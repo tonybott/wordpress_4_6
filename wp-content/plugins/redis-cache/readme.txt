@@ -3,17 +3,17 @@ Contributors: tillkruess
 Donate link: https://www.paypal.me/tillkruss
 Tags: redis, predis, hhvm, pecl, caching, cache, object cache, wp object cache, server, performance, optimize, speed, load, replication, clustering
 Requires at least: 3.3
-Tested up to: 4.5
-Stable tag: 1.3.2
+Tested up to: 4.6
+Stable tag: 1.3.3
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
-A persistent object cache backend powered by Redis. Supports Predis, PhpRedis, HHVM, replication and clustering.
+A persistent object cache backend powered by Redis. Supports Predis, PhpRedis (PECL), HHVM, replication and clustering.
 
 
 == Description ==
 
-A persistent object cache backend powered by Redis. Supports [Predis](https://github.com/nrk/predis/), [HHVM's Redis extension](https://github.com/facebook/hhvm/tree/master/hphp/system/php/redis) and the [PECL Redis Extension](https://github.com/phpredis/phpredis).
+A persistent object cache backend powered by Redis. Supports [Predis](https://github.com/nrk/predis/), [PhpRedis (PECL)](https://github.com/phpredis/phpredis), [HHVM](https://github.com/facebook/hhvm/tree/master/hphp/system/php/redis), replication and clustering.
 
 To adjust the connection parameters, prefix cache keys or configure replication/clustering, please see [Other Notes](http://wordpress.org/extend/plugins/redis-cache/other_notes/).
 
@@ -79,12 +79,22 @@ To adjust the configuration, define any of the following constants in your `wp-c
 
     Set maximum time-to-live (in seconds) for cache keys with an expiration time of `0`.
 
+  * `WP_REDIS_GLOBAL_GROUPS` (default: `['users', 'userlogins', 'usermeta', 'site-options', 'site-lookup', 'blog-lookup', 'blog-details', 'rss']`)
+
+    Set the list of network-wide cache groups that should not be prefixed with the blog-id _(Multisite only)_.
+
+  * `WP_REDIS_IGNORED_GROUPS` (default: `['comment', 'counts']`)
+
+    Set the cache groups that should not be cached in Redis.
+
 
 == Replication & Clustering ==
 
 To use Replication and Clustering, make sure your server is running PHP7, your setup is using Predis to connect to Redis and you consulted the [Predis documentation](https://github.com/nrk/predis).
 
-For replication, use the `WP_REDIS_SERVERS` constant and for clustering the `WP_REDIS_CLUSTER` constant. You can use a named array or an URI string to specify the parameters.
+For replication use the `WP_REDIS_SERVERS` constant and for clustering the `WP_REDIS_CLUSTER` constant. You can use a named array or an URI string to specify the parameters.
+
+For authentication use the `WP_REDIS_PASSWORD` constant.
 
 __Master-Slave Replication Example:__
 
@@ -104,10 +114,25 @@ __Clustering via Client-side Sharding Example:__
 
 == Screenshots ==
 
-1. Plugin settings page.
+1. Plugin settings, connected to a single Redis server.
+
+2. Plugin settings, not connected to a Redis cluster.
 
 
 == Changelog ==
+
+= 1.3.3 =
+
+  * Updated Predis to `v1.1.1`
+  * Added `redis_instance()` method
+  * Added `incr()` method alias for Batcache compatibility
+  * Added `WP_REDIS_GLOBAL_GROUPS` and `WP_REDIS_IGNORED_GROUPS` constant
+  * Added `redis_object_cache_delete` action
+  * Use `WP_PLUGIN_DIR` with `WP_CONTENT_DIR` as fallback
+  * Set password when using a cluster or replication
+  * Show Redis client in `stats()`
+  * Change visibility of `$cache` to public
+  * Use old array syntax, just in case
 
 = 1.3.2 =
 
@@ -185,6 +210,10 @@ __Clustering via Client-side Sharding Example:__
 
 
 == Upgrade Notice ==
+
+= 1.3.3 =
+
+This update contains several improvements.
 
 = 1.3.2 =
 
