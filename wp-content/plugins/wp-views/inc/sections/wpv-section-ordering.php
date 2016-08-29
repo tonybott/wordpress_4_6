@@ -24,6 +24,7 @@ class WPV_Editor_Ordering {
 	}
 	
 	static function wpv_editor_section_ordering( $view_settings, $view_id ) {
+		global $wp_version;
 		$hide = '';
 		if (
 			isset( $view_settings['sections-show-hide'] ) 
@@ -46,12 +47,14 @@ class WPV_Editor_Ordering {
 				</h2>
 			</div>
 			<div class="wpv-setting js-wpv-setting">
-				<p class="wpv-settings-query-type-posts js-wpv-settings-posts-order"<?php echo ( $view_settings['query_type'][0] != 'posts' ) ? ' style="display: none;"' : ''; ?>>
+				<ul class="wpv-settings-query-type-posts js-wpv-settings-posts-order"<?php echo ( $view_settings['query_type'][0] != 'posts' ) ? ' style="display: none;"' : ''; ?>>
+				<li style="position:relative">
 					<label for="wpv-settings-orderby"><?php _e( 'Order by ', 'wpv-views' ) ?></label>
 					<select id="wpv-settings-orderby" class="js-wpv-posts-orderby" name="_wpv_settings[orderby]" autocomplete="off" data-rand="<?php echo esc_attr( __('Pagination and random ordering do not work together and would produce unexpected results. Please disable pagination or random ordering.', 'wpv-views') ); ?>">
 						<option value="post_date" <?php selected( $view_settings['orderby'], 'post_date' ); ?>><?php _e('Post date', 'wpv-views'); ?></option>
 						<option value="post_title" <?php selected( $view_settings['orderby'], 'post_title' ); ?>><?php _e('Post title', 'wpv-views'); ?></option>
 						<option value="ID" <?php selected( $view_settings['orderby'], 'ID' ); ?>><?php _e('Post ID', 'wpv-views'); ?></option>
+						<option value="post_author" <?php selected( $view_settings['orderby'], 'post_author' ); ?>><?php _e('Post author', 'wpv-views'); ?></option>
 						<option value="modified" <?php selected( $view_settings['orderby'], 'modified' ); ?>><?php _e('Last modified', 'wpv-views'); ?></option>
 						<option value="menu_order" <?php selected( $view_settings['orderby'], 'menu_order' ); ?>><?php _e('Menu order', 'wpv-views'); ?></option>
 						<option value="rand" <?php selected( $view_settings['orderby'], 'rand' ); ?>><?php _e('Random order', 'wpv-views'); ?></option>
@@ -111,9 +114,42 @@ class WPV_Editor_Ordering {
 							<option value="NUMERIC" <?php selected( $view_settings['orderby_as'], 'NUMERIC' ); ?>><?php _e( 'As a number', 'wpv-views' ) ?></option>
 						</select>
 					</span>
-				</p>
+				</li>
+				<?php
+				if ( ! version_compare( $wp_version, '4.0', '<' ) ) {
+					?>
+					<li class="js-wpv-settings-posts-order-secondary" style="position:relative">
+						<span class="js-wpv-settings-orderby-second-display" style="display:block;cursor:pointer;background:#ededed;padding:5px 10px;margin:10px 0;">
+							<i class="fa fa-caret-<?php echo ( $view_settings['orderby_second'] != '' ) ? 'up' : 'down'; ?>" aria-hidden="true"></i>
+							&nbsp;<?php _e( 'Secondary sorting', 'wpv-views' ); ?>
+						</span>
+						<div class="wpv-advanced-setting js-wpv-settings-orderby-second-wrapper<?php if ( $view_settings['orderby_second'] == '' ) { echo ' hidden'; } ?>" style="margin-top:10px;padding-top:10px;">
+							<p>
+								<label for="wpv-settings-orderby-second"><?php _e( 'On posts sharing the same primary <em>order by</em> value, order by ', 'wpv-views' ) ?></label>
+								<select id="wpv-settings-orderby-second" class="js-wpv-posts-orderby-second" name="_wpv_settings[orderby_second]" autocomplete="off">
+									<option value=""><?php _e( 'No secondary sorting', 'wpv-views' ); ?></option>
+									<option value="post_date" <?php selected( $view_settings['orderby_second'], 'post_date' ); ?>><?php _e('Post date', 'wpv-views'); ?></option>
+									<option value="post_title" <?php selected( $view_settings['orderby_second'], 'post_title' ); ?>><?php _e('Post title', 'wpv-views'); ?></option>
+									<option value="ID" <?php selected( $view_settings['orderby_second'], 'ID' ); ?>><?php _e('Post ID', 'wpv-views'); ?></option>
+									<option value="post_author" <?php selected( $view_settings['orderby_second'], 'post_author' ); ?>><?php _e('Post author', 'wpv-views'); ?></option>
+									<option value="modified" <?php selected( $view_settings['orderby_second'], 'modified' ); ?>><?php _e('Last modified', 'wpv-views'); ?></option>
+									<option value="menu_order" <?php selected( $view_settings['orderby_second'], 'menu_order' ); ?>><?php _e('Menu order', 'wpv-views'); ?></option>
+									<option value="rand" <?php selected( $view_settings['orderby_second'], 'rand' ); ?>><?php _e('Random order', 'wpv-views'); ?></option>
+								</select>
+								<select name="_wpv_settings[order_second]" class="js-wpv-posts-order-second" autocomplete="off" <?php disabled( in_array( $view_settings['orderby_second'], array( '', 'rand' ) ) ); ?>>
+									<option value="DESC" <?php selected( $view_settings['order_second'], 'DESC' ); ?>><?php _e( 'Descending', 'wpv-views' ) ?></option>
+									<option value="ASC" <?php selected( $view_settings['order_second'], 'ASC' ); ?>><?php _e( 'Ascending', 'wpv-views' ) ?></option>
+								</select>
+							</p>
+						</div>
+					</li>
+					<?php
+				}
+				?>
+				</ul>
 
-				<p class="wpv-settings-query-type-taxonomy"<?php echo ( $view_settings['query_type'][0] != 'taxonomy' ) ? ' style="display: none;"' : ''; ?>>
+				<ul class="wpv-settings-query-type-taxonomy"<?php echo ( $view_settings['query_type'][0] != 'taxonomy' ) ? ' style="display: none;"' : ''; ?>>
+				<li style="position:relative">
 					<?php
 					$taxonomy_order_by = array(
 						'id'			=> __( 'Term ID', 'wpv-views' ),
@@ -134,7 +170,6 @@ class WPV_Editor_Ordering {
 							}
 						?>
 						<?php
-							global $wp_version;
 							if ( ! version_compare( $wp_version, '4.5', '<' ) ) {
 								$all_types_termmeta_fields			= get_option( 'wpcf-termmeta', array() );
 								$termmeta_keys = apply_filters( 'wpv_filter_wpv_get_termmeta_keys', array() );
@@ -192,9 +227,11 @@ class WPV_Editor_Ordering {
 							<option value="NUMERIC" <?php selected( $view_settings['taxonomy_orderby_as'], 'NUMERIC' ); ?>><?php _e( 'As a number', 'wpv-views' ) ?></option>
 						</select>
 					</span>
-				</p>
+				</li>
+				</ul>
 
-				<p class="wpv-settings-query-type-users"<?php echo ( $view_settings['query_type'][0] != 'users' ) ? ' style="display: none;"' : ''; ?>>
+				<ul class="wpv-settings-query-type-users"<?php echo ( $view_settings['query_type'][0] != 'users' ) ? ' style="display: none;"' : ''; ?>>
+				<li style="position:relative">
 					<?php 
 					$users_order_by = array(
 						'user_login'		=> __( 'User login', 'wpv-views' ),
@@ -224,13 +261,53 @@ class WPV_Editor_Ordering {
 							<?php
 
 							}
+							
+							$all_types_usermeta_fields			= get_option( 'wpcf-usermeta', array() );
+							$show_user_orderby_as				= false;
+							$selected_user_orderby_field_type	= '';
+							
+							foreach ( $all_types_usermeta_fields as $usermeta_field_slug => $usermeta_field_data ) {
+								
+								$usermeta_field_meta_key = $usermeta_field_data['meta_key'];
+								$usermeta_field_name = $usermeta_field_data['name'];
+								$usermeta_field_type = $usermeta_field_data['type'];
+								
+								$data_field_type = ' data-field-type="' . esc_attr( $usermeta_field_type ) . '"';
+								$selected = ( $view_settings['users_orderby'] == "user-field-" . $usermeta_field_meta_key ) ? ' selected="selected"' : '';
+								$option_text = sprintf( __( 'User Field - %s', 'wpv-views' ), $usermeta_field_name );
+								
+								$show_user_orderby_as = ( !empty( $selected ) ) ? true : $show_user_orderby_as;
+								$selected_user_orderby_field_type = ( ! empty( $selected ) ) ? $usermeta_field_type : $selected_user_orderby_field_type;
+								
+								if ( ! in_array( $usermeta_field_type, array( 'checkboxes', 'skype' ) ) ) {
+									$option = '<option value="user-field-' . esc_attr( $usermeta_field_meta_key ) . '"' . $data_field_type . $selected . '>';
+									$option .= $option_text;
+									$option .= '</option>';
+									echo $option;
+								}
+								
+							}
+							
 						?>
 					</select>
 					<select name="_wpv_settings[users_order]" class="js-wpv-users-order" autocomplete="off">
 						<option value="DESC" <?php selected( $view_settings['users_order'], 'DESC' ); ?>><?php _e( 'Descending', 'wpv-views' ) ?></option>
 						<option value="ASC" <?php selected( $view_settings['users_order'], 'ASC' ); ?>><?php _e( 'Ascending', 'wpv-views' ) ?></option>
 					</select>
-				</p>
+					<span class="js-wpv-settings-users-orderby-as"<?php echo ( $view_settings['query_type'][0] != 'users' || ! $show_user_orderby_as) ? ' style="display: none;"' : ''; ?>>
+						<?php
+						$disable_user_orderby_as = false;
+						if ( in_array( $selected_user_orderby_field_type, array( 'numeric', 'date' ) ) ) {
+							$view_settings['users_orderby_as'] = 'NUMERIC';
+							$disable_user_orderby_as = true;
+						}
+						?>
+						<select id="wpv-settings-user-orderby-as" name="_wpv_settings[users_orderby_as]" class="js-wpv-users-orderby-as" autocomplete="off" <?php disabled( $disable_user_orderby_as ); ?>>
+							<option value=""><?php _e( 'As a native custom field', 'wpv-views' ) ?></option>
+							<option value="STRING" <?php selected( $view_settings['users_orderby_as'], 'STRING' ); ?>><?php _e( 'As a string', 'wpv-views' ) ?></option>
+							<option value="NUMERIC" <?php selected( $view_settings['users_orderby_as'], 'NUMERIC' ); ?>><?php _e( 'As a number', 'wpv-views' ) ?></option>
+						</select>
+					</span>
 				<div class="js-wpv-toolset-messages"></div>
 			</div>
 			<span class="update-action-wrap auto-update js-wpv-update-action-wrap">
@@ -242,6 +319,7 @@ class WPV_Editor_Ordering {
 	}
 
 	static function wpv_wpa_editor_section_ordering( $view_settings, $view_id, $user_id ) {
+		global $wp_version;
 		$section_help_pointer = WPV_Admin_Messages::edit_section_help_pointer( 'archive_ordering' );
 		$view_settings = apply_filters( 'wpv_filter_wpv_get_sorting_defaults', $view_settings );
 		?>
@@ -256,12 +334,14 @@ class WPV_Editor_Ordering {
 				</h2>
 			</div>
 			<div class="wpv-setting js-wpv-setting">
-				<p class="wpv-settings-query-type-posts js-wpv-settings-posts-order">
-					<label for="wpv-settings-orderby"><?php _e( 'Order by: ', 'wpv-views' ) ?></label>
+				<ul class="wpv-settings-query-type-posts js-wpv-settings-posts-order">
+				<li style="position:relative">
+					<label for="wpv-settings-orderby"><?php _e( 'Order by ', 'wpv-views' ) ?></label>
 					<select id="wpv-settings-orderby" class="js-wpv-posts-orderby" name="_wpv_settings[orderby]" autocomplete="off" data-rand="<?php echo esc_attr( __('Pagination and random ordering do not work together and would produce unexpected results. Please disable pagination or random ordering.', 'wpv-views') ); ?>">
 						<option value="post_date" <?php selected( $view_settings['orderby'], 'post_date' ); ?>><?php _e('Post date', 'wpv-views'); ?></option>
 						<option value="post_title" <?php selected( $view_settings['orderby'], 'post_title' ); ?>><?php _e('Post title', 'wpv-views'); ?></option>
 						<option value="ID" <?php selected( $view_settings['orderby'], 'ID' ); ?>><?php _e('Post ID', 'wpv-views'); ?></option>
+						<option value="post_author" <?php selected( $view_settings['orderby'], 'post_author' ); ?>><?php _e('Post author', 'wpv-views'); ?></option>
 						<option value="modified" <?php selected( $view_settings['orderby'], 'modified' ); ?>><?php _e('Last modified', 'wpv-views'); ?></option>
 						<option value="menu_order" <?php selected( $view_settings['orderby'], 'menu_order' ); ?>><?php _e('Menu order', 'wpv-views'); ?></option>
 						<option value="rand" <?php selected( $view_settings['orderby'], 'rand' ); ?>><?php _e('Random order', 'wpv-views'); ?></option>
@@ -321,7 +401,39 @@ class WPV_Editor_Ordering {
 							<option value="NUMERIC" <?php selected( $view_settings['orderby_as'], 'NUMERIC' ); ?>><?php _e( 'As a number', 'wpv-views' ) ?></option>
 						</select>
 					</span>
-				</p>
+				</li>
+				<?php
+				if ( ! version_compare( $wp_version, '4.0', '<' ) ) {
+					?>
+					<li class="js-wpv-settings-posts-order-secondary" style="position:relative">
+						<span class="js-wpv-settings-orderby-second-display" style="display:block;cursor:pointer;background:#ededed;padding:5px 10px;margin:10px 0;">
+							<i class="fa fa-caret-<?php echo ( $view_settings['orderby_second'] != '' ) ? 'up' : 'down'; ?>" aria-hidden="true"></i>
+							&nbsp;<?php _e( 'Secondary sorting', 'wpv-views' ); ?>
+						</span>
+						<div class="wpv-advanced-setting js-wpv-settings-orderby-second-wrapper<?php if ( $view_settings['orderby_second'] == '' ) { echo ' hidden'; } ?>">
+							<p>
+								<label for="wpv-settings-orderby-second"><?php _e( 'On posts sharing the same <em>order by</em> value, order by ', 'wpv-views' ) ?></label>
+								<select id="wpv-settings-orderby-second" class="js-wpv-posts-orderby-second" name="_wpv_settings[orderby_second]" autocomplete="off">
+									<option value=""><?php _e( 'No secondary sorting', 'wpv-views' ); ?></option>
+									<option value="post_date" <?php selected( $view_settings['orderby_second'], 'post_date' ); ?>><?php _e('Post date', 'wpv-views'); ?></option>
+									<option value="post_title" <?php selected( $view_settings['orderby_second'], 'post_title' ); ?>><?php _e('Post title', 'wpv-views'); ?></option>
+									<option value="ID" <?php selected( $view_settings['orderby_second'], 'ID' ); ?>><?php _e('Post ID', 'wpv-views'); ?></option>
+									<option value="post_author" <?php selected( $view_settings['orderby_second'], 'post_author' ); ?>><?php _e('Post author', 'wpv-views'); ?></option>
+									<option value="modified" <?php selected( $view_settings['orderby_second'], 'modified' ); ?>><?php _e('Last modified', 'wpv-views'); ?></option>
+									<option value="menu_order" <?php selected( $view_settings['orderby_second'], 'menu_order' ); ?>><?php _e('Menu order', 'wpv-views'); ?></option>
+									<option value="rand" <?php selected( $view_settings['orderby_second'], 'rand' ); ?>><?php _e('Random order', 'wpv-views'); ?></option>
+								</select>
+								<select name="_wpv_settings[order_second]" class="js-wpv-posts-order-second" autocomplete="off" <?php disabled( in_array( $view_settings['orderby_second'], array( '', 'rand' ) ) ); ?>>
+									<option value="DESC" <?php selected( $view_settings['order_second'], 'DESC' ); ?>><?php _e( 'Descending', 'wpv-views' ) ?></option>
+									<option value="ASC" <?php selected( $view_settings['order_second'], 'ASC' ); ?>><?php _e( 'Ascending', 'wpv-views' ) ?></option>
+								</select>
+							</p>
+						</div>
+					</li>
+					<?php
+				}
+				?>
+				</ul>
 				<div class="js-wpv-toolset-messages"></div>
 			</div>
 			<span class="update-action-wrap auto-update js-wpv-update-action-wrap">
@@ -365,10 +477,11 @@ class WPV_Editor_Ordering {
 		$view_array = get_post_meta( $_POST["id"], '_wpv_settings', true );
 		$sorting_options = array(
 			'orderby', 'order', 'orderby_as',
+			'orderby_second', 'order_second',
 			'taxonomy_orderby', 'taxonomy_order', 'taxonomy_orderby_as',
-			'users_orderby', 'users_order'
+			'users_orderby', 'users_order', 'users_orderby_as'
 		);
-		foreach ( $sorting_options as $sorting_opt) {
+		foreach ( $sorting_options as $sorting_opt ) {
 			if (
 				isset( $_POST[$sorting_opt] )
 				&& (

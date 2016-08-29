@@ -414,7 +414,7 @@ WPViews.MetaFieldFilterGUI = function( $, meta ) {
 						}
 					},
 					error:		function( ajaxContext ) {
-						console.log( "Error: %s %s", textStatus, errorThrown );
+						console.log( "Error: ", ajaxContext.responseText );
 						Toolset.hooks.doAction( 'wpv-action-wpv-edit-screen-manage-save-fail-queue', 'save_filter_' + self.meta + '_field' );
 						if ( propagate ) {
 							$( document ).trigger( 'js_wpv_save_section_queue' );

@@ -314,67 +314,55 @@ function wpv_get_limit_offset_summary( $view_settings, $context = 'listing' ) {
 *
 * @since 1.6.2
 *
-* @todo add AJAX effect
+* @todo add the view ID so we can get third party effects
+* @todo unify cntxts, there is no need for two different ones; watch out as this is used directly on embedded listings
 */
 function wpv_get_pagination_summary( $view_settings, $context = 'listing' ) {
 	$return = '';
-	if ( isset( $view_settings['pagination'] ) && isset( $view_settings['pagination'][0] ) && $view_settings['pagination'][0] != 'disable' ) {
-		$posts_per_page = 0;
-		$pagination_type = '';
-		$pagination_effect = '';
-		if ( isset( $view_settings['pagination']['mode'] ) && $view_settings['pagination']['mode'] == 'paged' ) {
-			$posts_per_page = intval( $view_settings['posts_per_page'] );
-			if ( isset( $view_settings['ajax_pagination'] ) && isset( $view_settings['ajax_pagination'][0] ) && $view_settings['ajax_pagination'][0] == 'enable' ) {
-				$pagination_type = 'ajax';
-				$ajax_effects = array(
-					'fade' => __('Fade', 'wpv-views'),
-					'fadefast' => __('Fade', 'wpv-views'),
-					'fadeslow' => __('Fade', 'wpv-views'),
-					'slideh' => __('Slide horizontally', 'wpv-views'),
-					'slidev' => __('Slide vertically', 'wpv-views'),
-				);
-				$selected_effect = isset( $view_settings['ajax_pagination']['style'] ) ? $view_settings['ajax_pagination']['style'] : 'none';
-				$pagination_effect = isset( $ajax_effects[$selected_effect] ) ? $ajax_effects[$selected_effect] : '';
-			} else {
-				$pagination_type = 'manual';
-			}
-		} else if ( isset( $view_settings['pagination']['mode'] ) && $view_settings['pagination']['mode'] == 'rollover' && isset( $view_settings['rollover'] ) && isset( $view_settings['rollover']['posts_per_page'] ) ) {
-			$posts_per_page = intval( $view_settings['rollover']['posts_per_page'] );
-			$pagination_type = 'rollover';
-			$rollover_effects = array(
-				'fade' => __('Fade', 'wpv-views'),
-				'slideleft' => __('Slide Left', 'wpv-views'),
-				'slideright' => __('Slide Right', 'wpv-views'),
-				'slideup' => __('Slide Up', 'wpv-views'),
-				'slidedown' => __('Slide Down', 'wpv-views'),
-			);
-			$selected_effect = isset( $view_settings['rollover']['effect'] ) ? $view_settings['rollover']['effect'] : 'none';
-			$pagination_effect = isset( $rollover_effects[$selected_effect] ) ? $rollover_effects[$selected_effect] : '';
-		}
-		if ( '' != $pagination_type ) {
-			switch ( $pagination_type ) {
-				case 'manual':
-					if ( $context == 'embedded-info' ) {
-						$return .= sprintf( _n( 'Manual pagination, 1 item per page', 'Manual pagination, %s items per page', $posts_per_page, 'wpv-views' ), $posts_per_page );
-					} else {
-						$return .= ', ' . sprintf( _n( '1 item per page with manual pagination', '%s items per page with manual pagination', $posts_per_page, 'wpv-views' ), $posts_per_page );
-					}
-					break;
-				case 'ajax':
-					if ( $context == 'embedded-info' ) {
-						$return .= sprintf( _n( '%s, 1 item per page', '%s, %s items per page', $posts_per_page, 'wpv-views' ), $pagination_effect, $posts_per_page );
-					} else {
-						$return .= ', ' . sprintf( _n( '1 item per page with manual AJAX', '%s items per page with manual AJAX', $posts_per_page, 'wpv-views' ), $posts_per_page );
-					}
-					break;
-				case 'rollover':
-					if ( $context == 'embedded-info' ) {
-						$return .= sprintf( _n( '%s automatically, 1 item per page', '%s automatically, %s items per page', $posts_per_page, 'wpv-views' ), $pagination_effect, $posts_per_page );
-					} else {
-						$return .= ', ' . sprintf( _n( '1 item per page with automatic AJAX', '%s items per page with automatic AJAX', $posts_per_page, 'wpv-views' ), $posts_per_page );
-					}
-					break;
-			}
+	if ( $view_settings['pagination']['type'] != 'disabled' ) {
+		$pagination_type	= $view_settings['pagination']['type'];
+		$posts_per_page		= $view_settings['pagination']['posts_per_page'];
+		$selected_effect	= $view_settings['pagination']['effect'];
+		/*
+		$ajax_effects			= apply_filters( 'wpv_filter_wpv_pagination_ajax_effects', self::$pagination_ajax_effects, $view_id );
+		$rollover_effects		= apply_filters( 'wpv_filter_wpv_pagination_rollover_effects', self::$pagination_rollover_effects, $view_id );
+		*/
+		$ajax_effects = array(
+			'fade'				=> __('Fade', 'wpv-views'),
+			'fadefast'			=> __('Fade', 'wpv-views'),
+			'fadeslow'			=> __('Fade', 'wpv-views'),
+			'slideh'			=> __('Slide horizontally', 'wpv-views'),
+			'slidev'			=> __('Slide vertically', 'wpv-views'),
+			'slideleft'			=> __('Slide Left', 'wpv-views'),
+			'slideright'		=> __('Slide Right (backwards)', 'wpv-views'),
+			'sliderightforward'	=> __('Slide Right', 'wpv-views'),
+			'slideup'			=> __('Slide Up', 'wpv-views'),
+			'slidedown'			=> __('Slide Down (backwards)', 'wpv-views'),
+			'slidedownforward'	=> __('Slide Down', 'wpv-views'),
+		);
+		$pagination_effect = isset( $ajax_effects[ $selected_effect ] ) ? $ajax_effects[ $selected_effect ] : '';
+		switch ( $pagination_type ) {
+			case 'paged':
+				if ( $context == 'embedded-info' ) {
+					$return .= sprintf( _n( 'Manual pagination, 1 item per page', 'Manual pagination, %s items per page', $posts_per_page, 'wpv-views' ), $posts_per_page );
+				} else {
+					$return .= ', ' . sprintf( _n( '1 item per page with manual pagination', '%s items per page with manual pagination', $posts_per_page, 'wpv-views' ), $posts_per_page );
+				}
+				break;
+			case 'ajaxed':
+				if ( $context == 'embedded-info' ) {
+					$return .= sprintf( _n( '%s, 1 item per page', '%s, %s items per page', $posts_per_page, 'wpv-views' ), $pagination_effect, $posts_per_page );
+				} else {
+					$return .= ', ' . sprintf( _n( '1 item per page with manual AJAX', '%s items per page with manual AJAX', $posts_per_page, 'wpv-views' ), $posts_per_page );
+				}
+				break;
+			case 'rollover':
+				if ( $context == 'embedded-info' ) {
+					$return .= sprintf( _n( '%s automatically, 1 item per page', '%s automatically, %s items per page', $posts_per_page, 'wpv-views' ), $pagination_effect, $posts_per_page );
+				} else {
+					$return .= ', ' . sprintf( _n( '1 item per page with automatic AJAX', '%s items per page with automatic AJAX', $posts_per_page, 'wpv-views' ), $posts_per_page );
+				}
+				break;
 		}
 	} else {
 		if ( $context == 'embedded-info' ) {
@@ -1170,10 +1158,16 @@ function wpv_get_filter_post_search_summary_txt( $view_settings, $short = false 
 	if ( ! isset( $view_settings['post_search_value'] ) ) {
 		$view_settings['post_search_value'] = '';
 	}
-	$search_where = __( 'posts title and content', 'wpv-views' );
-	if ( isset( $view_settings['post_search_content'] ) && 'just_title' == $view_settings['post_search_content'] ) {
-		$search_where = __( 'posts title', 'wpv-views' );
+	if ( ! isset( $view_settings['post_search_content'] ) ) {
+		$view_settings['post_search_content'] = 'full_content';
 	}
+	
+	$post_search_content_options = WPV_Search_Frontend_Filter::get_post_search_content_options();
+	$post_search_content = isset( $post_search_content_options[ $view_settings['post_search_content'] ] ) ? $view_settings['post_search_content'] : 'full_content';
+	
+	$search_where = $post_search_content_options[ $post_search_content ]['summary'];
+	
+	$summary = '';
 	ob_start();
 	switch ( $view_settings['search_mode'] ) {
 		case 'specific':
@@ -1190,14 +1184,15 @@ function wpv_get_filter_post_search_summary_txt( $view_settings, $short = false 
 		case 'visitor':
 		case 'manual':
 			if ( $short ) {
-				echo sprintf( __( 'Filter %s by <strong>search box</strong>', 'wpv-views' ), $search_where );
+				echo sprintf( __( 'Filter %s by <strong>text search</strong>', 'wpv-views' ), $search_where );
 			} else {
-				echo sprintf( __( 'Filter %s by a search box that will be added <strong>manually</strong> using the shortcode <span class="wpv-code">[wpv-filter-search-box]</span>.', 'wpv-views' ), $search_where );
+				echo sprintf( __( 'Filter %s by a text search that will be added <strong>manually</strong> using the shortcode <span class="wpv-code">[wpv-filter-search-box]</span>.', 'wpv-views' ), $search_where );
 			}
 			break;
 	}
-	$data = ob_get_clean();
-	return $data;
+	$summary .= ob_get_clean();
+	$summary = apply_filters( 'wpv_filter_wpv_extend_post_search_summary', $summary, $view_settings );
+	return $summary;
 }
 
 /**
@@ -1336,10 +1331,10 @@ function wpv_get_filter_taxonomy_search_summary_txt( $view_settings ) {
 			echo sprintf( __( 'Filter by this search term: <strong>%s</strong>.', 'wpv-views' ), $term );
 			break;
 		case 'visitor':
-			echo __( 'Show a <strong>search box</strong> for visitors.', 'wpv-views' );
+			echo __( 'Show a <strong>text search</strong> for visitors.', 'wpv-views' );
 			break;
 		case 'manual':
-			echo __( 'The search box will be added <strong>manually</strong> using the shortcode <span class="wpv-code">eg. [wpv-filter-search-box]</span>', 'wpv-views' );
+			echo __( 'The text search will be added <strong>manually</strong> using the shortcode <span class="wpv-code">eg. [wpv-filter-search-box]</span>', 'wpv-views' );
 			break;
 	}
 	$data = ob_get_clean();
@@ -1768,7 +1763,7 @@ function wpv_get_meta_field_summary( $type, $view_settings = array(), $meta_type
  * Returns the query type part when building the summary for a View.
  *
  * @param $summary
- * @param $post_id
+ * @param $view_id
  * @param $view_settings
  *
  * @return string $summary
@@ -1777,7 +1772,7 @@ function wpv_get_meta_field_summary( $type, $view_settings = array(), $meta_type
  */
 add_filter( 'wpv-view-get-content-summary', 'wpv_query_type_summary_filter', 5, 3 );
 
-function wpv_query_type_summary_filter( $summary, $post_id, $view_settings ) {
+function wpv_query_type_summary_filter( $summary, $view_id, $view_settings ) {
     $summary .= wpv_get_query_type_summary( $view_settings );
     return $summary;
 }
@@ -1788,7 +1783,7 @@ function wpv_query_type_summary_filter( $summary, $post_id, $view_settings ) {
  * Returns the pagination part when building the summary for a View.
  *
  * @param $summary
- * @param $post_id
+ * @param $view_id
  * @param $view_settings
  *
  * @return string $summary
@@ -1797,7 +1792,7 @@ function wpv_query_type_summary_filter( $summary, $post_id, $view_settings ) {
  */
 add_filter( 'wpv-view-get-content-summary', 'wpv_pagination_summary_filter', 6, 3 );
 
-function wpv_pagination_summary_filter( $summary, $post_id, $view_settings ) {
+function wpv_pagination_summary_filter( $summary, $view_id, $view_settings ) {
     $summary .= wpv_get_pagination_summary( $view_settings );
     return $summary;
 }
@@ -1809,7 +1804,7 @@ function wpv_pagination_summary_filter( $summary, $post_id, $view_settings ) {
  * Returns the Limit and Offset part when building the summary for a View.
  *
  * @param $summary
- * @param $post_id
+ * @param $view_id
  * @param $view_settings
  *
  * @returns string $summary
@@ -1818,7 +1813,7 @@ function wpv_pagination_summary_filter( $summary, $post_id, $view_settings ) {
  */
 add_filter( 'wpv-view-get-content-summary', 'wpv_limit_offset_summary_filter', 5, 3 );
 
-function wpv_limit_offset_summary_filter( $summary, $post_id, $view_settings ) {
+function wpv_limit_offset_summary_filter( $summary, $view_id, $view_settings ) {
     $summary .= wpv_get_limit_offset_summary( $view_settings );
     return $summary;
 }
@@ -1830,7 +1825,7 @@ function wpv_limit_offset_summary_filter( $summary, $post_id, $view_settings ) {
  * Returns the sorting part when building the summary for a View.
  *
  * @param $summary
- * @param $post_id
+ * @param $view_id
  * @param $view_settings
  *
  * @return string $summary
@@ -1839,7 +1834,7 @@ function wpv_limit_offset_summary_filter( $summary, $post_id, $view_settings ) {
  */
 add_filter( 'wpv-view-get-content-summary', 'wpv_ordering_summary_filter', 5, 3 );
 
-function wpv_ordering_summary_filter( $summary, $post_id, $view_settings ) {
+function wpv_ordering_summary_filter( $summary, $view_id, $view_settings ) {
     $summary .= wpv_get_ordering_summary( $view_settings );
     return $summary;
 }

@@ -628,6 +628,7 @@ function wpv_filter_variable_settings_require_framework_values( $state, $view_se
 				}
 				break;
 			case 'rollover':
+			case 'pagination':
 				if ( 
 					is_array( $vs_value )
 					&& isset( $vs_value['posts_per_page'] ) 

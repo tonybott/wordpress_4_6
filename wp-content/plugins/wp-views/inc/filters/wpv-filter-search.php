@@ -29,6 +29,37 @@ class WPV_Search_Filter {
 
     static function init() {
 		wp_register_script( 'views-filter-search-js', ( WPV_URL . "/res/js/filters/views_filter_search.js" ), array( 'views-filters-js' ), WPV_VERSION, true );
+		$text_search_documentation_link = 'https://wp-types.com/documentation/user-guides/views-text-search/?utm_source=viewsplugin&utm_campaign=views&utm_medium=edit-view-search-text-filter&utm_term=Text Search documentation';
+		$search_strings = array(
+			'relevanssi'	=> array(
+								'available'					=> function_exists( 'relevanssi_init' ) ? 'true' : 'false',
+								'sort'						=> array(
+																'filter'	=> __( 'Since you are using a text search with Relevanssi, the order of results may be according to relevance and not according to this selection. If the visitor searches by text, the results will be ordered by relevance.', 'wpv-views' ),
+																'archive'	=> __( 'Since you are searching with Relevanssi, the order of results will be according to relevance and not according to this selection.', 'wpv-views' ),
+																),
+								'cpt_not_indexed'			=> sprintf(
+																	__( 'For this filter, you will need to add the following post types to the %1$sRelevanssi index%2$s: ##CTPLIST##. %3$sText Search documentation%4$s.', 'wpv-views' ),
+																	'<a href="' . admin_url( 'options-general.php?page=relevanssi/relevanssi.php#indexing' ) . '" target="_blank">',
+																	'</a>',
+																	'<a href="' . $text_search_documentation_link . '" target="_blank">',
+																	'</a>'
+																),
+								'cpt_not_indexed_archive'	=> sprintf(
+																	__( 'For the Search results archive, you will need to add the following post types to the %1$sRelevanssi index%2$s: ##CTPLIST##. %3$sText Search documentation%4$s.', 'wpv-views' ),
+																	'<a href="' . admin_url( 'options-general.php?page=relevanssi/relevanssi.php#indexing' ) . '" target="_blank">',
+																	'</a>',
+																	'<a href="' . $text_search_documentation_link . '" target="_blank">',
+																	'</a>'
+																),
+								'settings'					=> array(
+																'indexed_post_types'			=> get_option( 'relevanssi_index_post_types', array() ),
+																),
+							),
+			'builtin'		=> array(
+								'filter_on_archive'				=> __( 'Using a search filter on the search archive might have unexpected results', 'wpv-views' )
+							)
+		);
+		wp_localize_script( 'views-filter-search-js', 'wpv_search_strings', $search_strings );
     }
 	
 	static function admin_init() {
@@ -630,6 +661,9 @@ class WPV_Search_Filter {
 			'post_search_content'	=> 'full_content'
 		);
 		$view_settings = wp_parse_args( $view_settings, $defaults );
+		$post_search_content_options = WPV_Search_Frontend_Filter::get_post_search_content_options();
+		$post_search_content = isset( $post_search_content_options[ $view_settings['post_search_content'] ] ) ? $view_settings['post_search_content'] : 'full_content';
+		
 		?>
 		<h4><?php _e( 'How to search', 'wpv-views' ); ?></h4>
 		<ul class="wpv-filter-options-set">
@@ -644,19 +678,33 @@ class WPV_Search_Filter {
 			<li>
 				<?php $checked = ( $view_settings['search_mode'] == 'manual' || $view_settings['search_mode'] == 'visitor' ) ? 'checked="checked"' : ''; ?>
 				<input type="radio" id="wpv-search-mode-manual" class="js-wpv-post-search-mode" name="search_mode[]" value="manual" <?php echo $checked; ?> />
-				<label for="wpv-search-mode-manual"><?php _e( 'I’ll add the search box to the HTML manually', 'wpv-views' ); ?></label>
+				<label for="wpv-search-mode-manual"><?php _e( "I'll add the search box to the HTML manually", 'wpv-views' ); ?></label>
 			</li>
 		</ul>
 		<h4><?php _e('Where to search', 'wpv-views'); ?></h4>
 		<ul class="wpv-filter-options-set">
+			<?php
+			foreach ( $post_search_content_options as $post_search_content_options_key => $post_search_content_options_data ) {
+			?>
 			<li>
-				<input type="radio" id="wpv-search-content-full" name="post_search_content" value="full_content"<?php if ( $view_settings['post_search_content'] == 'full_content' ) echo ' checked="checked"';?>>
-				<label for="wpv-search-content-full"><?php echo __( 'Posts content and title', 'wpv-views' ); ?></label>
+				<input type="radio" id="wpv-search-content-<?php echo esc_attr( $post_search_content_options_key ); ?>" name="post_search_content" value="<?php echo esc_attr( $post_search_content_options_key ); ?>" <?php checked( $post_search_content, $post_search_content_options_key ); ?>>
+				<label for="wpv-search-content-<?php echo esc_attr( $post_search_content_options_key ); ?>"><?php echo esc_html( $post_search_content_options_data['label'] ); ?></label>
+				<?php
+				if ( 
+					isset( $post_search_content_options_data['description'] ) 
+					&& ! empty( $post_search_content_options_data['description'] )
+				) {
+					?>
+					<span class="wpv-helper-text" style="margin-left:24px;">
+					<?php echo $post_search_content_options_data['description']; ?>
+					</span>
+					<?php
+				}
+				?>
 			</li>
-			<li>
-				<input type="radio" id="wpv-search-content-title" name="post_search_content" value="just_title"<?php if ( $view_settings['post_search_content'] == 'just_title' ) echo ' checked="checked"';?>>
-				<label for="wpv-search-content-title"><?php echo __( 'Just posts title', 'wpv-views' ); ?></label>
-			</li>
+			<?php 
+			}
+			?>
 		</ul>
 		<?php
 	}
@@ -688,7 +736,7 @@ class WPV_Search_Filter {
 				<li>
 					<?php $checked = ( $view_settings['taxonomy_search_mode'] == 'manual' || $view_settings['taxonomy_search_mode'] == 'visitor' ) ? 'checked="checked"' : ''; ?>
 					<input type="radio" id="wpv-taxonomy-search-mode-manual" name="taxonomy_search_mode[]" value="manual" <?php echo $checked; ?> />
-					<label for="wpv-taxonomy-search-mode-manual"><?php _e( 'I’ll add the search box to the HTML manually', 'wpv-views' ); ?></label>
+					<label for="wpv-taxonomy-search-mode-manual"><?php _e( "I'll add the search box to the HTML manually", 'wpv-views' ); ?></label>
 				</li>
 			</ul>
 		<?php

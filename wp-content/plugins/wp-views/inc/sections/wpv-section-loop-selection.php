@@ -77,6 +77,7 @@ class WPV_Editor_Loop_Selection {
 						?>
 					</p>
 				</div>
+				<div class="js-wpv-toolset-messages"></div>
 			</div>
 			<span class="update-action-wrap auto-update js-wpv-update-action-wrap">
 				<span class="js-wpv-message-container"></span>
@@ -430,7 +431,7 @@ class WPV_Editor_Loop_Selection {
 			! is_array( $types_cpt ) 
 			|| empty( $types_cpt )
 		) {
-            return;
+            $types_cpt = array();
         }
 		
         $types_cpt_for_native = array(
@@ -611,7 +612,7 @@ class WPV_Editor_Loop_Selection {
 		}
 		if ( $loop_definition['extendable'] ) {
 		?>
-		<button class="button button-secomdary button-small js-wpv-apply-post-types-to-archive-loop-dialog" 
+		<button class="button button-secomdary button-small js-wpv-apply-post-types-to-archive-loop-tracker js-wpv-apply-post-types-to-archive-loop-dialog" 
 			data-display="<?php echo esc_attr( $loop_definition['display_name'] ); ?>" 
 			data-type="<?php echo esc_attr( $loop_definition['type'] ); ?>" 
 			data-name="<?php echo esc_attr( $loop_definition['name'] ); ?>" 
@@ -620,6 +621,14 @@ class WPV_Editor_Loop_Selection {
 		>
 			<?php echo __( 'Edit', 'wpv-views' ); ?>
 		</button>
+		<?php
+		} else {
+		?>
+		<span style="display:none;" class="js-wpv-apply-post-types-to-archive-loop-tracker"
+			data-type="<?php echo esc_attr( $loop_definition['type'] ); ?>" 
+			data-name="<?php echo esc_attr( $loop_definition['name'] ); ?>" 
+			data-selected="<?php echo esc_js( json_encode( $selected_post_types ) ); ?>" 
+		></span>
 		<?php
 		}
 		?>

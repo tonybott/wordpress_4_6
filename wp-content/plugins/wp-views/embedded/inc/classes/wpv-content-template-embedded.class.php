@@ -42,7 +42,7 @@ class WPV_Content_Template_Embedded extends WPV_Post_Object_Wrapper {
             if( WPV_Content_Template_Embedded::is_wppost_ct( $content_template ) ) {
                 // Store the data we got;
                 $this->object_id = $content_template->ID;
-                $this->post = clone( $content_template );
+                $this->post = clone $content_template;
             } else {
                 throw new InvalidArgumentException( "Invalid WP_Post object provided (not a Content Template): " . print_r( $content_template, true ) );
             }
@@ -293,21 +293,19 @@ class WPV_Content_Template_Embedded extends WPV_Post_Object_Wrapper {
 			
 			$post_types			= array_map( 'sanitize_text_field', $post_types );
 			$post_types_flat	= '"' . implode( '", "', $post_types ) . '"';
-				
-			$query = "UPDATE {$wpdb->postmeta} AS meta, 
-				{$wpdb->posts} AS posts 
-				SET meta.meta_value = %s 
-				WHERE
-					meta.post_id = posts.ID 
-					AND meta.meta_key = '_views_template' 
-					AND posts.post_type IN ( {$post_types_flat} )";
 			
-			$result = $wpdb->query(
+			$posts_to_update = $wpdb->get_col( 
 				$wpdb->prepare(
-					$query,
-					$this->id
+					"SELECT {$wpdb->posts}.ID FROM {$wpdb->posts} 
+					WHERE post_type IN ( {$post_types_flat} ) 
+					AND post_type != %s",
+					'view-template'
 				)
 			);
+			
+			foreach ( $posts_to_update as $post_updating ) {
+				update_post_meta( $post_updating, '_views_template', $this->id );
+			}
 
 		}
 	}

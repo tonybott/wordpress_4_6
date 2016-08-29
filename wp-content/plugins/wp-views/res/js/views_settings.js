@@ -211,7 +211,7 @@ WPViews.ViewsSettingsScreen = function( $ ) {
 		$( '.js-wpv-cs-error, .js-wpv-cs-dup, .js-wpv-cs-ajaxfail', parent_form ).hide();
 		if ( shortcode_pattern.test( newshortcode.val() ) == false ) {
 			$( '.js-wpv-cs-error', parent_form ).show();
-		} else if ( $( '.js-' + newshortcode.val() + '-item', parent_container ).length > 0 ) {
+		} else if ( $( '.js-' + newshortcode.val() + '-item, .js-' + newshortcode.val() + '-api-item', parent_container ).length > 0 ) {
 			$( '.js-wpv-cs-dup', parent_form ).show();
 		} else {
 			spinnerContainer.insertAfter( thiz ).show();

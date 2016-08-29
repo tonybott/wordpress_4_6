@@ -610,7 +610,10 @@ class WPV_Views_Conditional {
 
 		if(
 			empty( $attr['if'] )
-			|| empty( $content )
+			|| (
+				empty( $content )
+				&& $content !== '0'
+			)
 		) {
 			return ''; // ignore
 		}

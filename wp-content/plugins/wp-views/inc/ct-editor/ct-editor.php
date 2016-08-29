@@ -23,35 +23,9 @@
  */
 define( 'WPV_CT_EDITOR_PAGE_NAME', 'ct-editor' );
 
-add_action( 'init', 'wpv_ct_editor_register' );
 add_action( 'admin_init', 'wpv_ct_editor_load_sections' );
 add_action( 'admin_init', 'wpv_ct_editor_init' );
 
-
-/**
- * Register Editors
- * runs on hook 'init'. Must be init because we also need it on frontend for some editors.
- *
- * @since 2.1
- */
-function wpv_ct_editor_register() {
-    if( ! class_exists( 'WPV_Content_Template_Editor_Abstract' ) ) {
-        require_once( WPV_PATH . '/inc/classes/editor/interface.php' );
-        require_once( WPV_PATH . '/inc/classes/editor/abstract.php' );
-        require_once( WPV_PATH . '/inc/classes/editor/controller.php' );
-        require_once( WPV_PATH . '/inc/classes/editor/basic.php' );
-        require_once( WPV_PATH . '/inc/classes/editor/visual-composer.php' );
-    }
-
-    $editor_control = new WPV_Content_Template_Editor_Controller();
-
-    // Visual Composer
-    $editor_control->add_editor( new WPV_Content_Template_Editor_Visual_Composer() );
-    // Our default codemirror editor, IMPORTANT to add it last
-    $editor_control->add_editor( new WPV_Content_Template_Editor_Basic() );
-
-    add_filter( 'wpv_editor_active_editor', array( $editor_control, 'get_instance' ) );
-}
 
 /**
  * Load Editor sections
@@ -167,6 +141,56 @@ function wpv_ct_editor_enqueue() {
         wp_enqueue_style( 'editor_addon_menu_scroll' );
 
     }
+}
+
+/**
+* CT editor page hack for creating CT.
+*
+* On CT listing pages by usage we have methods for creating CT for a specific purpose, on the fly.
+* This results in CT edit pages lacking a ct_id URL parameter, which is expected by many parties.
+* This also results in inconsistencies since we have two pages for editing a CT and we might create a new one by just reloading the page.
+*
+* @note This is a hacky solution, we should implment an AJAX-based creation workflow.
+*
+* @since 2.2
+*/
+
+add_action( 'wp_loaded', 'wpv_ct_editor_create_and_redirect' );
+
+function wpv_ct_editor_create_and_redirect() {
+	
+	$page = wpv_getget( 'page', 'unset' );
+	$action = wpv_getget( 'action', 'edit', array( 'edit', 'create' ) );
+	
+	if (
+		$page == WPV_CT_EDITOR_PAGE_NAME 
+		&& $action == 'create'
+	) {
+		if( !current_user_can( 'manage_options' ) ) {
+			wpv_die_toolset_alert_error( __( 'You have no permission to access this page.', 'wpv-views' ) );
+		}
+		
+		$title = urldecode( wpv_getget( 'title' ) );
+
+		$usage = wpv_getget( 'usage' );
+		if( !is_array( $usage ) ) {
+			$usage = array();
+		}
+
+		$ct = wpv_ct_editor_page_create( $title, $usage );
+		if( $ct instanceof WPV_Content_Template ) {
+			$url = esc_url_raw(
+					add_query_arg(
+					array( 'page' => WPV_CT_EDITOR_PAGE_NAME, 'ct_id' => esc_attr( $ct->id ), 'action' => 'edit' ),
+					admin_url( 'admin.php' )
+				)
+			);
+			wp_redirect( $url );
+		} else {
+			wpv_die_toolset_alert_error( __( 'An error ocurred while creating a new Content Template.', 'wpv-views' ) );
+		}
+			
+	}
 }
 
 

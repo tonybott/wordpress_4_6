@@ -12,34 +12,36 @@ var WPViews = WPViews || {};
 
 WPViews.LayoutWizard = function( $ ) {
 	
-	var self = this;
+	var self		= this;
 	
-	self.view_id = $('.js-post_ID').val();
+	self.view_id	= $('.js-post_ID').val();
 	
-	self.initial_settings = null;
-	self.settings_from_wizard = null;
-	self.add_field_ui = null;
-	self.use_loop_template = false;
-	self.use_loop_template_id = '';
-	self.use_loop_template_title = '';
+	self.initial_settings			= null;
+	self.settings_from_wizard		= null;
+	self.add_field_ui				= null;
+	self.use_loop_template			= false;
+	self.use_loop_template_id		= '';
+	self.use_loop_template_title	= '';
 	
 	// Types compatibility
 	// @todo merge this into just one variable
 	// @todo store too the style options and loop template state
 	
-	self.wizard_dialog = null;
-	self.wizard_dialog_item = null;
-	self.wizard_dialog_item_parent = null;
-	self.wizard_dialog_style = null;
-	self.wizard_dialog_fields = null;
+	self.wizard_dialog				= null;
+	self.wizard_dialog_item			= null;
+	self.wizard_dialog_item_parent	= null;
+	self.wizard_dialog_style		= null;
+	self.wizard_dialog_fields		= null;
 	
-	self.wizard_dialog_data = null;
+	self.wizard_dialog_data			= null;
 	
-	self.saved_fields_html = null;
+	self.saved_fields_html			= null;
 	
-	self.doing_shortcode_gui = false;
-	self.doing_shortcode_gui_for = null;
-	self.doing_shortcode_gui_for_selected = null;
+	self.doing_shortcode_gui				= false;
+	self.doing_shortcode_gui_for			= null;
+	self.doing_shortcode_gui_for_selected	= null;
+	
+	self.overlay_container		= $("<div class='wpv-setting-overlay js-wpv-loop-output-overlay' style='top:0;'><div class='wpv-transparency'></div><i class='icon-lock fa fa-lock'></i></div>");
 	
 	// ---------------------------------
 	// Functions
@@ -613,7 +615,7 @@ WPViews.LayoutWizard = function( $ ) {
 	
 	// Open layout wizard dialog
 	
-	$( document ).on( 'click', '.js-open-meta-html-wizard', function() {
+	$( document ).on( 'click', '.js-wpv-loop-wizard-open', function() {
 		if ( self.initial_settings ) {
 			// We have a previous setting that we can use.
 			self.render_dialog( self.initial_settings );
@@ -1031,6 +1033,54 @@ WPViews.LayoutWizard = function( $ ) {
 	});
 	
 	// ---------------------------------
+	// Loop Output overlay and skip wizard
+	// ---------------------------------
+	
+	self.init_wizard_buttons = function() {
+		if ( $( '.js-wpv-settings-layout-extra .js-wpv-loop-wizard-skip' ).length > 0 ) {
+			$( '.js-wpv-settings-layout-extra .js-code-editor-toolbar button:not(.js-wpv-loop-wizard-open)' ).prop( 'disabled', true );
+			$( '.js-wpv-settings-layout-extra .quicktags-toolbar .button' ).prop( 'disabled', true );
+			$( '.js-wpv-settings-layout-extra .js-wpv-loop-wizard-open' )
+				.addClass( 'button-primary button-primary-toolset' )
+				.removeClass( 'button-secondary' );
+			$( '.js-wpv-settings-layout-extra .CodeMirror-wrap ').prepend( self.overlay_container );
+		} else {
+			// Some browsers might keep buttons disabled on soft page reloads
+			$( '.js-wpv-settings-layout-extra .js-code-editor-toolbar button:not(.js-wpv-loop-wizard-open)' ).prop( 'disabled', false );
+			$( '.js-wpv-settings-layout-extra .quicktags-toolbar .button' ).prop( 'disabled', false );
+		}
+		return self;
+	};
+	
+	self.skip_wizard = function( skip_control ) {
+		var thiz_item	= skip_control.closest( 'li' ),
+		thiz_toolbar	= skip_control.closest( '.js-code-editor-toolbar' ),
+		thiz_quicktags	= $( '.js-wpv-settings-layout-extra .quicktags-toolbar' );
+		thiz_item.fadeOut( 'fast', function() {
+			thiz_item.remove();
+			thiz_toolbar.find( '.button-secondary' ).prop( 'disabled', false );
+			thiz_quicktags.find( '.button' ).prop( 'disabled', false );
+			$( '.js-wpv-settings-layout-extra .js-wpv-loop-wizard-open' )
+				.removeClass( 'button-primary-toolset button-primary' )
+				.addClass( 'button-secondary' );
+			$( '.js-wpv-settings-layout-extra .js-wpv-loop-output-overlay' ).remove();
+		});
+	};
+	
+	$( document ).on( 'click', '.js-wpv-loop-wizard-skip', function( e ) {
+		e.preventDefault();
+		var skip_control = $( this );
+		self.skip_wizard( skip_control );
+	});
+	
+	$( document ).on( 'click', '.js-wpv-loop-wizard-open', function() {
+		if ( $( '.js-wpv-settings-layout-extra .js-wpv-loop-wizard-skip' ).length > 0 ) {
+			var skip_control = $( '.js-wpv-settings-layout-extra .js-wpv-loop-wizard-skip' );
+			self.skip_wizard( skip_control );
+		}
+	});
+	
+	// ---------------------------------
 	// Init
 	// ---------------------------------
 	
@@ -1051,6 +1101,7 @@ WPViews.LayoutWizard = function( $ ) {
 				$( '.js-wpv-ct-listing-' + self.use_loop_template_id + ' .js-wpv-content-template-open' ).click();
 			}
 		}
+		self.init_wizard_buttons();
 	};
 	
 	self.init();

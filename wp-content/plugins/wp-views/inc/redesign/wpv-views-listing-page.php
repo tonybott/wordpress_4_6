@@ -258,6 +258,39 @@ function wpv_admin_view_listing_table( $views_pre_query_data, $current_post_stat
 						$column_active = '';
 						$column_sort_to = 'ASC';
 						$column_sort_now = 'ASC';
+						if ( $wpv_args['orderby'] === 'ID' ) {
+							$column_active = ' views-list-sort-active';
+							$column_sort_to = ( $wpv_args['order'] === 'ASC' ) ? 'DESC' : 'ASC';
+							$column_sort_now = $wpv_args['order'];
+						}
+					?>
+					<th class="wpv-admin-listing-col-id">
+						<?php
+						// "sort by ID" link
+						printf(
+							'<a href="%s" class="%s" data-orderby="ID">%s <i class="%s"></i></a>',
+							wpv_maybe_add_query_arg(
+								array(
+									'page' => 'views',
+									'orderby' => 'ID',
+									'order' => $column_sort_to,
+									's' => $mod_url['s'],
+									'items_per_page' => $mod_url['items_per_page'],
+									'paged' => $mod_url['paged'],
+									'status' => $mod_url['status']
+								),
+								admin_url( 'admin.php' )
+							),
+							'js-views-list-sort views-list-sort ' . $column_active,
+							__( 'ID','wpv-views' ),
+							( 'DESC' === $column_sort_now ) ? 'icon-sort-by-attributes-alt fa fa-sort-amount-desc' : 'icon-sort-by-attributes fa fa-sort-amount-asc'
+						);
+						?>
+					</th>
+					<?php
+						$column_active = '';
+						$column_sort_to = 'ASC';
+						$column_sort_now = 'ASC';
 						if ( $wpv_args['orderby'] === 'title' ) {
 							$column_active = ' views-list-sort-active';
 							$column_sort_to = ( $wpv_args['order'] === 'ASC' ) ? 'DESC' : 'ASC';
@@ -353,6 +386,9 @@ function wpv_admin_view_listing_table( $views_pre_query_data, $current_post_stat
 									printf( '<input type="checkbox" value="%s" name="view[]" />', $post->ID );
 								?>
 							</th>
+							<td class="wpv-admin-listing-col-id">
+								<?php echo $post_id; ?>
+							</td>
 							<td class="wpv-admin-listing-col-title">
 								<span class="row-title">
 								<?php

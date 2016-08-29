@@ -1,5 +1,41 @@
 <?php
 
+add_action( 'wpv_action_wpv_codemirror_editor_toolbar', 'wpv_add_loop_output_loop_wizard_button', 10 );
+
+function wpv_add_loop_output_loop_wizard_button( $toolbar_data ) {
+	if ( 'wpv_layout_meta_html_content' == $toolbar_data['editor_id'] ) {
+		?>
+		<li>
+			<button class="button button-secondary js-code-editor-toolbar-button js-wpv-loop-wizard-open">
+				<i class="icon-th fa fa-th"></i>
+				<span class="button-label"><?php _e( 'Loop Wizard','wpv-views' ); ?></span>
+			</button>
+		</li>
+		<?php
+		
+		/**
+		* wpv_filter_wpv_loop_output_editor_disable_forced_loop_wizard
+		*
+		* Disable the workflow that forces the Loop Wizard on the Loop Output Editor
+		*
+		* @since 2.2
+		*/
+		
+		if ( 
+			$toolbar_data['has_default_loop_output'] 
+			&& ! apply_filters( 'wpv_filter_wpv_loop_output_editor_disable_forced_loop_wizard', false )
+		) {
+			?>
+			<li>
+				<a href="#" class="js-wpv-loop-wizard-skip" style="display:inline-block;height:28px;line-height:26px;">
+					<?php _e( 'Skip wizard', 'wpv-views' ); ?>
+				</a>
+			</li>
+			<?php
+		}
+	}
+}
+
 add_action( 'view-editor-section-hidden', 'wpv_loop_wizard_add_data_to_js', 10, 4 );
 
 function wpv_loop_wizard_add_data_to_js( $view_settings, $view_layout_settings, $view_id, $user_id ) {
@@ -187,7 +223,7 @@ function wpv_loop_wizard_load_saved_fields() {
 		$views_shortcodes_with_api_obj = apply_filters( 'wpv_filter_wpv_shortcodes_gui_data', array() );
 		$views_shortcodes_with_api = array_keys( $views_shortcodes_with_api_obj );
 		$user_fields_with_head = array(
-			'user_email', 'display_name', 'user_login', 'user_url', 'user_registered'
+			'user_email', 'display_name', 'user_login', 'user_url', 'user_registered', 'user_nicename'
 		);
 		$selected_fields = $_POST['selected_fields'];
 		$result_html = '';
@@ -449,7 +485,7 @@ function wpv_loop_wizard_load_saved_fields() {
 								$current_shortcode_is_types = true;
 								$current_shortcode_types_name = $field_in_loop[1];
 							} else if ( preg_match( '/usermeta="(.*?)"/', $current_shortcode_to_insert, $field_in_loop ) !== 0 ) {
-								$current_shortcode_head = '';
+								$current_shortcode_head = 'user-field-' . $field_in_loop[1];
 								$current_shortcode_is_types = true;
 								$current_shortcode_types_name = $field_in_loop[1];
 							} else if ( preg_match( '/termmeta="(.*?)"/', $current_shortcode_to_insert, $field_in_loop ) !== 0 ) {
@@ -463,7 +499,7 @@ function wpv_loop_wizard_load_saved_fields() {
 								$current_shortcode_is_types = true;
 								$current_shortcode_types_name = $field_in_loop[1];
 							} else if ( preg_match( "/usermeta='(.*?)'/", $current_shortcode_to_insert, $field_in_loop ) !== 0 ) {
-								$current_shortcode_head = '';
+								$current_shortcode_head = 'user-field-' . $field_in_loop[1];
 								$current_shortcode_is_types = true;
 								$current_shortcode_types_name = $field_in_loop[1];
 							} else if ( preg_match( "/termmeta='(.*?)'/", $current_shortcode_to_insert, $field_in_loop ) !== 0 ) {
@@ -876,7 +912,7 @@ function wpv_loop_wizard_add_field() {
 	$views_shortcodes_with_api_obj = apply_filters( 'wpv_filter_wpv_shortcodes_gui_data', array() );
 	$views_shortcodes_with_api = array_keys( $views_shortcodes_with_api_obj );
 	$user_fields_with_head = array(
-		'user_email', 'display_name', 'user_login', 'user_url', 'user_registered'
+		'user_email', 'display_name', 'user_login', 'user_url', 'user_registered', 'user_nicename'
 	);
 	
     ob_start();
@@ -950,7 +986,7 @@ function wpv_loop_wizard_add_field() {
 						$current_shortcode_is_types = true;
 						$current_shortcode_types_name = $field_in_loop[1];
 					} else if ( preg_match( '/usermeta="(.*?)"/', $current_shortcode_to_insert, $field_in_loop ) !== 0 ) {
-						$current_shortcode_head = '';
+						$current_shortcode_head = 'user-field-' . $field_in_loop[1];
 						$current_shortcode_is_types = true;
 						$current_shortcode_types_name = $field_in_loop[1];
 					} else if ( preg_match( '/termmeta="(.*?)"/', $current_shortcode_to_insert, $field_in_loop ) !== 0 ) {
@@ -964,7 +1000,7 @@ function wpv_loop_wizard_add_field() {
 						$current_shortcode_is_types = true;
 						$current_shortcode_types_name = $field_in_loop[1];
 					} else if ( preg_match( "/usermeta='(.*?)'/", $current_shortcode_to_insert, $field_in_loop ) !== 0 ) {
-						$current_shortcode_head = '';
+						$current_shortcode_head = 'user-field-' . $field_in_loop[1];
 						$current_shortcode_is_types = true;
 						$current_shortcode_types_name = $field_in_loop[1];
 					} else if ( preg_match( "/termmeta='(.*?)'/", $current_shortcode_to_insert, $field_in_loop ) !== 0 ) {
@@ -991,7 +1027,7 @@ function wpv_loop_wizard_add_field() {
 						$current_shortcode_head = $view_user_field[1];
 					} else if (
 						isset( $view_user_field_single_quotes[1] ) 
-						&& in_array( $view_user_field[1], $view_user_field_single_quotes ) 
+						&& in_array( $view_user_field_single_quotes[1], $user_fields_with_head ) 
 					) {
 						$current_shortcode_head = $view_user_field_single_quotes[1];
 					} else {

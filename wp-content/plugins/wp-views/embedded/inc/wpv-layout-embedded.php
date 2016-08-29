@@ -1,5 +1,56 @@
 <?php
 
+/**
+* wpv-layout-embedded.php
+*
+* @package Views
+*
+* @since unknown
+*/
+
+/**
+* WPV_Layout_Embedded
+*
+* @since 2.2
+*/
+
+class WPV_Layout_Embedded {
+	
+	public function __construct() {
+		add_action( 'init',		array( $this, 'init' ) );
+		
+		add_filter( 'wpv_filter_wpv_has_default_loop_output', array( $this, 'has_default_loop_output' ), 10, 3 );
+    }
+	
+	function init() {
+		
+	}
+	
+	function has_default_loop_output( $state, $view_layout_settings = array(), $view_id = 0 ) {
+		if ( 
+			empty( $view_layout_settings )
+			&& $view_id > 0 
+		) {
+			$view_layout_settings	= apply_filters( 'wpv_filter_wpv_get_object_layout_settings', array(), $view_id );
+		}
+		if ( 
+			is_array( $view_layout_settings ) 
+			&& ! empty( $view_layout_settings ) 
+		) {
+			$loop_output			= isset( $view_layout_settings['layout_meta_html'] ) ? $view_layout_settings['layout_meta_html'] : '';
+			$generate_loop_output	= WPV_View_Base::generate_loop_output();
+			$loop_output_empty		= $generate_loop_output['loop_output_settings']['layout_meta_html'];
+			if ( $loop_output == $loop_output_empty ) {
+				$state = true;
+			}
+		}
+		return $state;
+	}
+}
+
+global $WPV_Layout_Embedded;
+$WPV_Layout_Embedded = new WPV_Layout_Embedded();
+
 /*
  
     Shortcode for sorting by the column heading in
@@ -75,7 +126,15 @@ function wpv_header_shortcode( $atts, $value ) {
 				break;
 			case 'users':
 				$default_order = $view_settings['users_order'];
-				if ( ! in_array( $atts['name'], array( 'user_email', 'user_login', 'display_name', 'user_url', 'user_registered' ) ) ) {
+				if ( strpos( $atts['name'], 'user-field-') === 0 ) {
+					$field_name = strtolower( substr( $atts['name'], 15 ) );
+					$field_type = wpv_types_get_field_type( $field_name, 'uf' );
+					if ( in_array( $field_type, array( 'checkboxes', 'skype' ) ) ) {
+						$can_order = false;
+					} else if ( in_array( $field_type, array( 'numeric', 'date' ) ) ) {
+						$orderby_as = 'numeric';
+					}
+				} else if ( ! in_array( $atts['name'], array( 'user_email', 'user_login', 'display_name', 'user_url', 'user_registered', 'user_nicename' ) ) ) {
 					$can_order = false;
 				}
 				break;
@@ -116,11 +175,11 @@ function wpv_header_shortcode( $atts, $value ) {
 			}
 		}
         $link = '<a href="#"'
-			. ' class="' . $order_class . ' js-wpv-column-header-click'. $class .'"'
+			. ' class="' . $order_class . ' js-wpv-sort-trigger js-wpv-column-header-click'. $class .'"'
 			. $style 
 			. ' data-viewnumber="' 	. $view_number . '"'
-			. ' data-name="' 		. $atts['name'] . '"'
-			. ' data-direction="' 	. $dir . '"'
+			. ' data-orderby="'		. $atts['name'] . '"'
+			. ' data-order="'	 	. $dir . '"'
 			. ' data-orderbyas="' 	. $orderby_as . '"'
 			. '>' 
 			. wpv_do_shortcode( $value ) 
@@ -155,7 +214,7 @@ function wpv_layout_start_shortcode($atts){
     $style = array();
 	$add = '';
 	
-	if ( $pagination_data['type'] == 'ajaxed' ) {
+	if ( in_array( $pagination_data['type'], array( 'ajaxed', 'rollover' ) ) ) {
 		
 		$class[] = 'wpv-pagination';
 		$class[] = 'js-wpv-layout-has-pagination';
@@ -250,8 +309,10 @@ function wpv_layout_meta_html($atts) {
 
     $view_layout_settings = apply_filters( 'wpv_filter_wpv_get_view_layout_settings', array() );
     
-    if ( isset( $view_layout_settings['layout_meta_html'] ) ) {
+    if (isset($view_layout_settings['layout_meta_html'])) {
+        
         $content = $view_layout_settings['layout_meta_html'];
+        
         return wpv_do_shortcode($content);
     } else {
         return '';

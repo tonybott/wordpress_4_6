@@ -84,9 +84,35 @@ class WPV_Taxonomy_Frontend_Filter {
 			}
 		}
 		$taxonomy_query = WPV_Taxonomy_Frontend_Filter::get_settings( $query, $archive_settings, $archive_id, $tax_to_exclude );
+		
+		// Re-apply the taxonomy query caused by a taxonomy archive page
+		// Note that on Layout-based archives this duplicates the native archive tax query entry, but we can not avoid it
+		if ( 
+			isset( $query->tax_query ) 
+			&& is_object( $query->tax_query )
+		) {
+			$tax_query_obj		= clone $query->tax_query;
+			$tax_query_queries	= $tax_query_obj->queries;
+			if ( 
+				count( $tax_query_queries ) > 0 
+				&& count( $tax_to_exclude ) > 0
+			) {
+				foreach ( $tax_query_queries as $tax_query_queries_item ) {
+					if ( 
+						is_array( $tax_query_queries_item ) 
+						&& isset( $tax_query_queries_item['taxonomy'] ) 
+						&& in_array( $tax_query_queries_item['taxonomy'], $tax_to_exclude ) 
+					) {
+						$taxonomy_query[] = $tax_query_queries_item;
+					}
+				}
+			}
+		}
+		
 		if ( count( $taxonomy_query ) > 0 ) {
 			$taxonomy_query['relation'] = isset( $archive_settings['taxonomy_relationship'] ) ? $archive_settings['taxonomy_relationship'] : 'AND';
 			$query->set( 'tax_query', $taxonomy_query );
+			$query->tax_query = new WP_Tax_Query( $taxonomy_query );
 		}
 	}
 	
@@ -101,8 +127,9 @@ class WPV_Taxonomy_Frontend_Filter {
 	*/
 	
 	static function get_settings( $query, $view_settings, $view_id, $tax_to_exclude = array() ) {
-		$taxonomy_query = array();
-		$taxonomies = get_taxonomies( '', 'objects' );
+		$taxonomy_query			= array();
+		$taxonomies				= get_taxonomies( '', 'objects' );
+		$archive_environment	= apply_filters( 'wpv_filter_wpv_get_current_archive_loop', array() );
 		
 		foreach ( $taxonomies as $category_slug => $category ) {
 			if ( in_array( $category_slug, $tax_to_exclude ) ) {
@@ -193,7 +220,22 @@ class WPV_Taxonomy_Frontend_Filter {
 						}
 						break;
 					case 'FROM ARCHIVE':
-						if ( 
+						if (
+							isset( $archive_environment['type'] ) 
+							&& $archive_environment['type'] == 'taxonomy' 
+							&& isset( $archive_environment['data']['taxonomy'] ) 
+							&& $archive_environment['data']['taxonomy'] == $category->name
+							&& isset( $archive_environment['data']['term_id'] ) 
+						) {
+							$include_child = apply_filters( 'wpv_filter_tax_filter_include_children', $include_child, $category->name, $view_id );
+							$taxonomy_query[] = array(
+								'taxonomy'			=> $category->name,
+								'field'				=> 'id',
+								'terms'				=> (int) $archive_environment['data']['term_id'],
+								'operator'			=> "IN",
+								"include_children"	=> $include_child
+							);
+						} else if (  
 							is_tax() 
 							|| is_category() 
 							|| is_tag() 

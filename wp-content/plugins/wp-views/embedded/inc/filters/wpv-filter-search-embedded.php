@@ -201,4 +201,27 @@ class WPV_Search_Frontend_Filter {
 		return $attributes;
 	}
 	
+	/*
+	* ---------------------
+	* Helpers
+	* ---------------------
+	*/
+	
+	static function get_post_search_content_options() {
+		$post_search_content_options = array(
+			'full_content'	=> array(
+				'label'			=> __( 'Posts content and title', 'wpv-views' ),
+				'description'	=> __( 'Use this to search in both post contents and titles', 'wpv-views' ),
+				'summary'		=> __( 'post content and title', 'wpv-views' )
+			),
+			'just_title'	=> array(
+				'label'			=> __( 'Just post title', 'wpv-views' ),
+				'description'	=> __( 'Use this to search just in titles', 'wpv-views' ),
+				'summary'		=> __( 'post title', 'wpv-views' )
+			)
+		);
+		$post_search_content_options = apply_filters( 'wpv_filter_wpv_extend_post_search_content_options', $post_search_content_options );
+		return $post_search_content_options;
+	}
+	
 }

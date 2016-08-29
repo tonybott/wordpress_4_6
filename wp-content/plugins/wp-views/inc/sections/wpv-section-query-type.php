@@ -147,15 +147,28 @@ function add_view_content_selection_section( $view_settings, $view_id ) {
 						}
 						foreach( $wp_roles->role_names as $role => $name ) { ?>
 							<?php 
-							$checked = @in_array( $role, $view_settings['roles_type'] ) ? ' checked="checked"' : ''; ?>
+								$checked = @in_array( $role, $view_settings['roles_type'] ) ? ' checked="checked"' : '';
+
+								// Offer checkbox or radio as per WP Version.
+								// - checkbox: if 4.4 and above
+								// - radio: if less than 4.4
+								$ele_type = 'checkbox';
+
+								global $wp_version;
+
+								if ( version_compare( $wp_version, '4.4', '<' ) ) {
+									// Offer 'radio' buttons
+									$ele_type = 'radio';
+								}
+							?>
 						<li>
-							<input type="radio" id="wpv-settings-post-users-<?php echo esc_attr( $role ); ?>" name="_wpv_settings[roles_type][]" class="js-wpv-query-users-type" value="<?php echo esc_attr( $role ); ?>"<?php echo $checked; ?> autocomplete="off" />
+							<input type="<?php echo $ele_type; ?>" id="wpv-settings-post-users-<?php echo esc_attr( $role ); ?>" name="_wpv_settings[roles_type][]" class="js-wpv-query-users-type" value="<?php echo esc_attr( $role ); ?>"<?php echo $checked; ?> autocomplete="off" />
 							<label for="wpv-settings-post-users-<?php echo esc_attr( $role ); ?>"><?php echo $name; ?></label>
 						</li>
 						<?php } ?>
 						<li>
 							<?php $checked = @in_array( 'any', $view_settings['roles_type'] ) ? ' checked="checked"' : ''; ?>
-							<input type="radio" id="wpv-settings-post-users-any-role" name="_wpv_settings[roles_type][]" class="js-wpv-query-users-type" value="any"<?php echo $checked; ?> autocomplete="off" />
+							<input type="<?php echo $ele_type; ?>" id="wpv-settings-post-users-any-role" name="_wpv_settings[roles_type][]" class="js-wpv-query-users-type" value="any"<?php echo $checked; ?> autocomplete="off" />
 							<label for="wpv-settings-post-users-any-role"><?php _e( 'Any role', 'wpv-views' ); ?></label>
 						</li>
 					</ul>

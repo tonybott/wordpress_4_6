@@ -38,13 +38,14 @@ class WPV_Editor_Loop_Output{
 			! isset( $view_settings['view-query-mode'] )
 			|| ( 'normal' == $view_settings['view-query-mode'] ) 
 		) {
-			$view_kind = 'view';
-			$section_help_pointer = WPV_Admin_Messages::edit_section_help_pointer( 'layout_html_css_js' );
+			$query_mode				= 'normal';
+			$section_help_pointer	= WPV_Admin_Messages::edit_section_help_pointer( 'layout_html_css_js' );
 		} else {
 			// we assume 'archive' or 'layouts-loop'
-			$view_kind = 'wpa';
-			$section_help_pointer = WPV_Admin_Messages::edit_section_help_pointer( 'layout_archive_html_css_js' );
+			$query_mode				= 'archive';
+			$section_help_pointer	= WPV_Admin_Messages::edit_section_help_pointer( 'layout_archive_html_css_js' );
 		}
+		$has_default_loop_output = apply_filters( 'wpv_filter_wpv_has_default_loop_output', false, $view_layout_settings, $view_id );
 		?>
 		<div class="wpv-setting-container wpv-setting-container-horizontal wpv-settings-layout-markup js-wpv-settings-layout-extra">
 
@@ -64,12 +65,19 @@ class WPV_Editor_Loop_Output{
 				<div class="js-code-editor code-editor layout-html-editor" data-name="layout-html-editor">
 					<div class="code-editor-toolbar js-code-editor-toolbar">
 						<ul class="js-wpv-layout-edit-toolbar">
-							<li>
-								<button class="button-secondary js-code-editor-toolbar-button js-open-meta-html-wizard">
-									<i class="icon-th fa fa-th"></i>
-									<span class="button-label"><?php _e( 'Loop Wizard','wpv-views' ); ?></span>
-								</button>
-							</li>
+							<?php
+							$toolbar_action_data = array(
+								'editor_id'					=> 'wpv_layout_meta_html_content',
+								'view_settings'				=> $view_settings, 
+								'view_layout_settings'		=> $view_layout_settings,
+								'view_id'					=> $view_id, 
+								'user_id'					=> $user_id, 
+								'loop_template_id'			=> $loop_content_template, 
+								'query_mode'				=> $query_mode, 
+								'has_default_loop_output'	=> $has_default_loop_output
+							);
+							do_action( 'wpv_action_wpv_codemirror_editor_toolbar', $toolbar_action_data );
+							?>
 							<?php
 								do_action( 'wpv_views_fields_button', 'wpv_layout_meta_html_content' );
 							?>
@@ -81,17 +89,17 @@ class WPV_Editor_Loop_Output{
 							</li>
 							<?php
 							
-								if ( 'view' == $view_kind ) {
+								if ( 'normal' == $query_mode ) {
 									// we only add the pagination button to the Layout box if the View is not a WPA
 									?>
-									<li class="js-editor-pagination-button-wrapper">
+									<li class="js-wpv-editor-pagination-button-wrapper"<?php if ( isset( $view_settings['pagination']['type'] ) && $view_settings['pagination']['type'] == 'disabled' ) { echo ' style="display:none"'; } ?>>
 										<button class="button-secondary js-code-editor-toolbar-button js-wpv-pagination-popup" data-content="wpv_layout_meta_html_content">
 											<i class="icon-pagination fa fa-wpv-custom"></i>
 											<span class="button-label"><?php _e('Pagination controls','wpv-views'); ?></span>
 										</button>
 									</li>
 									<?php
-								} else if( 'wpa' == $view_kind ) {
+								} else if( 'archive' == $query_mode ) {
 									// Button to the Archive pagination controls popup for WPAs
 									?>
 									<li class="js-wpv-archive-editor-pagination-button-wrapper"<?php if ( isset( $view_settings['pagination']['type'] ) && $view_settings['pagination']['type'] == 'disabled' ) { echo ' style="display:none"'; } ?>>
@@ -125,7 +133,7 @@ class WPV_Editor_Loop_Output{
 					?>
 					<div class="wpv-editor-metadata-toggle js-wpv-editor-metadata-toggle js-wpv-assets-editor-toggle" data-instance="layout-css-editor" data-target="js-wpv-assets-layout-css-editor" data-type="css">
 						<span class="wpv-toggle-toggler-icon js-wpv-toggle-toggler-icon">
-							<i class="icon-caret-down fa fa-caret-down icon-large fa-lg"></i>
+							<i class="fa fa-caret-down icon-large fa-lg"></i>
 						</span>
 						<i class="icon-pushpin fa fa-thumb-tack js-wpv-textarea-full" style="<?php echo ( empty( $layout_extra_css ) ) ? 'display:none;' : ''; ?>"></i>
 						<strong><?php _e( 'CSS editor', 'wpv-views' ); ?></strong>
@@ -136,7 +144,7 @@ class WPV_Editor_Loop_Output{
 					
 					<div class="wpv-editor-metadata-toggle js-wpv-editor-metadata-toggle js-wpv-assets-editor-toggle" data-instance="layout-js-editor" data-target="js-wpv-assets-layout-js-editor" data-type="js">
 						<span class="wpv-toggle-toggler-icon js-wpv-toggle-toggler-icon">
-							<i class="icon-caret-down fa fa-caret-down icon-large fa-lg"></i>
+							<i class="fa fa-caret-down icon-large fa-lg"></i>
 						</span>
 						<i class="icon-pushpin fa fa-thumb-tack js-wpv-textarea-full" style="<?php echo ( empty( $layout_extra_js ) ) ? 'display:none;' : ''; ?>"></i>
 						<strong><?php _e( 'JS editor', 'wpv-views' ); ?></strong>

@@ -281,9 +281,9 @@ function wpv_count_filter_controls( $view_settings ) {
 	}
 	if ( $filter_controls_by_tag < $return['pr'] + $return['cf'] + $return['tax'] + $return['search'] ) {
 		// Something went wrong! There are filters using another key...
-		$return['warning'] = __('Your View contains more URL based filters than parametric search controls in the Filter HTML textarea', 'wpv-views');
+		$return['warning'] = __('Your View contains more URL based filters than custom search controls in the Filter HTML textarea', 'wpv-views');
 	} else if ( $filter_controls_by_tag > $return['pr'] + $return['cf'] + $return['tax'] + $return['search'] ) {
-		$return['warning'] = __('Your View contains more parametric search controls in the Filter HTML textarea than URL based filters', 'wpv-views');
+		$return['warning'] = __('Your View contains more custom search controls in the Filter HTML textarea than URL based filters', 'wpv-views');
 	}
 	return $return;
 }

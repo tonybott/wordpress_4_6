@@ -21,12 +21,12 @@ WPV_Frontend_Render_Filters::on_load();
 class WPV_Frontend_Render_Filters {
 	
 	static function on_load() {
-		add_filter( 'the_content', array( 'WPV_Frontend_Render_Filters', 'the_content' ), 5 );
-		add_filter( 'wpv_filter_wpv_the_content_suppressed', array( 'WPV_Frontend_Render_Filters', 'the_content' ), 5 );
-		add_filter( 'wpv-pre-do-shortcode', array( 'WPV_Frontend_Render_Filters', 'wpv_pre_do_shortcode' ), 5 );
+		add_filter( 'the_content',								array( 'WPV_Frontend_Render_Filters', 'pre_process_shortcodes' ), 5 );
+		add_filter( 'wpv_filter_wpv_the_content_suppressed',	array( 'WPV_Frontend_Render_Filters', 'pre_process_shortcodes' ), 5 );
+		add_filter( 'wpv-pre-do-shortcode',						array( 'WPV_Frontend_Render_Filters', 'wpv_pre_do_shortcode' ), 5 );
 	}
 	
-	static function the_content( $content ) {
+	static function pre_process_shortcodes( $content ) {
 		
 		$content = WPV_Formatting_Embedded::resolve_wpv_noautop_shortcodes( $content );
 		
@@ -69,7 +69,7 @@ class WPV_Frontend_Render_Filters {
 
 function wpv_inner_shortcodes_list_regex() {
     $regex = 'wpv-post-|wpv-taxonomy-|types|wpv-current-user|wpv-user|wpv-attribute|wpv-archive-title|wpv-bloginfo|'.
-        'wpv-found-count|wpv-items-count|wpv-pager|wpv-posts-found|wpv-search-term|wpv-view';
+        'wpv-found-count|wpv-items-count|wpv-pager|wpv-posts-found|wpv-search-term|wpv-view|wpv-theme-option';
     return $regex;
 }
 

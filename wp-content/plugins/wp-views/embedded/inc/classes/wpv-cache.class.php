@@ -79,7 +79,11 @@ class WPV_Cache {
 		add_action( 'deleted_user_meta',			array( $this, 'delete_transient_usermeta_keys' ) );
 		// Delete the meta keys transients on Types groups create/update/delete
 		// This covers create and update, deleting a meta entry triggers specific actions above
-		// Note: Both wpcf_save_group and wpcf_group_updated hooks are required at this point, for back and forward compatibility
+		// Note: The hooks to use here are types_fields_group_saved, and precisely types_fields_group_post_saved, types_fields_group_term_saved and types_fields_group_user_saved
+		add_action( 'types_fields_group_saved',		array( $this, 'delete_transient_meta_keys' ) );
+		add_action( 'types_fields_group_saved',		array( $this, 'delete_transient_termmeta_keys' ) );
+		add_action( 'types_fields_group_saved',		array( $this, 'delete_transient_usermeta_keys' ) );
+		// Note: Both wpcf_save_group and wpcf_group_updated hooks are deprecated at this point, but kept for back and forward compatibility
 		add_action( 'wpcf_save_group',				array( $this, 'delete_transient_meta_keys' ) );
 		add_action( 'wpcf_group_updated',			array( $this, 'delete_transient_meta_keys' ) );
 		add_action( 'wpcf_save_group',				array( $this, 'delete_transient_termmeta_keys' ) );
@@ -109,10 +113,14 @@ class WPV_Cache {
 	* Process the filter_meta_html content, find the wpv-control and wpv-control-set shortcodes and extract their attributes.
 	* Transform that data into something that WPV_Cache can use.
 	*
+	* @param $view_settings			array	The object settings
+	* @param $override_settings		array	Additional settings that will override the ones in $view_settings and needed to perform this action:
+	* 		'post_type'		array	The post types that the current object will be returning. Needed as WordPress Archives get this on-the-fly.
+	*
 	* @since 2.1
 	*/
 	
-	static function get_parametric_search_data_to_cache( $view_settings = array() ) {
+	static function get_parametric_search_data_to_cache( $view_settings = array(), $override_settings = array() ) {
 		$parametric_search_data_to_cache = array(
 			'cf' => array(),
 			'tax' => array()
@@ -126,6 +134,11 @@ class WPV_Cache {
 		) {
 			return $parametric_search_data_to_cache;
 		}
+		
+		foreach ( $override_settings as $override_key => $override_value ) {
+			$view_settings[ $override_key ] = $override_value;
+		}
+		
 		global $shortcode_tags;
 		self::$collected_parametric_search_filter_attributes = array();
 		// Back up current registered shortcodes and clear them all out
@@ -142,6 +155,7 @@ class WPV_Cache {
 			if ( isset( $atts_set['ancestors'] ) ) {
 				if ( function_exists( 'wpcf_pr_get_belongs' ) ) {
 					$returned_post_types = $view_settings['post_type'];
+					$returned_post_types = is_array( $returned_post_types ) ? $returned_post_types : array( $returned_post_types );
 					$returned_post_type_parents = array();
 					if ( empty( $returned_post_types ) ) {
 						$returned_post_types = array( 'any' );

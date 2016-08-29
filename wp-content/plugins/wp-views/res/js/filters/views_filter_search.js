@@ -19,19 +19,43 @@ WPViews.SearchFilterGUI = function( $ ) {
 	
 	self.spinner = '<span class="wpv-spinner ajax-loader"></span>&nbsp;&nbsp;';
 	
-	self.post_row = '.js-wpv-filter-row-post-search';
-	self.post_options_container_selector = '.js-wpv-filter-post-search-options';
-	self.post_summary_container_selector = '.js-wpv-filter-post-search-summary';
-	self.post_edit_open_selector = '.js-wpv-filter-post-search-edit-open';
-	self.post_close_save_selector = '.js-wpv-filter-post-search-edit-ok';
+	self.post_row							= '.js-wpv-filter-row-post-search';
+	self.post_options_container_selector	= '.js-wpv-filter-post-search-options';
+	self.post_summary_container_selector	= '.js-wpv-filter-post-search-summary';
+	self.post_edit_open_selector			= '.js-wpv-filter-post-search-edit-open';
+	self.post_close_save_selector			= '.js-wpv-filter-post-search-edit-ok';
 	
 	self.post_current_options = $( self.post_options_container_selector + ' input, ' + self.post_options_container_selector + ' select' ).serialize();
 	
-	self.tax_row = '.js-wpv-filter-row-taxonomy-search';
-	self.tax_options_container_selector = '.js-wpv-filter-taxonomy-search-options';
-	self.tax_summary_container_selector = '.js-wpv-filter-taxonomy-search-summary';
-	self.tax_edit_open_selector = '.js-wpv-filter-taxonomy-search-edit-open';
-	self.tax_close_save_selector = '.js-wpv-filter-taxonomy-search-edit-ok';
+	self.compatibility_data = {
+		relevanssi:		{
+			available:	wpv_search_strings.relevanssi.available,
+			settings:	{
+							'indexed_cpt':	wpv_search_strings.relevanssi.settings.indexed_post_types
+						}
+		}
+	};
+	
+	self.warnings = {
+		relevanssi:	{
+			'cpt_not_indexed':			'<p class="js-wpv-filter-post-search-compatibility-relevanssi-indexed-cpt js-wpv-permanent-alert-error toolset-alert toolset-alert-warning"><i class="fa fa-exclamation-triangle" aria-hidden"true"=""></i> ' + wpv_search_strings.relevanssi.cpt_not_indexed + '</p>',
+			'cpt_not_indexed_archive':	'<p class="js-wpv-filter-post-search-compatibility-relevanssi-indexed-cpt js-wpv-permanent-alert-error toolset-alert toolset-alert-warning"><i class="fa fa-exclamation-triangle" aria-hidden"true"=""></i> ' + wpv_search_strings.relevanssi.cpt_not_indexed_archive + '</p>',
+			'sort_filter':				'<li class="js-wpv-filter-post-search-compatibility-relevanssi-sort-filter js-wpv-permanent-alert-error toolset-alert toolset-alert-warning"><i class="fa fa-exclamation-triangle" aria-hidden"true"=""></i> ' + wpv_search_strings.relevanssi.sort.filter + '</li>',
+			'sort_archive':				'<li class="js-wpv-filter-post-search-compatibility-relevanssi-sort-archive js-wpv-permanent-alert-error toolset-alert toolset-alert-warning"><i class="fa fa-exclamation-triangle" aria-hidden"true"=""></i> ' + wpv_search_strings.relevanssi.sort.archive + '</li>'
+		},
+		builtin:	{
+			'filter_on_archive':		'<p class="js-wpv-filter-post-search-compatibility-builtin-filter-on-archive js-wpv-permanent-alert-error toolset-alert toolset-alert-warning"><i class="fa fa-exclamation-triangle" aria-hidden"true"=""></i> ' + wpv_search_strings.builtin.filter_on_archive + '</p>'
+		}
+	};
+	
+	self.post_sort							= '.js-wpv-settings-posts-order';
+	self.relevanssi_sort_overlay			= $("<div class='wpv-setting-overlay js-wpv-relevanssi-search-and-sort-overlay' style='top:0'><div class='wpv-transparency'></div><i class='icon-lock fa fa-lock' style='padding:0 5px'></i></div>");
+	
+	self.tax_row							= '.js-wpv-filter-row-taxonomy-search';
+	self.tax_options_container_selector		= '.js-wpv-filter-taxonomy-search-options';
+	self.tax_summary_container_selector		= '.js-wpv-filter-taxonomy-search-summary';
+	self.tax_edit_open_selector				= '.js-wpv-filter-taxonomy-search-edit-open';
+	self.tax_close_save_selector			= '.js-wpv-filter-taxonomy-search-edit-ok';
 	
 	self.tax_current_options = $( self.tax_options_container_selector + ' input, ' + self.tax_options_container_selector + ' select').serialize();
 	
@@ -158,6 +182,7 @@ WPViews.SearchFilterGUI = function( $ ) {
 			self.post_current_options = '';
 			Toolset.hooks.doAction( 'wpv-action-wpv-edit-screen-manage-save-queue', { section: 'save_filter_post_search', action: 'remove' } );
 			Toolset.hooks.doAction( 'wpv-action-wpv-edit-screen-get-parametric-search-hints' );
+			self.check_compatibility.relevanssi( self );
 		}
 	});
 	
@@ -165,6 +190,140 @@ WPViews.SearchFilterGUI = function( $ ) {
 		if ( filter_type == 'post_search' ) {
 			self.post_current_options = $( self.post_options_container_selector + ' input, ' + self.post_options_container_selector + ' select' ).serialize();
 			Toolset.hooks.doAction( 'wpv-action-wpv-edit-screen-manage-save-queue', { section: 'save_filter_post_search', action: 'add' } );
+			self.check_compatibility.relevanssi( self );
+		}
+	});
+	
+	//--------------------
+	// Compatibility for post search
+	//--------------------
+	
+	self.check_compatibility = {
+		relevanssi:		function() {
+			
+			if ( self.compatibility_data.relevanssi.available == 'false' ) {
+				return;
+			}
+			
+			var query_mode							= Toolset.hooks.applyFilters( 'wpv-filter-wpv-edit-screen-get-query-mode', 'normal' ),
+				post_types_in_search_not_indexed	= [],
+				post_types_selected_not_indexed		= [],
+				auxiliar_warning					= '';
+			
+			switch ( query_mode ) {
+				case 'normal':
+					$( '.js-wpv-filter-post-search-compatibility-relevanssi-indexed-cpt, .js-wpv-filter-post-search-compatibility-relevanssi-sort-filter, .js-wpv-filter-post-search-compatibility-relevanssi-post-date' ).remove();
+					if ( 
+						$( self.post_row ).length > 0 
+						&& $( '#js-row-post_search input[name="post_search_content"]:checked' ).length > 0 
+						&& $( '#js-row-post_search input[name="post_search_content"]:checked' ).val() == 'content_extended'
+					) {
+						// Warning on sorting
+						$( '.js-wpv-settings-posts-order select' ).prop( 'disabled', false );
+						Toolset.hooks.doAction( 'wpv-action-wpv-edit-screen-adjust-sorting-section', 'posts' );
+						$( self.warnings.relevanssi['sort_filter'] ).prependTo( self.post_sort ).show();
+						// View: check that the selected post types are indexed
+						post_types_selected_not_indexed = $( '.js-wpv-query-post-type:checked' ).map( function() {
+							if ( _.indexOf( self.compatibility_data.relevanssi.settings['indexed_cpt'], $( this ).val() ) == -1 ) {
+								return $( this ).parent( 'li' ).find( 'label' ).html();
+							}
+						}).get();
+						if ( post_types_selected_not_indexed.length > 0 ) {
+							auxiliar_warning = self.warnings.relevanssi['cpt_not_indexed'];
+							auxiliar_warning = auxiliar_warning.replace( '##CTPLIST##', '<strong>' + post_types_selected_not_indexed.join( '</strong>, <strong>' ) + '</strong>' );
+							$( auxiliar_warning ).prependTo( self.post_row ).show();
+						}
+					}
+					break;
+				case 'archive':
+					$( '.js-wpv-filter-post-search-compatibility-relevanssi-sort-archive, .js-wpv-filter-post-search-compatibility-relevanssi-sort-filter, .js-wpv-relevanssi-search-and-sort-overlay, .js-wpv-filter-post-search-compatibility-relevanssi-post-date, .js-wpv-filter-post-search-compatibility-relevanssi-indexed-cpt' ).remove();
+					if ( $( '.js-wpv-settings-archive-loop #wpv-view-loop-search-page:checked' ).length > 0 ) {
+						// WPA assigned to the search archive loop
+						$( '.js-wpv-settings-posts-order select' ).prop( 'disabled', true );
+						$( self.relevanssi_sort_overlay ).prependTo( $( self.post_sort + ' li' ) ).show();
+						$( self.warnings.relevanssi['sort_archive'] ).prependTo( self.post_sort ).show();
+						if ( $( '.js-wpv-apply-post-types-to-archive-loop-tracker[data-name="search"][data-type="native"]' ).length > 0 ) {
+							post_types_in_search_not_indexed = $( '.js-wpv-apply-post-types-to-archive-loop-tracker[data-name="search"][data-type="native"]' ).data( 'selected' );
+							post_types_in_search_not_indexed = _.difference( post_types_in_search_not_indexed, self.compatibility_data.relevanssi.settings['indexed_cpt'] );
+							if ( post_types_in_search_not_indexed.length > 0 ) {
+								auxiliar_warning = self.warnings.relevanssi['cpt_not_indexed_archive'];
+								auxiliar_warning = auxiliar_warning.replace( '##CTPLIST##', '<strong>' + post_types_in_search_not_indexed.join( '</strong>, <strong>' ) + '</strong>' );
+								$( auxiliar_warning ).prependTo( $( '.js-wpv-settings-archive-loop .js-wpv-toolset-messages' ) );
+							}
+						}
+						
+					}
+					if ( 
+						$( self.post_row ).length > 0 
+						&& $( '#js-row-post_search input[name="post_search_content"]:checked' ).length > 0 
+						&& $( '#js-row-post_search input[name="post_search_content"]:checked' ).val() == 'content_extended'
+					) {
+						// Query filter needs warning on indexed post types
+						$( '.js-wpv-apply-post-types-to-archive-loop-tracker' ).each( function() {
+							var thiz_native_selected_post_types = $( this ).data( 'selected' );
+							post_types_in_search_not_indexed = _.union( post_types_in_search_not_indexed, thiz_native_selected_post_types );
+						});
+						$( 'input.js-wpv-settings-archive-loop[data-type="post_type"]:checked' ).each( function() {
+							post_types_in_search_not_indexed = _.union( post_types_in_search_not_indexed, [ $( this ).data( 'name' ) ] );
+						});
+						post_types_in_search_not_indexed = _.difference( post_types_in_search_not_indexed, self.compatibility_data.relevanssi.settings['indexed_cpt'] );
+						if ( post_types_in_search_not_indexed.length > 0 ) {
+							auxiliar_warning = self.warnings.relevanssi['cpt_not_indexed'];
+							auxiliar_warning = auxiliar_warning.replace( '##CTPLIST##', '<strong>' + post_types_in_search_not_indexed.join( '</strong>, <strong>' ) + '</strong>' );
+							$( auxiliar_warning ).prependTo( self.post_row );
+						}
+						if ( $( '.js-wpv-settings-archive-loop #wpv-view-loop-search-page:checked' ).length == 0 ) {
+							$( self.warnings.relevanssi['sort_filter'] ).prependTo( self.post_sort ).show();
+						}
+					}
+					// Maybe warning on Post date filter
+					break;
+			}
+			
+		},
+		builtin:	function() {
+			
+			var query_mode						= Toolset.hooks.applyFilters( 'wpv-filter-wpv-edit-screen-get-query-mode', 'normal' ),
+				auxiliar_warning				= '';
+			
+			if ( query_mode == 'archive' ) {
+				$( '.js-wpv-filter-post-search-compatibility-builtin-filter-on-archive' ).remove();
+				if ( 
+					$( '#wpv-view-loop-search-page' ).prop( 'checked' ) 
+					&& $( self.post_row ).length > 0 
+				) {
+					//Ops! A search filter on a WPA assigned to the search archive
+					$( self.warnings.builtin['filter_on_archive'] ).prependTo( self.post_row ).show();
+				}
+			}
+			
+		}
+	};
+	
+	self.init_compatibility = function() {
+		self.check_compatibility.relevanssi();
+		self.check_compatibility.builtin();
+		return self;
+	};
+	
+	$( document ).on( 'js_event_wpv_query_type_saved js_event_wpv_save_section_loop_selection_completed js_event_wpv_save_filter_post_search_completed js_event_wpv_save_section_sorting_completed', function( event ) {
+		self.check_compatibility.relevanssi();
+		self.check_compatibility.builtin();
+	});
+	
+	$( document ).on( 'js_event_wpv_post_types_for_archive_loop_updated', function( event, data ) {
+		if (
+			data.type == 'native' 
+			&& data.name == 'search'
+		) {
+			self.check_compatibility.relevanssi();
+			self.check_compatibility.builtin();
+		}
+	});
+	
+	$( document ).on( 'js_event_wpv_query_filter_created js_event_wpv_query_filter_saved', function( event, filter_type ) {
+		if ( filter_type == 'post_date' ) {
+			self.check_compatibility.relevanssi();
 		}
 	});
 	
@@ -306,6 +465,7 @@ WPViews.SearchFilterGUI = function( $ ) {
 			callback:	self.save_filter_taxonomy_search,
 			event:		'js_event_wpv_save_filter_taxonomy_search_completed'
 		});
+		return self;
 	};
 	
 	//--------------------
@@ -313,7 +473,8 @@ WPViews.SearchFilterGUI = function( $ ) {
 	//--------------------
 	
 	self.init = function() {
-		
+		self.init_hooks()
+			.init_compatibility();
 	};
 	
 	self.init();

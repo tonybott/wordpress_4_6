@@ -1269,6 +1269,7 @@ WPViews.CTEditScreen = function( $ ) {
             } else {
                 self.showSuccessMessage(messageContainerSelector, self.l10n.editor.saved);
                 self.highlight_action_bar('success');
+                jQuery( document ).trigger('ct_saved');
             }
         });
 
@@ -1952,6 +1953,7 @@ WPViews.CTEditScreen = function( $ ) {
                 var quicktags_slug = editor_slug + '_quicktags';
                 self[quicktags_slug] = quicktags( { id: editor_info.selector, buttons: 'strong,em,link,block,del,ins,img,ul,ol,li,code,close' } );
                 WPV_Toolset.add_qt_editor_buttons( self[quicktags_slug],self[editor_slug] );
+                Toolset.hooks.doAction( 'toolset_text_editor_CodeMirror_init', editor_info.selector );
             }
         });
 
@@ -2269,8 +2271,8 @@ WPViews.CTEditScreen = function( $ ) {
      */
     self.no_third_party_editor = function() {
         if(
-            typeof wpv_ct_editor_choice === "undefined"
-            || wpv_ct_editor_choice == "basic"
+            typeof toolset_user_editor_choice === "undefined"
+            || toolset_user_editor_choice == "basic"
         ) return true;
 
         return false;

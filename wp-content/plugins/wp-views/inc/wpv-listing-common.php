@@ -653,7 +653,7 @@ function wpv_render_wpa_listing_dialog_templates_arrangeby_usage() {
 					<li>
 						<p>
 							<input type="radio" name="wpv_wpa_usage_purpose" class="js-wpv-usage-purpose js-wpv-usage-purpose-parametric" id="wpv_wpa_purpose_parametric" value="parametric" />
-							<label for="wpv_wpa_purpose_parametric"><?php _e('Display the items as a parametric search','wpv-views'); ?></label>
+							<label for="wpv_wpa_purpose_parametric"><?php _e('Display the items using a custom search','wpv-views'); ?></label>
 							<span class="wpv-helper-text"><?php _e('Visitors will be able to search through your content using different search criteria.', 'wpv-views'); ?></span>
 						</p>
 					</li>
@@ -717,7 +717,7 @@ function wpv_render_view_listing_dialog_templates() {
 					<li>
 						<p>
 							<input type="radio" name="view_purpose" class="js-wpv-purpose" id="view_purpose_parametric" value="parametric" />
-							<label for="view_purpose_parametric"><?php _e('Display the results as a parametric search','wpv-views'); ?></label>
+							<label for="view_purpose_parametric"><?php _e('Display the results using a custom search','wpv-views'); ?></label>
 							<span class="wpv-helper-text"><?php _e('Visitors will be able to search through your content using different search criteria.', 'wpv-views'); ?></span>
 						</p>
 					</li>

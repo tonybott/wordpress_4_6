@@ -385,16 +385,16 @@ class WPV_Settings_Screen {
 				<?php _e( 'When doing manual AJAX pagination on a View or WordPress Archive, you can add each page to the browser history, so it can be reached using the back and forth browser buttons. You can either enable this feature (and control it on each View or WordPress Archive) or disable it globally.', 'wpv-views' ); ?>
 			</p>
 		</div>
-		<h3><?php _e( 'Browser history management for AJAX parametric searches', 'wpv-views' ); ?></h3>
+		<h3><?php _e( 'Browser history management for AJAX custom searches', 'wpv-views' ); ?></h3>
 		<div class="toolset-advanced-setting">
 			<p>
 				<label>
 					<input id="js-wpv-enable-parametric-search-manage-history" type="checkbox" name="wpv-enable-parametric-search-manage-history" class="js-wpv-enable-manage-history" value="on" <?php checked( $settings->wpv_enable_parametric_search_manage_history == 1 ); ?> autocomplete="off" />
-					<?php _e( "Enable history management setttings for AJAX parametric search", 'wpv-views' ); ?>
+					<?php _e( "Enable history management setttings for AJAX custom search", 'wpv-views' ); ?>
 				</label>
 			</p>
 			<p>
-				<?php _e( 'When loading parametric search results using AJAX, you can adjust the URL to match the options selected, so it can be used to link to those specific results. You can either enable this feature (and control it on each View or WordPress Archive) or disable it globally.', 'wpv-views' ); ?>
+				<?php _e( 'When loading custom search results using AJAX, you can adjust the URL to match the options selected, so it can be used to link to those specific results. You can either enable this feature (and control it on each View or WordPress Archive) or disable it globally.', 'wpv-views' ); ?>
 			</p>
 		</div>
         <?php
@@ -572,14 +572,37 @@ class WPV_Settings_Screen {
         if ( !is_array( $custom_shrt ) ) {
             $custom_shrt = array();
         }
+
 		ob_start();
         ?>
 		<div class="js-wpv-custom-inner-shortcodes-summary">
-
-			<p>
-				<?php _e( 'List of custom and third-party shortcodes you want to be able to use as Views shortcode arguments.', 'wpv-views' ); ?>
-			</p>
 			<div class="js-wpv-add-item-settings-wrapper">
+				<?php
+				$custom_inner_api_shortcodes = array();
+				$custom_inner_api_shortcodes = apply_filters( 'wpv_custom_inner_shortcodes', $custom_inner_api_shortcodes );
+				if ( count( $custom_inner_api_shortcodes ) > 0 ) {
+					?>
+				<h3><?php _e('Shortcodes registered automatically', 'wpv-views'); ?></h3>
+				<ul class="wpv-taglike-list">
+					<?php
+					sort( $custom_inner_api_shortcodes );
+
+					foreach ( $custom_inner_api_shortcodes as $custom_shortcode ) {
+						?>
+						<li class="js-<?php echo $custom_shortcode; ?>-api-item">
+							<span class="">[<?php echo esc_html( $custom_shortcode ); ?>]</span>
+						</li>
+						<?php
+					}
+					?>
+				</ul>
+					<?php
+					} 
+				?>
+				<h3><?php _e('Shortcodes registered manually', 'wpv-views'); ?></h3>
+				<p>
+					<?php _e( 'List of custom and third-party shortcodes you want to be able to use as Views shortcode arguments.', 'wpv-views' ); ?>
+				</p>
 				<ul class="wpv-taglike-list js-wpv-add-item-settings-list js-wpv-custom-shortcode-list">
 					<?php
 					if ( count( $custom_shrt ) > 0 ) {
@@ -1035,10 +1058,10 @@ class WPV_Settings_Screen {
 					. __( 'Please refer to the following links for documentation related to the most used browsers:' )
 					. WPV_MESSAGE_SPACE_CHAR
 				?>
-					<a href="http://mzl.la/MyNqBe">Mozilla Firefox</a> &bull; 
-					<a href="http://windows.microsoft.com/en-us/internet-explorer/ie-security-privacy-settings">Internet Explorer</a> &bull; 
-					<a href="https://support.google.com/chrome/answer/95472">Google Chrome</a> &bull; 
-					<a href="http://www.opera.com/help/tutorials/personalize/content/#siteprefs">Opera</a>
+					<a href="http://mzl.la/MyNqBe" target="_blank">Mozilla Firefox</a> &bull; 
+					<a href="http://windows.microsoft.com/en-us/internet-explorer/ie-security-privacy-settings" target="_blank">Internet Explorer</a> &bull; 
+					<a href="https://support.google.com/chrome/answer/95472" target="_blank">Google Chrome</a> &bull; 
+					<a href="http://www.opera.com/help/tutorials/personalize/content/#siteprefs" target="_blank">Opera</a>
 				</p>
 			</div><!-- close .js-wpv-views-debug-additional-options -->
 
@@ -1101,16 +1124,34 @@ class WPV_Settings_Screen {
 	*/
 	
 	function wpv_map_plugin_options( $sections ) {
-    	$settings = WPV_Settings::get_instance();
+    	$settings				= WPV_Settings::get_instance();
+		$toolset_maps_installed	= apply_filters( 'toolset_is_maps_available', false );
 		ob_start();
+		if ( $toolset_maps_installed ) {
+			?>
+		<p>
+			<?php 
+			echo __( "You can enable the legacy Views Maps plugin if you already use in your site.", 'wpv-views' );
+			?>
+		</p>
+			<?php
+		} else {
+			?>
+		<p>
+			<?php 
+			echo __( "Enabling the legacy Views Maps plugin will add the Google Maps API and the Views Maps plugin to your site.", 'wpv-views' )
+				. WPV_MESSAGE_SPACE_CHAR 
+				. __( 'This will let you create maps on your site and use Views to plot WordPress posts on a Google Map.', 'wpv-views' );
+			?>
+		</p>
+		<p>
+			<?php
+			echo __( 'Please consider updating to the new Toolset Maps plugin for extended fetures and better compatibility.', 'wpv-views' );
+			?>
+		</p>
+			<?php
+		}
         ?>
-		<p>
-			<?php _e( "Enabling Views Maps will add the Google Maps API and the Views Maps plugin to your site.", 'wpv-views' ); ?>
-
-		</p>
-		<p>
-			<?php _e( 'This will let you create maps on your site and use Views to plot WordPress posts on a Google Map.', 'wpv-views' ); ?>
-		</p>
 		<p>
 			<?php 
 			$documentation_link_args = array(
@@ -1122,9 +1163,9 @@ class WPV_Settings_Screen {
 				)
 			);
 			echo sprintf( 
-				__( 'Get more details in the <a href="%1$s" title="%2$s">documentation page</a>.', 'wpv-views' ), 
+				__( 'Get more details about the new Toolset Maps plugin in the <a href="%1$s" title="%2$s">documentation page</a>.', 'wpv-views' ), 
 				WPV_Admin_Messages::get_documentation_promotional_link( $documentation_link_args, 'https://wp-types.com/documentation/user-guides/map-wordpress-posts/' ),
-				esc_attr( __( 'Documentation on the Views map plugin', 'wpv-views' ) )
+				esc_attr( __( 'Documentation on the Toolset Maps plugin', 'wpv-views' ) )
 			);
 			?>
 		</p>
@@ -1132,7 +1173,7 @@ class WPV_Settings_Screen {
 			<p>
 				<label>
 					<input type="checkbox" name="wpv-map-plugin" class="js-wpv-map-plugin" value="1" <?php checked( $settings->wpv_map_plugin ); ?> autocomplete="off" />
-					<?php _e( "Enable Views Map Plugin", 'wpv-views' ); ?>
+					<?php echo __( "Enable the legacy Views Map plugin", 'wpv-views' ); ?>
 				</label>
 			</p>
 			
@@ -1145,7 +1186,7 @@ class WPV_Settings_Screen {
 			
 		$sections['maps-legacy'] = array(
 			'slug'		=> 'maps-legacy',
-			'title'		=> __( 'Map plugin', 'wpv-views' ),
+			'title'		=> __( 'Map plugin (legacy)', 'wpv-views' ),
 			'content'	=> $section_content
 		);
 		return $sections;

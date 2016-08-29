@@ -224,34 +224,52 @@ class WPV_Meta_Field_Filter {
 				break;
 		}
 		$value = WPV_Filter_Item::unencode_date( $value );
+		
+		$select_type = '<select'
+			. ' name="' . esc_attr( sprintf( $name, '_type' ) ) . '"'
+			. ' class="' . esc_attr( 'js-wpv-' . $meta_type . '-field-type-select' ) . '"'
+			. ' autocomplete="off"'
+			. '>';
+		foreach ( $types as $type_key => $type_val ) {
+			$select_type .= '<option'
+				. ' value="' . esc_attr( $type_key ) . '"'
+				. ' ' . selected( $type_selected, $type_key, false )
+				. '>'
+				. esc_html( $type_val ) 
+				. '</option>';
+		}
+		$select_type .= '</select>';
+		
+		$select_compare = '<select'
+			. ' name="' . esc_attr( sprintf( $name, '_compare' ) ) . '"'
+			. ' class="' . esc_attr( 'wpv_' . $meta_type . '_field_compare_select js-wpv-' . $meta_type . '-field-compare-select' ) . '"'
+			. ' autocomplete="off"'
+			. '>';
+		foreach ( $compare as $com_key => $com_val ) {
+			$select_compare .= '<option'
+			. ' value="' . esc_attr( $com_key ) . '"'
+			. ' ' . selected( $compare_selected, $com_key, false )
+			. '>'
+			. esc_html( $com_val )
+			. '</option>';
+		}
+		$select_compare .= '</select>';
 		?>
-		<?php echo esc_html( sprintf( __( 'The field %s is a', 'wpv-views' ), $args['nicename'] ) ); ?>
-		<select name="<?php echo esc_attr( sprintf( $name, '_type' ) ); ?>" class="<?php echo esc_attr( 'js-wpv-' . $meta_type . '-field-type-select' ); ?>" autocomplete="off">
-			<?php
-			foreach ( $types as $type_key => $type_val ) {
-			?>
-			<option value="<?php echo esc_attr( $type_key ); ?>" <?php selected( $type_selected, $type_key ); ?>><?php echo esc_html( $type_val ); ?></option>
-			<?php
-			}
-			?>
-		</select>
-		<?php _e( 'that is', 'wpv-views' ); ?>
-		<select name="<?php echo esc_attr( sprintf( $name, '_compare' ) ); ?>" class="<?php echo esc_attr( 'wpv_' . $meta_type . '_field_compare_select js-wpv-' . $meta_type . '-field-compare-select' ); ?>" autocomplete="off">
-			<?php
-			foreach ( $compare as $com_key => $com_val ) {
-			?>
-			<option value="<?php echo esc_attr( $com_key ); ?>" <?php selected( $compare_selected, $com_key ); ?>><?php echo esc_html( $com_val ); ?></option>
-			<?php
-			}
-			?>
-		</select>
+		<?php 
+		/* translators: for example, "The field *field-slug* is a *string|number|date* that is *equal to|different from|greater than* the following: */
+		echo sprintf( 
+			__( 'The field %1$s is a %2$s that is %3$s the following:', 'wpv-views' ), 
+			esc_attr( $args['nicename'] ),
+			$select_type,
+			$select_compare
+		); 
+		?>
 			<div class="<?php echo esc_attr( 'wpv-filter-multiple-element-options-mode js-wpv-' . $meta_type . '-field-values' ); ?>">
 				<input type="hidden" class="<?php echo esc_attr( 'js-wpv-' . $meta_type . '-field-values-real' ); ?>" name="<?php echo esc_attr( sprintf( $name, '_value' ) ); ?>" value="<?php echo esc_attr( $value ); ?>" autocomplete="off" />
 				<?php
 				foreach ( $parts as $i => $value_part ) {
 					?>
 					<div class="<?php echo esc_attr( 'wpv_' . $meta_type . '_field_value_div js-wpv-' . $meta_type . '-field-value-div' ); ?>">
-						<?php _e( 'the', 'wpv-views' ); ?>
 						<?php
 						$function_value = WPV_Filter_Item::get_custom_filter_function_and_value( $value_part );
 						$selected_function = $function_value['function'];

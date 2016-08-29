@@ -409,6 +409,9 @@ WPViews.ViewEditScreenInlineCT = function( $ ) {
 				self.track_inline_content_template_changes( template_id );
 			});
 		}
+		
+		Toolset.hooks.doAction( 'wpv-action-wpv-set-inline-content-template-events', template_id );
+		
 	};
 	
 	/**

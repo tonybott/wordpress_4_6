@@ -242,7 +242,7 @@ class WPV_Widget_filter extends WP_Widget {
 				?>
 				<p>
 				<?php
-					printf( __( 'There are no Views with a parametric search. You can add them <a%s>here</a>.', 'wpv-views' ), ' href="' . admin_url( 'admin.php?page=views' ). '"' );
+					printf( __( 'There are no Views with a custom search. You can add them <a%s>here</a>.', 'wpv-views' ), ' href="' . admin_url( 'admin.php?page=views' ). '"' );
 				?>
 				</p>
 				<p>
@@ -255,7 +255,7 @@ class WPV_Widget_filter extends WP_Widget {
 				?>
 				<p>
 				<?php
-					_e( 'There are no Views with a parametric search.', 'wpv-views' );
+					_e( 'There are no Views with a custom search.', 'wpv-views' );
 				?>
 				</p>
 				<?php

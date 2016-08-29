@@ -69,9 +69,8 @@ function wpv_filter_limit_arg( $query, $view_settings, $view_id ) {
 		|| $offset != 0 
 	) {
 		if ( 
-			isset( $view_settings['pagination'] ) 
-			&& isset( $view_settings['pagination'][0] ) 
-			&& $view_settings['pagination'][0] != 'disable' 
+			isset( $view_settings['pagination']['type'] ) 
+			&& $view_settings['pagination']['type'] != 'disabled' 
 		) {
 			// WordPress WPBUG
 			// https://core.trac.wordpress.org/ticket/18897
@@ -170,7 +169,10 @@ function wpv_filter_limit_query_post_process_fix_limit_offset_pagination( $query
 		|| $query_data['wpv_original_offset'] != 0
 		
 	) {
-		if ( isset( $view_settings['pagination'] ) && isset( $view_settings['pagination'][0] ) && $view_settings['pagination'][0] != 'disable' ) {
+		if ( 
+			isset( $view_settings['pagination']['type'] ) 
+			&& $view_settings['pagination']['type'] != 'disabled' 
+		) {
 			if ( $query_data['wpv_original_limit'] != -1 ) {
 				if ( $query_data['wpv_original_limit'] > $query_data['wpv_original_posts_per_page'] ) {
 					if ( $query_data['wpv_original_offset'] > 0 ) {

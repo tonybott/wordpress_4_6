@@ -14,7 +14,7 @@
 *
 * Description: The [wpv-filter-start] shortcode specifies the start point
 * for any controls that the views filter generates. Example controls are
-* pagination controls and search boxes. This shortcode is usually added
+* pagination controls and search forms. This shortcode is usually added
 * automatically to the Views Meta HTML.
 *
 * @param	hide	"true"	Optional, will add a display:none style to the form HTML element
@@ -162,6 +162,9 @@ function wpv_filter_shortcode_start( $atts ) {
 		$query_args_remove[]	= 'lang';
 		$query_args_remove[]	= 'wpv_sort_orderby';
 		$query_args_remove[]	= 'wpv_sort_order';
+		$query_args_remove[]	= 'wpv_sort_orderby_as';
+		$query_args_remove[]	= 'wpv_sort_orderby_second';
+		$query_args_remove[]	= 'wpv_sort_order_second';
 		$query_args_remove[]	= 'wpv_aux_current_post_id';
 		$query_args_remove[]	= 'wpv_aux_parent_post_id';
 		$query_args_remove[]	= 'wpv_aux_parent_term_id';
@@ -172,9 +175,11 @@ function wpv_filter_shortcode_start( $atts ) {
 			$url
 		);
 		
-		$sort_orderby		= '';
-		$sort_order			= '';
-		$sort_orderby_as	= '';
+		$sort_orderby			= '';
+		$sort_order				= '';
+		$sort_orderby_as		= '';
+		$sort_orderby_second	= '';
+		$sort_order_second		= '';
 		
 		if ( 
 			! isset( $view_settings['view-query-mode'] )
@@ -188,17 +193,21 @@ function wpv_filter_shortcode_start( $atts ) {
 		
 		switch ( $query_mode ) {
 			case 'archive':
-				$sort_orderby = $view_settings['orderby'];
-				$sort_order = strtolower( $view_settings['order'] );
-				$sort_orderby_as = strtolower( $view_settings['orderby_as'] );
+				$sort_orderby			= $view_settings['orderby'];
+				$sort_order				= strtolower( $view_settings['order'] );
+				$sort_orderby_as		= strtolower( $view_settings['orderby_as'] );
+				$sort_orderby_second	= $view_settings['orderby_second'];
+				$sort_order_second		= strtolower( $view_settings['order_second'] );
 				break;
 			default:
 				$query_type = $view_settings['query_type'][0];
 				switch ( $query_type ) {
 					case 'posts':
-						$sort_orderby = $view_settings['orderby'];
-						$sort_order = strtolower( $view_settings['order'] );
-						$sort_orderby_as = strtolower( $view_settings['orderby_as'] );
+						$sort_orderby			= $view_settings['orderby'];
+						$sort_order				= strtolower( $view_settings['order'] );
+						$sort_orderby_as		= strtolower( $view_settings['orderby_as'] );
+						$sort_orderby_second	= $view_settings['orderby_second'];
+						$sort_order_second		= strtolower( $view_settings['order_second'] );
 						break;
 					case 'taxonomy':
 						$sort_orderby = $view_settings['taxonomy_orderby'];
@@ -236,6 +245,21 @@ function wpv_filter_shortcode_start( $atts ) {
 			) {
 				$sort_orderby_as = esc_attr( $_GET['wpv_sort_orderby_as'] );
 			}
+			// Secondary sorting
+			if (
+				isset( $_GET['wpv_sort_order_second'] ) 
+				&& in_array( strtoupper( esc_attr( $_GET['wpv_sort_order_second'] ) ), array( 'ASC', 'DESC' ) )
+			) {
+				$sort_order_second = strtoupper( esc_attr( $_GET['wpv_sort_order_second'] ) );
+			}
+			if (
+				isset( $_GET['wpv_sort_orderby_second'] ) 
+				&& esc_attr( $_GET['wpv_sort_orderby_second'] ) != 'undefined' 
+				&& esc_attr( $_GET['wpv_sort_orderby_second'] ) != '' 
+				&& in_array( $_GET['wpv_sort_orderby_second'], array( 'post_date', 'post_title', 'ID', 'modified', 'menu_order', 'rand' ) )
+			) {
+				$sort_orderby_second = esc_attr( $_GET['wpv_sort_orderby_second'] );
+			}
 		}
 		
 		// @todo Switch .js-wpv-filter-data-for-this-form into a form data attribute that we can init on document.ready and refresh when neeeded
@@ -252,10 +276,14 @@ function wpv_filter_shortcode_start( $atts ) {
 									'orderby'		=> $sort_orderby,
 									'order'			=> $sort_order,
 									'orderby_as'	=> $sort_orderby_as,
+									'orderby_second'	=> $sort_orderby_second,
+									'order_second'		=> $sort_order_second
 									),
 			'orderby'			=> $sort_orderby,
 			'order'				=> $sort_order,
 			'orderby_as'		=> $sort_orderby_as,
+			'orderby_second'	=> $sort_orderby_second,
+			'order_second'		=> $sort_order_second,
 			'ajax_form'			=> '',// 'disabled'|'enabled'
 			'ajax_results'		=> '',// 'disabled'|'onsubmit'|'enabled'
 			'effect'			=> 'fade',
@@ -357,6 +385,13 @@ function wpv_filter_shortcode_start( $atts ) {
             }
         }
 		
+		$archive_environment = apply_filters( 'wpv_filter_wpv_get_current_archive_loop', array() );
+		$view_auxiliar_requires['archive'] = array(
+			'type'	=> $archive_environment['type'],
+			'name'	=> $archive_environment['name'],
+			'data'	=> $archive_environment['data'],
+		);
+		
 		$parametric_data['environment'] = $view_auxiliar_requires;
 		
 		$parametric_data = apply_filters( 'wpv_filter_wpv_get_parametric_settings', $parametric_data, $view_settings );
@@ -375,8 +410,10 @@ function wpv_filter_shortcode_start( $atts ) {
 			. ' data-orderby="' . $sort_orderby . '"'
 			. ' data-order="' . $sort_order . '"'
 			. ' data-orderbyas="' . $sort_orderby_as . '"'
-			. ' data-parametric="' . esc_js( wp_json_encode( $parametric_data ) ) . '"'
-			. ' data-attributes="' . esc_js( wp_json_encode( $view_attrs_to_keep ) ) . '"'
+			. ' data-orderbysecond="' . $sort_orderby_second . '"'
+			. ' data-ordersecond="' . $sort_order_second . '"'
+			. ' data-parametric="' . esc_attr( wp_json_encode( $parametric_data ) ) . '"'
+			. ' data-attributes="' . esc_attr( wp_json_encode( $view_attrs_to_keep ) ) . '"'
 			. ' data-environment="' . esc_js( wp_json_encode( $view_auxiliar_requires ) ) . '"'
 			. '>';
         
@@ -422,11 +459,6 @@ function wpv_filter_shortcode_start( $atts ) {
         */
         
         $out .= '<input class="wpv_view_count wpv_view_count-' . $view_count . '" type="hidden" name="wpv_view_count" value="' . $view_count . '" />';
-		
-        // Rollover
-        if (isset($view_settings['pagination']['mode']) && $view_settings['pagination']['mode'] == 'rollover') {
-            wpv_pagination_rollover_shortcode();
-        }
         
     }
     
@@ -516,37 +548,46 @@ function _wpv_filter_is_form_required() {
 	$view_settings			= apply_filters( 'wpv_filter_wpv_get_object_settings', array() );
     $view_layout_settings	= apply_filters( 'wpv_filter_wpv_get_object_layout_settings', array() );
 	
-	// Tabe sorting
+	// Table sorting
     if (
 		isset( $view_layout_settings['style'] ) 
 		&& $view_layout_settings['style'] == 'table_of_fields' 
 	) {
         return true;
     }
-
-    // Its a View with pagination
-    if (
-		(
-			isset ( $view_settings['pagination'][0] )
-			&& $view_settings['pagination'][0] == 'enable' 
-		) || (
-			isset( $view_settings['pagination']['mode'] ) 
-			&& $view_settings['pagination']['mode'] == 'rollover'
-		)
-	) {
-        return true;
-    }
-	// Its a WordPress Archive with pagination
+	
+	// Pagination
 	if (
 		isset( $view_settings['pagination']['type'] ) 
-		&& ( ! in_array( $view_settings['pagination']['type'], array( 'disabled', 'paged' ) ) )
+		&& ( ! in_array( $view_settings['pagination']['type'], array( 'disabled' ) ) )
 	) {
 		return true;
 	}
 	
+	$filter_meta_html = isset( $view_settings['filter_meta_html'] ) ? $view_settings['filter_meta_html'] : '';
+	$layout_meta_html = isset( $view_layout_settings['layout_meta_html'] ) ? $view_layout_settings['layout_meta_html'] : '';
+	
 	// Contains a parametric search with filters
-    $meta_html = isset( $view_settings['filter_meta_html'] ) ? $view_settings['filter_meta_html'] : '';
-	if ( preg_match('#\\[wpv-control.*?\\]#is', $meta_html, $matches ) ) {
+	if ( preg_match('#\\[wpv-control.*?\\]#is', $filter_meta_html, $matches ) ) {
+	    if ( $matches[0] != '' ) {
+	        return true;
+	    }
+	}
+	
+	// Contains sorting on the form or the layout output
+	if ( preg_match('#\\[wpv-sort.*?\\]#is', $filter_meta_html, $matches ) ) {
+	    if ( $matches[0] != '' ) {
+	        return true;
+	    }
+	}
+	if ( preg_match('#\\[wpv-sort.*?\\]#is', $layout_meta_html, $matches ) ) {
+	    if ( $matches[0] != '' ) {
+	        return true;
+	    }
+	}
+	
+	// Contains table header links for sorting
+	if ( preg_match('#\\[wpv-heading.*?\\]#is', $layout_meta_html, $matches ) ) {
 	    if ( $matches[0] != '' ) {
 	        return true;
 	    }
@@ -568,7 +609,7 @@ function _wpv_filter_is_form_required() {
  *
  * Description: The [wpv-filter-submit] shortcode adds a submit button to
  * the form that the views filter generates. An example is the "Submit" button
- * for a search box
+ * for a search form
  *
  * Parameters:
  * 'hide' => 'true'|'false'
@@ -3521,7 +3562,7 @@ add_shortcode('wpv-control-set', 'wpv_shortcode_wpv_control_set');
 function wpv_shortcode_wpv_control_set( $atts, $value ) {
 	// First control checks
 	if ( ! function_exists( 'wpcf_pr_get_belongs' ) ) {
-		return __( 'You need the Types plugin to render this parametric search control', 'wpv-views' );
+		return __( 'You need the Types plugin to render this custom search control', 'wpv-views' );
 	}
 	if ( ! isset( $atts['url_param'] ) ) {
 		return __('The url_param argument is missing from the wpv-control-set shortcode.', 'wpv-views');
@@ -3608,7 +3649,7 @@ function wpv_shortcode_wpv_control_item( $atts, $value ) {
 	global $sitepress;
 	// First control checks
 	if ( ! function_exists( 'wpcf_pr_get_belongs' ) ) {
-		return __( 'You need the Types plugin to render this parametric search control', 'wpv-views' );
+		return __( 'You need the Types plugin to render this custom search control', 'wpv-views' );
 	}
 	if ( 
 		! isset( $atts['url_param'] ) 

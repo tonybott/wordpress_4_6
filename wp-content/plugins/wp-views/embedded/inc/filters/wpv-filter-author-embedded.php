@@ -89,13 +89,14 @@ class WPV_Author_Frontend_Filter {
 			$show_author_array = WPV_Author_Frontend_Filter::get_settings( $query, $archive_settings, $archive_id );
 			if ( isset( $show_author_array ) ) {
 				if ( count( $show_author_array ) > 0 ) {
-					$query->set('author__in', $show_author_array );
+					$show_author = implode( ",", $show_author_array );
+					$query->set('author', $show_author );
 				} else {
 					// this only happens when:
 					// - auth_mode = current_user and user is not logged in
 					// - auth_mode = by_url and no numeric id or valid nicename is given
 					// we need to return an empty query
-					$query->set('author__in', array( 0 ) );
+					$query->set('post__in', array( 0 ) );
 				}
 			}
 		}

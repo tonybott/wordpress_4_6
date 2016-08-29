@@ -38,7 +38,7 @@ if ( ! defined( 'WPV_LINK_CREATE_SLIDERS' ) ) {
 }
 
 if ( ! defined( 'WPV_LINK_CREATE_PARAMETRIC_SEARCH' ) ) {
-	define( 'WPV_LINK_CREATE_PARAMETRIC_SEARCH', 'http://wp-types.com/documentation/user-guides/front-page-filters/?utm_source=viewsplugin&utm_campaign=views&utm_medium=edit-view-create-parametric-search-helpbox&utm_term=Creating parametric searches with Views' );
+	define( 'WPV_LINK_CREATE_PARAMETRIC_SEARCH', 'http://wp-types.com/documentation/user-guides/front-page-filters/?utm_source=viewsplugin&utm_campaign=views&utm_medium=edit-view-create-custom-search-helpbox&utm_term=Creating custom searches with Views' );
 }
 
 if ( ! defined( 'WPV_LINK_DESIGN_SLIDER_TRANSITIONS' ) ) {

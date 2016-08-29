@@ -96,7 +96,7 @@ function wpv_filter_url_check_js() {
 
 	$toolset_reserved_words = array(
 		'wpv_column_sort_id', 'wpv_column_sort_dir', 
-		'wpv_sort_orderby', 'wpv_sort_order', 'wpv_sort_orderby_as', 
+		'wpv_sort_orderby', 'wpv_sort_order', 'wpv_sort_orderby_as', 'wpv_sort_orderby_second', 'wpv_sort_order_second',
 		'wpv_paged', 'wpv_paged_preload_reach', 
 		'wpv_view_count', 'wpv_filter_submit', 
 		'wpv_post_search', 'wpv_taxonomy_search'
@@ -104,7 +104,7 @@ function wpv_filter_url_check_js() {
 	$toolset_reserved_words = apply_filters('wpv_toolset_reserved_words', $toolset_reserved_words);
 	
 	$toolset_reserved_attributes = array(
-		'name', 'post_type', 'order', 'orderby', 'orderby_as', 'limit', 'offset', 'posts_per_page', 'cached'
+		'name', 'post_type', 'order', 'orderby', 'orderby_as', 'order_second', 'orderby_second', 'limit', 'offset', 'posts_per_page', 'cached'
 	);
 	$toolset_reserved_attributes = apply_filters('wpv_toolset_reserved_attributes', $toolset_reserved_attributes);
 
@@ -426,7 +426,7 @@ function wpv_filters_add_query_filter_dialog_callback() {
 	ob_start();
 	?>
 	<div class="wpv-dialog wpv-dialog-query-filter">
-		<label for="filter-add-select" class="label-alignleft"><?php _e('Select what to filter by:', 'wpv-views'); ?></label>
+		<label for="filter-add-select" class="label-alignleft"><?php _e('Filter by:', 'wpv-views'); ?></label>
 		<?php wpv_filters_add_filter_select( $view_array ); ?>
 	</div>
 	<?php
@@ -461,7 +461,7 @@ function wpv_filters_add_archive_query_filter_dialog_callback() {
 	ob_start();
 	?>
 	<div class="wpv-dialog wpv-dialog-query-filter">
-		<label for="filter-add-select" class="label-alignleft"><?php _e('Select what to filter by:', 'wpv-views'); ?></label>
+		<label for="filter-add-select" class="label-alignleft"><?php _e('Filter by:', 'wpv-views'); ?></label>
 		<?php wpv_filters_add_archive_filter_select( $view_array ); ?>
 	</div>
 	<?php

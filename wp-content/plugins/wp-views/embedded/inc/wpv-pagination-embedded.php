@@ -23,7 +23,8 @@ class WPV_Pagination_Embedded {
 		$this->register_shortcodes();
 		
 		add_filter( 'wpv_view_settings',										array( $this, 'get_pagination_defaults' ) );
-		add_filter( 'wpv_filter_wpv_get_pagination_defaults',					array( $this, 'get_pagination_defaults' ) );
+		
+		add_filter( 'wpv_filter_query',											array( $this, 'set_pagination_in_query' ), 1, 3 );
 		
 		add_filter( 'wpv_filter_wpv_get_pagination_settings',					array( $this, 'get_pagination_settings' ), 10, 2 );
 		add_filter( 'wpv_filter_wpv_get_pagination_permalinks',					array( $this, 'get_pagination_permalink_data' ), 10, 3 );
@@ -100,11 +101,12 @@ class WPV_Pagination_Embedded {
 	
 	function get_pagination_defaults( $view_settings ) {
 		$defaults = array(
-			'posts_per_page'	=> 10,
 			'pagination'		=> array(
-				'mode'								=> 'paged',
 				'type'								=> 'paged',
-				'posts_per_page'					=> 'default', // Added anew for WordPress Archives, as they got 10 in the general posts_per_page setting
+				'posts_per_page'					=> 'default',
+				'effect'							=> 'fade',
+				'duration'							=> 500,
+				'speed'								=> 5,
 				'preload_images'					=> 1,
 				'cache_pages'						=> 1,
 				'preload_pages'						=> 1,
@@ -113,74 +115,16 @@ class WPV_Pagination_Embedded {
 				'spinner_image_uploaded'			=> '',
 				'callback_next'						=> '',
 				'manage_history'					=> 'on',
-				'page_selector_control_type'		=> 'drop_down',
-			),
-			'ajax_pagination'	=> array(
-				'style'								=> 'fade',
-			),
-			'rollover'			=> array(
-				'posts_per_page'					=> 1,
-				'speed'								=> 5,
-				'effect'							=> 'fade',
-				'preload_images'					=> 1,
-				'include_page_selector'				=> 0,
-				'include_prev_next_page_controls' 	=> 0,
 			),
 		);
 		$view_settings = wpv_parse_args_recursive( $view_settings, $defaults );
-		// Move the 0-indexed items out of the recursive parsing: it breaks!
-		if ( ! isset( $view_settings['pagination'][0] ) ) {
-			$view_settings['pagination'][0] = 'disable';
-		}
-		if ( ! isset( $view_settings['ajax_pagination'][0] ) ) {
-			$view_settings['ajax_pagination'][0] = 'disable';
-		}
-		if ( $view_settings['pagination']['spinner'] == 'uploaded' ) {
-			$view_settings['pagination']['spinner_image'] = $view_settings['pagination']['spinner_image_uploaded'];
-		}
+		
+		$view_settings = $this->upgrade_pagination_schema( $view_settings );
 
 		return $view_settings;
 	}
 	
-	/**
-	* get_pagination_settings
-	*
-	* Get the View or WordPress Archive pagination settings, using a filter for uniformity:
-	* $pagination_settings = apply_filters( 'wpv_filter_wpv_get_pagination_settings', array(), $view_settings );
-	*
-	* Proxy between the old and new pagination data structure.
-	*
-	* @return array
-	* 	'id'					=>											The object ID
-	* 	'query'					=> 'normal'|'archive'						The kind of object
-	* 	'base_permalink'		=> 											The current permalink with all URL parameters, but a placeholded page number
-	* 	'type'					=> 'disabled'|'paged'|'ajaxed'|'rollover'	The pagination mode
-	* 	'effect'				=> 											The AJAX pagination effect name
-	* 	'duration'				=> 											The AJAX pagination effect duration, in milisecons
-	* 	'stop_rollover'			=> 											The AJAX pagination rollover status, whether it should be stopped on item selection TO BE DEPRECATED
-	* 	'cache_pages'			=> 'enabled'|'disabled'						The AJAX pagination cache pages status
-	* 	'preload_pages'			=> 'enabled'|'disabled'						The AJAX pagination preload pages status
-	* 	'preload_reach'			=> 											The AJAX pagination preload pages reach, in natural number
-	* 	'preload_images'		=> 'enabled'|'disabled'						The AJAX pagination preload images status
-	* 	'spinner'				=> 'builtin'|'uploaded'|'disabled'			The AJAX pagination spinner mode
-	* 	'spinner_image'			=> 											The AJAX pagination spinner image, as empty string or URL
-	* 	'callback_next'			=> 											The AJAX pagination callback to execute after paging
-	* 	'manage_history'		=> 'enabled'|'disabled'						The AJAX pagination history mnageent mode
-	* 	'controls_in_form'		=> 'enabled'|'disabled'						Whether there are pagination controls in the form editor
-	* 	'infinite_tolerance'	=> 											The AJAX pagination infinite scrolling tolerance, in integer number
-	* 	'page'					=>											The current page
-	* 	'max_pages'				=>											The total number of pages
-	* 	'query'					=> 'normal'|'archive'						The object query mode
-	*
-	* @since 2.1
-	*/
-	
-	function get_pagination_settings( $pagination_data, $view_settings ) {
-		
-		$pagination_data['id']				= apply_filters( 'wpv_filter_wpv_get_current_view', null );
-		// This might not be needed but if we can avoid POSTing the form when doing non-AJAXed pagination...
-		$permalinks_data					= $this->pagination_permalink_data( $view_settings, $pagination_data['id'] );
-		$pagination_data['base_permalink']	= $permalinks_data['other'];
+	function upgrade_pagination_schema( $view_settings ) {
 		
 		if ( 
 			! isset( $view_settings['view-query-mode'] )
@@ -192,23 +136,30 @@ class WPV_Pagination_Embedded {
 			$query_mode = 'archive';
 		}
 		
-		$pagination_data['query'] = $query_mode;
-		
-		/**
-		* Pagination type
-		*/
-		
-		// Note: the default value for Views and WPAs should be different!! 'disabled' versions 'paged'
-		// @todo chec what happens for old WPAs without this setings, shoudl default to 'paged'
-		if ( $query_mode == 'normal' ) {
+		if ( 
+			$query_mode == 'normal' 
+			&& isset( $view_settings['posts_per_page'] ) 
+			&& isset( $view_settings['pagination']['mode'] )
+		) {
+			
+			$pagination_settings = $view_settings['pagination'];
+			
+			$pagination_settings['posts_per_page'] = $view_settings['posts_per_page'];
+			
 			$type = 'disabled';
-			$mode = isset( $view_settings['pagination']['mode'] ) ? $view_settings['pagination']['mode'] : 'disabled';
-			if ( 
-				isset( $view_settings['pagination'][0] ) 
-				&& $view_settings['pagination'][0] == 'disable'
-			) {
-				$mode = 'disabled';
+			$mode = 'disabled';
+			
+			if ( isset( $pagination_settings['mode'] ) ) {
+				$mode = $pagination_settings['mode'];
+				unset( $pagination_settings['mode'] );
 			}
+			if ( isset( $pagination_settings[0] ) ) {
+				if ( $pagination_settings[0] == 'disable' ) {
+					$mode = 'disabled';
+				}
+				unset( $pagination_settings[0] );
+			}
+			
 			switch ( $mode ) {
 				case 'rollover':
 					$type = 'rollover';
@@ -232,54 +183,133 @@ class WPV_Pagination_Embedded {
 					$type = 'disabled';
 					break;
 			}
-			$pagination_data['type'] = $type;
+			$pagination_settings['type'] = $type;
 			
 			/**
 			* AJAX effect and duration
 			*/
-			$pagination_data['effect'] = isset( $view_settings['ajax_pagination']['style'] ) ? $view_settings['ajax_pagination']['style'] : 'fade';
-			$pagination_data['duration'] = isset( $view_settings['ajax_pagination']['duration'] ) ? $view_settings['ajax_pagination']['duration'] : '500';
-			$pagination_data['stop_rollover'] = 'false';
-			$preload_images = isset( $view_settings['pagination']['preload_images'] ) ? $view_settings['pagination']['preload_images'] : true;
+			$pagination_settings['effect'] = isset( $view_settings['ajax_pagination']['style'] ) ? $view_settings['ajax_pagination']['style'] : 'fade';
+			$pagination_settings['duration'] = isset( $view_settings['ajax_pagination']['duration'] ) ? $view_settings['ajax_pagination']['duration'] : '500';
+			$preload_images = isset( $pagination_settings['preload_images'] ) ? $pagination_settings['preload_images'] : true;
 			// Adjust for rollover
 			if ( 
-				$pagination_data['type'] == 'rollover' 
+				$pagination_settings['type'] == 'rollover' 
 			) {
-				$pagination_data['effect'] = isset( $view_settings['rollover']['effect'] ) ? $view_settings['rollover']['effect'] : $pagination_data['effect'];
-				$pagination_data['duration'] = isset( $view_settings['rollover']['duration'] ) ? $view_settings['rollover']['duration'] : $pagination_data['duration'];
-				$pagination_data['stop_rollover'] = 'true';
+				$pagination_settings['posts_per_page'] = isset( $view_settings['rollover']['posts_per_page'] ) ? $view_settings['rollover']['posts_per_page'] : $pagination_settings['posts_per_page'];
+				$pagination_settings['effect'] = isset( $view_settings['rollover']['effect'] ) ? $view_settings['rollover']['effect'] : $pagination_settings['effect'];
+				$pagination_settings['duration'] = isset( $view_settings['rollover']['duration'] ) ? $view_settings['rollover']['duration'] : $pagination_settings['duration'];
+				$pagination_settings['speed'] = isset( $view_settings['rollover']['speed'] ) ? $view_settings['rollover']['speed'] : 5;
 				$preload_images = isset( $view_settings['rollover']['preload_images'] ) ? $view_settings['rollover']['preload_images'] : true;
 			}
 			
-			$pagination_data['preload_images'] = $preload_images ? 'enabled' : 'disabled';
+			$pagination_settings['preload_images'] = $preload_images;
 			
-			if ( $pagination_data['effect'] == 'fadeslow' ) {
-				$pagination_data['effect']		= 'fade';
-				$pagination_data['duration']	= '1500';
-			} else if ( $pagination_data['effect'] == 'fadefast' ) {
-				$pagination_data['effect']		= 'fade';
-				$pagination_data['duration']	= '1';
+			if ( $pagination_settings['effect'] == 'fadeslow' ) {
+				$pagination_settings['effect']		= 'fade';
+				$pagination_settings['duration']	= '1500';
+			} else if ( $pagination_settings['effect'] == 'fadefast' ) {
+				$pagination_settings['effect']		= 'fade';
+				$pagination_settings['duration']	= '1';
 			}
-		} else {
-			$pagination_data['type']		= isset( $view_settings['pagination']['type'] ) ? $view_settings['pagination']['type'] : 'paged';
-			$pagination_data['effect']		= isset( $view_settings['pagination']['effect'] ) ? $view_settings['pagination']['effect'] : 'fade';
-			$pagination_data['duration']	= isset( $view_settings['pagination']['duration'] ) ? $view_settings['pagination']['duration'] : '500';
 			
-			$preload_images = isset( $view_settings['pagination']['preload_images'] ) ? $view_settings['pagination']['preload_images'] : true;
-			$pagination_data['preload_images'] = $preload_images ? 'enabled' : 'disabled';
+			$pagination_settings['pre_reach'] = isset( $pagination_settings['pre_reach'] ) ? $pagination_settings['pre_reach'] : 1;
 			
-			if ( 
-				$pagination_data['type'] == 'rollover' 
-			) {
-				$pagination_data['stop_rollover'] = 'true';
-			}
+			$view_settings['pagination'] = $pagination_settings;
+			
+			unset( $view_settings['posts_per_page'] );
+			unset( $view_settings['ajax_pagination'] );
+			unset( $view_settings['rollover'] );
+			
 		}
 		
-		/**
-		* Cache & preload
-		*/
+		return $view_settings;
+	}
+	
+	function set_pagination_in_query( $query, $view_settings, $id  ) {
+		
+		$view_settings = $this->upgrade_pagination_schema( $view_settings );
+		
+		if ( $view_settings['pagination']['type'] == 'disabled' ) {
+			$query['posts_per_page'] = -1;
+		} else {
+			$view_settings['pagination']['posts_per_page'] = ( $view_settings['pagination']['posts_per_page'] == 'default' ) ? 10 : $view_settings['pagination']['posts_per_page'];
+			$query['posts_per_page'] = $view_settings['pagination']['posts_per_page'];
+		}
+		
+		return $query;
+	}
+	
+	/**
+	* get_pagination_settings
+	*
+	* Get the View or WordPress Archive pagination settings, using a filter for uniformity:
+	* $pagination_settings = apply_filters( 'wpv_filter_wpv_get_pagination_settings', array(), $view_settings );
+	*
+	* Proxy between the old and new pagination data structure.
+	*
+	* @return array
+	* 	'id'					=>											The object ID
+	* 	'query'					=> 'normal'|'archive'						The kind of object
+	* 	'base_permalink'		=> 											The current permalink with all URL parameters, but a placeholded page number
+	* 	'type'					=> 'disabled'|'paged'|'ajaxed'|'rollover'	The pagination mode
+	* 	'effect'				=> 											The AJAX pagination effect name
+	* 	'duration'				=> 											The AJAX pagination effect duration, in milisecons
+	*   'speed'					=>											The rollover speed, if any, in miliseconds
+	* 	'stop_rollover'			=> 											The AJAX pagination rollover status, whether it should be stopped on item selection TO BE DEPRECATED
+	* 	'cache_pages'			=> 'enabled'|'disabled'						The AJAX pagination cache pages status
+	* 	'preload_pages'			=> 'enabled'|'disabled'						The AJAX pagination preload pages status
+	* 	'preload_reach'			=> 											The AJAX pagination preload pages reach, in natural number
+	* 	'preload_images'		=> 'enabled'|'disabled'						The AJAX pagination preload images status
+	* 	'spinner'				=> 'builtin'|'uploaded'|'disabled'			The AJAX pagination spinner mode
+	* 	'spinner_image'			=> 											The AJAX pagination spinner image, as empty string or URL
+	* 	'callback_next'			=> 											The AJAX pagination callback to execute after paging
+	* 	'manage_history'		=> 'enabled'|'disabled'						The AJAX pagination history mnageent mode
+	* 	'controls_in_form'		=> 'enabled'|'disabled'						Whether there are pagination controls in the form editor
+	* 	'infinite_tolerance'	=> 											The AJAX pagination infinite scrolling tolerance, in integer number
+	* 	'page'					=>											The current page
+	* 	'max_pages'				=>											The total number of pages
+	* 	'query'					=> 'normal'|'archive'						The object query mode
+	*
+	* @since 2.1
+	*/
+	
+	function get_pagination_settings( $pagination_data, $view_settings ) {
+		
+		$view_settings = $this->upgrade_pagination_schema( $view_settings );
+		
+		$pagination_data['id']				= apply_filters( 'wpv_filter_wpv_get_current_view', null );
+		// This might not be needed but if we can avoid POSTing the form when doing non-AJAXed pagination...
+		$permalinks_data					= $this->pagination_permalink_data( $view_settings, $pagination_data['id'] );
+		$pagination_data['base_permalink']	= $permalinks_data['other'];
+		
+		if ( 
+			! isset( $view_settings['view-query-mode'] )
+			|| ( 'normal' == $view_settings['view-query-mode'] ) 
+		) {
+			$query_mode = 'normal';
+		} else {
+			// we assume 'archive' or 'layouts-loop'
+			$query_mode = 'archive';
+		}
+		
+		$pagination_data['query']		= $query_mode;
+		$pagination_data['type']		= isset( $view_settings['pagination']['type'] ) ? $view_settings['pagination']['type'] : 'paged';
+		$pagination_data['effect']		= isset( $view_settings['pagination']['effect'] ) ? $view_settings['pagination']['effect'] : 'fade';
+		$pagination_data['duration']	= isset( $view_settings['pagination']['duration'] ) ? $view_settings['pagination']['duration'] : '500';
+		$pagination_data['speed']		= isset( $view_settings['pagination']['speed'] ) ? $view_settings['pagination']['speed'] : 5;
+		
+		$pagination_data['stop_rollover'] = 'false';
+		if ( 
+			$pagination_data['type'] == 'rollover' 
+		) {
+			$pagination_data['stop_rollover'] = 'true';
+		}
+		
 		$cache_pages = isset( $view_settings['pagination']['cache_pages'] ) ? $view_settings['pagination']['cache_pages'] : true;
 		$pagination_data['cache_pages'] = $cache_pages ? 'enabled' : 'disabled';
+		
+		$preload_images = isset( $view_settings['pagination']['preload_images'] ) ? $view_settings['pagination']['preload_images'] : true;
+		$pagination_data['preload_images'] = $preload_images ? 'enabled' : 'disabled';
 		
 		$preload_pages = isset( $view_settings['pagination']['preload_pages'] ) ? $view_settings['pagination']['preload_pages'] : true;
 		$pagination_data['preload_pages'] = $preload_pages ? 'enabled' : 'disabled';
@@ -417,34 +447,6 @@ class WPV_Pagination_Embedded {
 			* Deprecated on Views 1.11, keep for backwards compatibility
 			*/
 			
-			$cache_pages = $view_settings['pagination']['cache_pages'];
-			$preload_pages = $view_settings['pagination']['preload_pages'];
-			$spinner = $view_settings['pagination']['spinner'];
-			$spinner_image = $view_settings['pagination']['spinner_image'];
-			// $spinner_image might contain SSL traces, adjust if needed
-			if ( ! is_ssl() ) {
-				$spinner_image = str_replace( 'https://', 'http://', $spinner_image );
-			}
-			$callback_next = $view_settings['pagination']['callback_next'];
-			
-			if ( $view_settings['pagination']['mode'] == 'paged' ) {
-				$ajax = $view_settings['ajax_pagination'][0] == 'enable' ? 'true' : 'false';
-				$effect = isset( $view_settings['ajax_pagination']['style'] ) ? $view_settings['ajax_pagination']['style'] : 'fade';
-			}
-			
-			if ( $view_settings['pagination']['mode'] == 'rollover' ) {
-				$ajax = 'true';
-				$effect = $view_settings['rollover']['effect'];
-				// convert rollover to slide effect if the user clicks on a page.
-				
-				if ( $effect == 'slideleft' || $effect == 'slideright' ) {
-					$effect = 'slideh';
-				}
-				if ( $effect == 'slideup' || $effect == 'slidedown' ) {
-					$effect = 'slidev';
-				}
-			}
-
 			switch( $atts['style'] ) {
 				case 'drop_down':
 					$out = '';
@@ -550,7 +552,7 @@ class WPV_Pagination_Embedded {
 		if ( 
 			$max_page > 1.0 
 			&& (
-				$view_settings['pagination']['mode'] == 'rollover' 
+				$view_settings['pagination']['type'] == 'rollover' 
 				|| $page > 1
 			)
 		) {
@@ -624,7 +626,7 @@ class WPV_Pagination_Embedded {
 		if ( 
 			$max_page > 1.0 
 			&& (
-				$view_settings['pagination']['mode'] == 'rollover'
+				$view_settings['pagination']['type'] == 'rollover'
 				|| $page < $max_page
 			)
 		) {
@@ -757,6 +759,10 @@ class WPV_Pagination_Embedded {
 		$view_count			= apply_filters( 'wpv_filter_wpv_get_object_unique_hash', '', $view_settings );
 		$max_page			= (int) apply_filters( 'wpv_filter_wpv_get_max_pages', 1 );
 		$page				= (int) apply_filters( 'wpv_filter_wpv_get_current_page_number', 1 );
+		
+		if ( $max_page <= 1.0 ) {
+			return '';
+		}
 		
 		if ( ! empty( $ul_class ) ) {
 			$ul_class = ' class="' . esc_attr( $ul_class ) . '"';
@@ -1080,6 +1086,7 @@ class WPV_Pagination_Embedded {
 			'li_class_force'	=> '',
 			'a_class_force'		=> 'wpv-archive-pagination-link js-wpv-archive-pagination-link',
 			'span_class_force'	=> 'wpv-archive-pagination-link wpv-archive-pagination-link-current',
+			'ellipsis_class_force' => 'wpv-archive-pagination-link wpv-archive-pagination-link-ellipsis'
 		);
 		
 		$view_id			= apply_filters( 'wpv_filter_wpv_get_current_view', null );
@@ -1095,6 +1102,8 @@ class WPV_Pagination_Embedded {
 		$view_url_param_maybe[]	= 'orderby';
 		$view_url_param_maybe[]	= 'order';
 		$view_url_param_maybe[]	= 'orderby_as';
+		$view_url_param_maybe[]	= 'orderby_second';
+		$view_url_param_maybe[]	= 'order_second';
 		
 		$query_args			= array();
 		$query_args_remove	= array();
@@ -1421,6 +1430,8 @@ class WPV_Pagination_Embedded {
 			$view_url_param_maybe[]	= 'orderby';
 			$view_url_param_maybe[]	= 'order';
 			$view_url_param_maybe[]	= 'orderby_as';
+			$view_url_param_maybe[]	= 'orderby_second';
+			$view_url_param_maybe[]	= 'order_second';
 			
 			$query_args			= array();
 			$query_args_remove	= array();
@@ -1470,15 +1481,24 @@ class WPV_Pagination_Embedded {
 			foreach ( $view_url_param_maybe as $param ) {
 				if ( 
 					isset( $_GET[ 'wpv_sort_' . $param ] ) 
+					&& $_GET[ 'wpv_sort_' . $param ] != '' 
 					&& (
 						! isset( $view_settings[ $param ] ) 
 						|| strtolower( $_GET[ 'wpv_sort_' . $param ] ) != strtolower( $view_settings[ $param ] )
 					)
 				) {
-					$query_args[ $param ] = $_GET[ 'wpv_sort_' . $param ];
+					$query_args[ 'wpv_sort_' . $param ] = $_GET[ 'wpv_sort_' . $param ];
 				} else {
-					$query_args_remove[] = $param;
+					$query_args_remove[] = 'wpv_sort_' . $param;
 				}
+			}
+			
+			if (
+				in_array( 'wpv_sort_orderby_second', $query_args_remove ) 
+				&& isset( $query_args['wpv_sort_order_second'] )
+			) {
+				$query_args_remove[] = 'wpv_sort_order_second';
+				unset( $query_args['wpv_sort_order_second'] );
 			}
 			
 			$query_args = urlencode_deep( $query_args );
@@ -1541,6 +1561,8 @@ class WPV_Pagination_Embedded {
 		$view_url_parameters['wpv_sort_orderby']		= 'wpv_sort_orderby';
 		$view_url_parameters['wpv_sort_order']			= 'wpv_sort_order';
 		$view_url_parameters['wpv_sort_orderby_as']		= 'wpv_sort_orderby_as';
+		$view_url_parameters['wpv_sort_orderby_second']	= 'wpv_sort_orderby_second';
+		$view_url_parameters['wpv_sort_order_second']	= 'wpv_sort_order_second';
 		$view_url_param_maybe	= array();
 		
 		$origin					= false;
@@ -1598,11 +1620,23 @@ class WPV_Pagination_Embedded {
 						$query_args[ $param_value ] = $_GET[ $param_value ];
 					}
 				} else {
-					$query_args[ $param_value ] = $_GET[ $param_value ];
+					if ( $_GET[ $param_value ] == '' ) {
+						$query_args_remove[] = $param_value;
+					} else {
+						$query_args[ $param_value ] = $_GET[ $param_value ];
+					}
 				}
 			} else {
 				$query_args_remove[] = $param_value;
 			}
+		}
+		
+		if (
+			in_array( 'wpv_sort_orderby_second', $query_args_remove ) 
+			&& isset( $query_args['wpv_sort_order_second'] )
+		) {
+			$query_args_remove[] = 'wpv_sort_order_second';
+			unset( $query_args['wpv_sort_order_second'] );
 		}
 		
 		if ( $view_hash ) {
@@ -1753,6 +1787,7 @@ class WPV_Pagination_Embedded {
 			'li_class_force'		=> '',
 			'a_class_force'			=> '',
 			'span_class_force'		=> '',
+			'ellipsis_class_force'	=> '',
 			'current_type'			=> 'text',
 			'anchor_text'			=> '%%PAGE%%',
 			'anchor_title'			=> '%%PAGE%%',
@@ -1789,6 +1824,11 @@ class WPV_Pagination_Embedded {
 		$span_class_array = array();
 		if ( ! empty( $args['span_class_force'] ) ) {
 			$span_class_array = array_map( 'esc_attr', explode( ' ', $args['span_class_force'] ) );
+		}
+
+		$ellipsis_class_array = array();
+		if ( !empty ( $args['ellipsis_class_force'] ) ) {
+			$ellipsis_class_array = array_map( 'esc_attr', explode( ' ', $args['ellipsis_class_force'] ) );
 		}
 
 		// Merge additional query vars found in the original URL into 'add_args' array.
@@ -1910,7 +1950,7 @@ class WPV_Pagination_Embedded {
 					$dots 
 					&& ! $args['show_all'] 
 				) {
-					$page_links[] = '<span class="' . implode( ' ', $span_class_array ) . '">' . $args['ellipsis'] . '</span>';
+					$page_links[] = '<span class="' . implode( ' ', $ellipsis_class_array ) . '">' . $args['ellipsis'] . '</span>';
 					$dots = false;
 				}
 			}
@@ -2100,71 +2140,6 @@ class WPV_Pagination_Embedded {
 
 global $WPV_Pagination_Embedded;
 $WPV_Pagination_Embedded = new WPV_Pagination_Embedded();
-
-function wpv_pagination_rollover_shortcode() {
-    $view_settings = apply_filters( 'wpv_filter_wpv_get_view_settings', array() );
-    $view_settings['rollover']['count'] = apply_filters( 'wpv_filter_wpv_get_max_pages', 1 );
-    wpv_pagination_rollover_add_slide( apply_filters( 'wpv_filter_wpv_get_object_unique_hash', '', $view_settings ), $view_settings );
-    add_action( 'wp_footer', 'wpv_pagination_rollover_js', 30 ); // Set priority higher than 20, when all the footer scripts are loaded
-}
-
-function wpv_pagination_rollover_add_slide( $id, $settings = array() ) {
-    static $rollovers = array();
-    if ( $id == 'get' ) {
-        return $rollovers;
-    }
-    $rollovers[$id] = $settings;
-}
-
-// @todo - refactor and pass only the data, manage it on the pagination script directly
-function wpv_pagination_rollover_js() {
-    $rollovers = wpv_pagination_rollover_add_slide( 'get' );
-	$rollovers_ids = array();
-    if ( ! empty( $rollovers ) ) {
-        $out = '';
-        ?>
-        <script type="text/javascript">
-			var WPViews = WPViews || {};
-            jQuery( document ).ready( function() {
-				<?php
-				foreach ( $rollovers as $id => $rollover ) {
-					// Make sure we have all the needed data
-					if ( 
-						! isset( $rollover['rollover']['effect'] ) 
-						|| empty ( $rollover['rollover']['effect'] )
-					) {
-						$rollover['rollover']['effect'] = 'fade';
-					}
-					if ( 
-						! isset( $rollover['rollover']['speed'] ) 
-						|| empty( $rollover['rollover']['speed'] )
-					) {
-						$rollover['rollover']['speed'] = 5;
-					}
-					if ( ! isset( $rollover['rollover']['count'] ) ) {
-						$rollover['rollover']['count'] = 0;
-					}
-					$out .= 'if ( jQuery("#wpv-view-layout-' . $id . '").length > 0 ) {' . "\n";
-					$out .= 'jQuery("#wpv-view-layout-' . $id . '").wpvRollover({'
-							. 'id: "'		. $id . '", '
-							. 'effect: "'	. esc_js( $rollover['rollover']['effect'] ) . '", '
-							. 'speed: '		. esc_js( $rollover['rollover']['speed'] ) . ', '
-							. 'page: 1'		. ', '
-							. 'count: '		. esc_js( $rollover['rollover']['count'] )
-							. '});'
-							. "\r\n"
-							. "}\n";
-					
-					$rollovers_ids[] = $id;
-				}
-				$out .= "WPViews.rollower_ids = " . json_encode( $rollovers_ids ) . ";\r\n";
-				echo $out;
-				?>
-            });
-        </script>
-        <?php
-    }
-}
 
 
 /**

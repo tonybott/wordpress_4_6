@@ -35,7 +35,7 @@ class WPV_Editor_Screen_Options{
 							'all'			=> __('Display all results', 'wpv-views'),
 							'pagination'	=> __('Display the results with pagination', 'wpv-views'),
 							'slider'		=> __('Display the results as a slider', 'wpv-views'),
-							'parametric'	=> __('Display the results as a parametric search', 'wpv-views'),
+							'parametric'	=> __('Display the results using a custom search', 'wpv-views'),
 							'full'			=> __('Full custom display mode', 'wpv-views')
 						);
 						foreach ( $purpose_options as $opt => $opt_name ) { ?>
@@ -221,7 +221,7 @@ class WPV_Editor_Screen_Options{
 					<select id="wpv-view-purpose" class="js-wpv-purpose" autocomplete="off">
 						<?php $purpose_options = array(
 							'all'			=> __('Display the basic archive', 'wpv-views'),
-							'parametric'	=> __('Display the archive as a parametric search', 'wpv-views'),
+							'parametric'	=> __('Display the archive as a custom search', 'wpv-views'),
 						);
 						foreach ( $purpose_options as $opt => $opt_name ) { ?>
 							<option <?php selected( $view_settings['view_purpose'], $opt ); ?> value="<?php echo esc_attr( $opt ); ?>"><?php echo $opt_name; ?></option>

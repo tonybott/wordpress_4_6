@@ -864,10 +864,14 @@ class WP_Views {
 			$sort_orderby		= '';
 			$sort_order			= '';
 			$sort_orderby_as	= '';
+			$sort_orderby_second	= '';
+			$sort_order_second		= '';
 			if ( $view_settings['query_type'][0] == 'posts' ) {
 				$sort_orderby = $view_settings['orderby'];
 				$sort_order = strtolower( $view_settings['order'] );
 				$sort_orderby_as = strtolower( $view_settings['orderby_as'] );
+				$sort_orderby_second = $view_settings['orderby_second'];
+				$sort_order_second = strtolower( $view_settings['order_second'] );
 			}
 			if ( $view_settings['query_type'][0] == 'taxonomy' ) {
 				$sort_orderby = $view_settings['taxonomy_orderby'];
@@ -877,7 +881,7 @@ class WP_Views {
 			if ( $view_settings['query_type'][0] == 'users' ) {
 				$sort_orderby = $view_settings['users_orderby'];
 				$sort_order = strtolower( $view_settings['users_order'] );
-				$sort_orderby_as = strtolower( $view_settings['users_orderby_as'] );
+				//$sort_orderby_as = strtolower( $view_settings['users_orderby_as'] );
 			}
 			
 			if (
@@ -902,6 +906,21 @@ class WP_Views {
 				) {
 					$sort_orderby_as = esc_attr( $_GET['wpv_sort_orderby_as'] );
 				}
+				// Secondary sorting
+				if (
+					isset( $_GET['wpv_sort_order_second'] ) 
+					&& in_array( strtoupper( esc_attr( $_GET['wpv_sort_order_second'] ) ), array( 'ASC', 'DESC' ) )
+				) {
+					$sort_order_second = strtoupper( esc_attr( $_GET['wpv_sort_order_second'] ) );
+				}
+				if (
+					isset( $_GET['wpv_sort_orderby_second'] ) 
+					&& esc_attr( $_GET['wpv_sort_orderby_second'] ) != 'undefined' 
+					&& esc_attr( $_GET['wpv_sort_orderby_second'] ) != '' 
+					&& in_array( $_GET['wpv_sort_orderby_second'], array( 'post_date', 'post_title', 'ID', 'modified', 'menu_order', 'rand' ) )
+				) {
+					$sort_orderby_second = esc_attr( $_GET['wpv_sort_orderby_second'] );
+				}
 			}
 			
 			// @todo Switch .js-wpv-filter-data-for-this-form into a form data attribute that we can init on document.ready and refresh when neeeded
@@ -918,10 +937,14 @@ class WP_Views {
 									'orderby'		=> $sort_orderby,
 									'order'			=> $sort_order,
 									'orderby_as'	=> $sort_orderby_as,
+									'orderby_second'	=> $sort_orderby_second,
+									'order_second'		=> $sort_order_second,
 									),
 				'orderby'			=> $sort_orderby,
 				'order'				=> $sort_order,
 				'orderby_as'		=> $sort_orderby_as,
+				'orderby_second'	=> $sort_orderby_second,
+				'order_second'		=> $sort_order_second,
 				'ajax_form'			=> '',// 'disabled'|'enabled'
 				'ajax_results'		=> '',// 'disabled'|'onsubmit'|'enabled'
 				'effect'			=> 'fade',
@@ -1028,6 +1051,13 @@ class WP_Views {
 				}
 			}
 			
+			$archive_environment = apply_filters( 'wpv_filter_wpv_get_current_archive_loop', array() );
+			$view_auxiliar_requires['archive'] = array(
+				'type'	=> $archive_environment['type'],
+				'name'	=> $archive_environment['name'],
+				'data'	=> $archive_environment['data'],
+			);
+			
 			$parametric_data['environment'] = $view_auxiliar_requires;
 			
 			$parametric_data = apply_filters( 'wpv_filter_wpv_get_parametric_settings', $parametric_data, $view_settings );
@@ -1045,6 +1075,8 @@ class WP_Views {
 				. ' data-orderby="' . $sort_orderby . '"'
 				. ' data-order="' . $sort_order . '"'
 				. ' data-orderbyas="' . $sort_orderby_as . '"'
+				. ' data-orderbysecond="' . $sort_orderby_second . '"'
+				. ' data-ordersecond="' . $sort_order_second . '"'
 				. ' data-parametric="' . esc_js( wp_json_encode( $parametric_data ) ) . '"'
 				. ' data-attributes="' . esc_js( wp_json_encode( $view_attrs_to_keep ) ) . '"'
 				. ' data-environment="' . esc_js( wp_json_encode( $view_auxiliar_requires ) ) . '"'
@@ -1190,6 +1222,9 @@ class WP_Views {
         if( isset( $view_settings['orderby'] ) && 'rand' === $view_settings['orderby'] ) {
             return false;
         }
+		if( isset( $view_settings['orderby_second'] ) && 'rand' === $view_settings['orderby_second'] ) {
+            return false;
+        }
         
         /* Rule 4: Environment-bound Views cannot be cached (at this time) */
         $requirement_list = array(
@@ -1307,6 +1342,9 @@ class WP_Views {
 
 	function wpv_get_view_shortcodes_attributes( $attributes = false ) {
 		$attributes = $this->get_view_shortcodes_attributes();
+		if ( ! is_array( $attributes ) ) {
+			$attributes = array();
+		}
 		return $attributes;
 	}
 
@@ -1413,6 +1451,9 @@ class WP_Views {
 			'offset',
 			'orderby',
 			'order',
+			'orderby_as',
+			'orderby_second',
+			'order_second',
 			'cached'
 		);
 		foreach ( $ignore as $ig_key ) {
@@ -1421,6 +1462,8 @@ class WP_Views {
 			}
 		}
 		if ( ! empty( $attr ) ) {
+			// Let's assume that shortcode attributes must be strings
+			$attr = array_map( 'strval', $attr );
 			ksort( $attr );
 			$attr_attr = 'CATTR' . md5( serialize( $attr ) );
 		}
@@ -3072,23 +3115,16 @@ class WP_Views {
 
 	function taxonomy_query( $view_settings ) {
 		$items = get_taxonomy_query( $view_settings );
-
+		
 		$this->taxonomy_data['item_count'] = sizeof( $items );
-
-		if ( $view_settings['pagination'][0] == 'disable' ) {
+		
+		if ( $view_settings['pagination']['type'] == 'disabled' ) {
 			$this->taxonomy_data['max_num_pages'] = 1;
 			$this->taxonomy_data['item_count_this_page'] = $this->taxonomy_data['item_count'];
 		} else {
-			// calculate the number of pages.
-			$posts_per_page = $view_settings['posts_per_page'];
-			if ( isset( $view_settings['pagination']['mode']) && $view_settings['pagination']['mode'] == 'rollover') {
-				$posts_per_page = $view_settings['rollover']['posts_per_page'];
-			}
-
+			$posts_per_page = $view_settings['pagination']['posts_per_page'];
 			$this->taxonomy_data['max_num_pages'] = ceil( $this->taxonomy_data['item_count'] / $posts_per_page );
-
 			if ( $this->taxonomy_data['item_count'] > $posts_per_page ) {
-				// return the paged result
 				$page = 1;
 				if (
 					isset( $_GET['wpv_paged'] ) 
@@ -3098,13 +3134,11 @@ class WP_Views {
 					// @todo check this against the View hash too!
 					$page = (int) $_GET['wpv_paged'];
 				}
-
 				$this->taxonomy_data['page_number'] = $page;
-
-				// only return 1 page of items.
 				$items = array_slice( $items, ($page - 1) * $posts_per_page, $posts_per_page );
 			}
 		}
+		
 		$this->taxonomy_data['item_count_this_page'] = sizeof( $items );
 		return $items;
 	}
@@ -3115,24 +3149,16 @@ class WP_Views {
 	 */
 	function users_query( $view_settings ) {
 		$items = get_users_query( $view_settings );
-
+		
 		$this->users_data['item_count'] = sizeof( $items );
-
-		if ( $view_settings['pagination'][0] == 'disable' ) {
+		
+		if ( $view_settings['pagination']['type'] == 'disabled' ) {
 			$this->users_data['item_count_this_page'] = $this->users_data['item_count'];
 			$this->users_data['max_num_pages'] = 1;
 		} else {
-			// calculate the number of pages.
-			$posts_per_page = $view_settings['posts_per_page'];
-			if ( isset( $view_settings['pagination']['mode'] ) && $view_settings['pagination']['mode'] == 'rollover') {
-				$posts_per_page = $view_settings['rollover']['posts_per_page'];
-			}
-
+			$posts_per_page = $view_settings['pagination']['posts_per_page'];
 			$this->users_data['max_num_pages'] = ceil( $this->users_data['item_count'] / $posts_per_page );
-
 			if ( $this->users_data['item_count'] > $posts_per_page ) {
-				// return the paged result
-
 				$page = 1;
 				if (
 					isset( $_GET['wpv_paged'] ) 
@@ -3141,14 +3167,11 @@ class WP_Views {
 				) {
 					$page = (int) $_GET['wpv_paged'];
 				}
-
 				$this->users_data['page_number'] = $page;
-
-				// only return 1 page of items.
 				$items = array_slice( $items, ($page - 1) * $posts_per_page, $posts_per_page );
-
 			}
 		}
+		
 		$this->users_data['item_count_this_page'] = sizeof( $items );
 		return $items;
 	}
@@ -4036,8 +4059,8 @@ function wpv_views_plugin_plugin_row_meta( $plugin_meta, $plugin_file, $plugin_d
 	if ( $plugin_file == $this_plugin ) {
 		$plugin_meta[] = sprintf(
 				'<a href="%s" target="_blank">%s</a>',
-				'https://wp-types.com/version/views-2-1/?utm_source=viewsplugin&utm_campaign=views&utm_medium=release-notes-plugin-row&utm_term=Views 2.1 release notes',
-				__( 'Views 2.1 release notes', 'wpv-views' ) 
+				'https://wp-types.com/version/views-2-2/?utm_source=viewsplugin&utm_campaign=views&utm_medium=release-notes-plugin-row&utm_term=Views 2.2 release notes',
+				__( 'Views 2.2 release notes', 'wpv-views' ) 
 			);
 	}
 	return $plugin_meta;
@@ -4367,6 +4390,7 @@ function get_view_allowed_url_parameters( $view_id ) {
 	}
 	
 	$attributes = apply_filters( 'wpv_filter_register_url_parameters_for_' . $query_type, $attributes, $view_settings );
+	$meta_value_pattern = '/URL_PARAM\(([^(]*?)\)/siU';
 	
 	switch ( $query_type ) {
 		case 'posts':
@@ -4393,21 +4417,23 @@ function get_view_allowed_url_parameters( $view_id ) {
 				// Custom fields
 				if ( 
 					preg_match( "/custom-field-(.*)_value/", $key, $res )
-					&& preg_match( "/URL_PARAM\(([^\)]+)\)/", $value, $parameter ) 
+					&& preg_match_all( $meta_value_pattern, $value, $matches_postmeta, PREG_SET_ORDER )
 				) {
 					$expected_input_data_type = in_array( $view_settings[ 'custom-field-' . $res[1] . '_type' ], array( 'NUMERIC', 'DATE', 'DATETIME', 'TIME' ) )
 							? 'integer'
 							: ( ( $view_settings[ 'custom-field-' . $res[1] . '_type' ] == 'DECIMAL' ) ? 'decimal' : 'string' );
-					$attributes[] = array(
-						'query_type'	=> $view_settings['query_type'][0],
-						'filter_type'	=> 'post_custom_field_'. $res[1],
-						'filter_label'	=> sprintf( __( 'Custom field - %s', 'wpv-views' ), $res[1] ),
-						'value'			=> 'custom_field_value',
-						'attribute'		=> $parameter[1],
-						'expected'		=> $expected_input_data_type,
-						'placeholder'	=> 'value',
-						'description'	=> __( 'Please type a custom field value', 'wpv-views' )
-					);
+					foreach( $matches_postmeta as $index => $match ) {
+						$attributes[] = array(
+							'query_type'	=> $view_settings['query_type'][0],
+							'filter_type'	=> 'post_custom_field_'. $res[1] . '_' . $index,
+							'filter_label'	=> sprintf( __( 'Custom field - %s', 'wpv-views' ), $res[1] ),
+							'value'			=> 'custom_field_value',
+							'attribute'		=> $match[1],
+							'expected'		=> $expected_input_data_type,
+							'placeholder'	=> 'value',
+							'description'	=> __( 'Please type a custom field value', 'wpv-views' )
+						);
+					}
 				}
 			}
 			break;
@@ -4416,21 +4442,23 @@ function get_view_allowed_url_parameters( $view_id ) {
 				// Termmeta fields
 				if ( 
 					preg_match( "/termmeta-field-(.*)_value/", $key, $res )
-					&& preg_match( "/URL_PARAM\(([^\)]+)\)/", $value, $parameter ) 
+					&& preg_match_all( $meta_value_pattern, $value, $matches_termmeta, PREG_SET_ORDER )
 				) {
 					$expected_input_data_type = in_array( $view_settings[ 'termmeta-field-' . $res[1] . '_type' ], array('NUMERIC','DATE','DATETIME','TIME') )
 							? 'integer'
 							: ( ( $view_settings[ 'termmeta-field-' . $res[1] . '_type' ] == 'DECIMAL' ) ? 'decimal' : 'string' );
-					$attributes[] = array(
-						'query_type'	=> $view_settings['query_type'][0],
-						'filter_type'	=> 'taxonomy_termmeta_field_'. $res[1],
-						'filter_label'	=> sprintf( __( 'Termmeta field - %s', 'wpv-views' ), $res[1] ),
-						'value'			=> 'termmeta_field_value',
-						'attribute'		=> $parameter[1],
-						'expected'		=> $expected_input_data_type,
-						'placeholder'	=> 'value',
-						'description'	=> __( 'Please type a termmeta field value', 'wpv-views' )
-					);
+					foreach( $matches_termmeta as $index => $match ) {
+						$attributes[] = array(
+							'query_type'	=> $view_settings['query_type'][0],
+							'filter_type'	=> 'taxonomy_termmeta_field_'. $res[1] . '_' . $index,
+							'filter_label'	=> sprintf( __( 'Termmeta field - %s', 'wpv-views' ), $res[1] ),
+							'value'			=> 'termmeta_field_value',
+							'attribute'		=> $match[1],
+							'expected'		=> $expected_input_data_type,
+							'placeholder'	=> 'value',
+							'description'	=> __( 'Please type a termmeta field value', 'wpv-views' )
+						);
+					}
 				}
 			}
 			break;
@@ -4439,21 +4467,23 @@ function get_view_allowed_url_parameters( $view_id ) {
 				// Usermeta fields
 				if ( 
 					preg_match( "/usermeta-field-(.*)_value/", $key, $res )
-					&& preg_match( "/URL_PARAM\(([^\)]+)\)/", $value, $parameter ) 
+					&& preg_match_all( $meta_value_pattern, $value, $matches_usermeta, PREG_SET_ORDER )
 				) {
 					$expected_input_data_type = in_array( $view_settings[ 'usermeta-field-' . $res[1] . '_type' ], array('NUMERIC','DATE','DATETIME','TIME') )
 							? 'integer'
 							: ( ( $view_settings[ 'usermeta-field-' . $res[1] . '_type' ] == 'DECIMAL' ) ? 'decimal' : 'string' );
-					$attributes[] = array(
-						'query_type'	=> $view_settings['query_type'][0],
-						'filter_type'	=> 'user_usermeta_field_'. $res[1],
-						'filter_label'	=> sprintf( __( 'Usermeta field - %s', 'wpv-views' ), $res[1] ),
-						'value'			=> 'usermeta_field_value',
-						'attribute'		=> $parameter[1],
-						'expected'		=> $expected_input_data_type,
-						'placeholder'	=> 'value',
-						'description'	=> __( 'Please type an username field value', 'wpv-views' )
-					);
+					foreach( $matches_usermeta as $index => $match ) {
+						$attributes[] = array(
+							'query_type'	=> $view_settings['query_type'][0],
+							'filter_type'	=> 'user_usermeta_field_'. $res[1] . '_' . $index,
+							'filter_label'	=> sprintf( __( 'Usermeta field - %s', 'wpv-views' ), $res[1] ),
+							'value'			=> 'usermeta_field_value',
+							'attribute'		=> $match[1],
+							'expected'		=> $expected_input_data_type,
+							'placeholder'	=> 'value',
+							'description'	=> __( 'Please type an username field value', 'wpv-views' )
+						);
+					}
 				}
 			}
 			break;
