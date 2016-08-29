@@ -500,7 +500,7 @@ var WPV_ParametricFilterWindow = function() {
 					{
 						attrs['auto_fill'] = 0;
 					}
-					if( attrs['type'] == 'Types auto style' ) {
+					if( attrs['type'] == 'As defined in Types' ) {
 						attrs['auto_fill'] = 0;
 						attrs['type'] = false;
 					}
@@ -1522,7 +1522,7 @@ var WPV_ParametricFilterWindow = function() {
 
 			if( field.type === 'false' )
 			{
-				field.type = "Types auto style";
+				field.type = "As defined in Types";
 			}
 
 			raw = new WPV_ParametricField(
@@ -1590,10 +1590,10 @@ var WPV_ParametricFilterWindow = function() {
 			}
 
 
-			if( field.is_types && parametricViewModel.selectInputKind()[0] != "Types auto style" && field.type ==  "Types auto style" && field.index != null )
+			if( field.is_types && parametricViewModel.selectInputKind()[0] != "As defined in Types" && field.type ==  "As defined in Types" && field.index != null )
 			{
-				parametricViewModel.selectInputKind.unshift( "Types auto style" );
-				parametricViewModel.type( "Types auto style" );
+				parametricViewModel.selectInputKind.unshift( "As defined in Types" );
+				parametricViewModel.type( "As defined in Types" );
 			}
 
 			parametricViewModel.compare( field.compare );
@@ -2357,7 +2357,7 @@ var WPV_ParametricViewModel = function() {
 			return '';
 		}
 
-		if( !field.is_types && self.selectInputKind()[0] == "Types auto style" ) {
+		if( !field.is_types && self.selectInputKind()[0] == "As defined in Types" ) {
 			self.selectInputKind.shift();
 		}
 		//if(  WPV_Parametric.debug ) console.log("self.field:: ", field.field() ? field.field() : 'NO FIELD' );
@@ -2504,17 +2504,17 @@ var WPV_ParametricViewModel = function() {
 			newValue = 'textfield';
 
 		try	{
-			if( self.is_populating && field.field_type_switch == "Types auto style" ) {
+			if( self.is_populating && field.field_type_switch == "As defined in Types" ) {
 				newValue = field.field_type_switch;
 				self.type( newValue );
 				return newValue;
 			}
 
-			if( field.is_types && meta_data_root[ field.kind ][ field.field_type_switch ]['type'][0] != "Types auto style" ) {
+			if( field.is_types && meta_data_root[ field.kind ][ field.field_type_switch ]['type'][0] != "As defined in Types" ) {
 
-				meta_data_root[ field.kind ][ field.field_type_switch ]['type'].unshift( "Types auto style" );
+				meta_data_root[ field.kind ][ field.field_type_switch ]['type'].unshift( "As defined in Types" );
 
-			} else if( !field.is_types && meta_data_root[ field.kind ][ field.field_type_switch ]['type'][0] == "Types auto style" ) {
+			} else if( !field.is_types && meta_data_root[ field.kind ][ field.field_type_switch ]['type'][0] == "As defined in Types" ) {
 
 				meta_data_root[ field.kind ][ field.field_type_switch ]['type'].shift();
 			}
@@ -2546,7 +2546,7 @@ var WPV_ParametricViewModel = function() {
 			newValue = '=',
 			tmp;
 		try	{
-			tmp = ( field.field_type_switch == 'Types auto style' ) ? 'textfield' : field.field_type_switch;
+			tmp = ( field.field_type_switch == 'As defined in Types' ) ? 'textfield' : field.field_type_switch;
 
 			if( ~jqp.inArray( field.data_type(), self.numeric_operators ) ) {
 				self.selectCompare( meta_data_root[field.kind]['numeric']['compare'] );
@@ -2576,7 +2576,7 @@ var WPV_ParametricViewModel = function() {
 
 		try	{
 			newVal = ( typeof newVal == 'undefined' ) ? field.type() : newVal;
-			tmp = ( newVal == 'Types auto style' ) ? 'textfield' : newVal;
+			tmp = ( newVal == 'As defined in Types' ) ? 'textfield' : newVal;
 			field.type( newVal );
 
 			if( field.kind == 'field' && self.type() != 'textfield' && !self.is_populating ) {
@@ -3696,7 +3696,16 @@ var WPV_ParametricSearchButton = function() {
 		self.dialog_override.dialog( "open" );
 		jqp( '.js-wpv-search-filter-override-var' ).hide();
 		jqp( '.js-wpv-post-search-override-dialog' ).attr( 'checked', false );
-		jqp( '#search-override-full' ).attr( 'checked', true );
+		if ( jqp( '#js-row-post_search input[name="post_search_content"]:checked' ).length > 0 ) {
+			var selected = jqp( '#js-row-post_search input[name="post_search_content"]:checked' ).val();
+			if ( jqp( '#wpv-search-override-shortcode-' + selected ).length > 0 ) {
+				jqp( '#wpv-search-override-shortcode-' + selected ).attr( 'checked', true );
+			} else {
+				jqp( '#wpv-search-override-shortcode-full_content' ).attr( 'checked', true );
+			}
+		} else {
+			jqp( '#wpv-search-override-shortcode-full_content' ).attr( 'checked', true );
+		}
 		jqp( '.js-parametric-add-search-override' )
 			.addClass( 'button-primary' )
 			.removeClass( 'button-secondary' )
@@ -3753,11 +3762,13 @@ var WPV_ParametricSearchButton = function() {
 					decoded_response = jQuery.parseJSON( response );
 					if ( decoded_response.success === prms.id ) {
 						jQuery( '.js-filter-list' ).html( decoded_response.wpv_filter_update_filters_list );
+						jQuery( document ).trigger( 'js_event_wpv_query_filter_created', [ 'post_search' ] );
 						if ( typeof callback == 'function' ) {
 							callback.apply( self, args ? args : [] )
 						}
+						Toolset.hooks.doAction( 'wpv-action-wpv-edit-screen-manage-save-queue', { section: 'save_filter_post_search', action: 'remove' } );
+						jQuery( document ).trigger( 'js_event_wpv_save_filter_post_search_completed' );
 					}
-					jQuery( document ).trigger( 'js_event_wpv_query_filter_created', [ 'post_search' ] );
 				} else {
 					//if(  WPV_Parametric.debug ) console.log( WPV_Parametric.ajax_error, response );
 				}

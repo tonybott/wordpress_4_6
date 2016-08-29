@@ -188,7 +188,7 @@ class Editor_addon_parametric extends Editor_addon_generic {
 					'debug' => true,
 					'ajaxurl' => wpv_get_views_ajaxurl(),
 					
-					'dialog_title_create' => __( 'Insert a parametric search filter', 'wpv-views' ),
+					'dialog_title_create' => __( 'Insert a custom search filter', 'wpv-views' ),
 					'dialog_title_edit' => __( 'Edit this filter', 'wpv-views' ),
 					
 					'make_valid_selection' => __('Please make a valid selection.', 'wpv-views'),
@@ -220,7 +220,7 @@ class Editor_addon_parametric extends Editor_addon_generic {
 					'relationship_select_tree' => __('Select one tree', 'wpv-views'),
 					
 					'add_submit_shortcode_button' => __('Submit button', 'wpv-views'),
-					'add_submit_shortcode_dialog_title' => __( 'Create a submit button for this parametric search.', 'wpv-views' ),
+					'add_submit_shortcode_dialog_title' => __( 'Create a submit button for this custom search.', 'wpv-views' ),
 					'add_submit_shortcode_button_label' => __('Submit', 'wpv-views'),
 					'add_toolbar_submit_button_title' => __( 'Use the submit button to get results based on the form values', 'wpv-views' ),
 					'add_toolbar_submit_button_title_complete' => __( 'This form has a submit button already', 'wpv-views' ),
@@ -230,7 +230,7 @@ class Editor_addon_parametric extends Editor_addon_generic {
 					'add_submit_shortcode_dialog_label_default' => __('Submit', 'wpv-views'),
 					
 					'add_reset_shortcode_button' => __('Clear form', 'wpv-views'),
-					'add_reset_shortcode_dialog_title' => __( 'Create a reset button for this parametric search.', 'wpv-views' ),
+					'add_reset_shortcode_dialog_title' => __( 'Create a reset button for this custom search.', 'wpv-views' ),
 					'add_reset_shortcode_button_label' => __('Clear', 'wpv-views'),
 					'add_toolbar_reset_button_title' => __( 'You can use a reset button that will take the search form to its original state', 'wpv-views' ),
 					'add_toolbar_reset_button_title_complete' => __( 'This form has a reset button already', 'wpv-views' ),
@@ -238,18 +238,18 @@ class Editor_addon_parametric extends Editor_addon_generic {
 					'add_reset_shortcode_dialog_label_default' => __('Reset', 'wpv-views'),
 					
 					'add_spinner_shortcode_button' => __('Spinner graphics', 'wpv-views'),
-					'add_spinner_shortcode_dialog_title' => __( 'Create a spinner container for this parametric search.', 'wpv-views' ),
+					'add_spinner_shortcode_dialog_title' => __( 'Create a spinner container for this custom search.', 'wpv-views' ),
 					'add_toolbar_spinner_button_title' => __( 'You can use a spinner container that will be shown when performing any automatic update', 'wpv-views' ),
 					'add_toolbar_spinner_button_title_complete' => __( 'This form has a spinner container already', 'wpv-views' ),
-					'add_toolbar_spinner_button_title_useless' => __( 'No spinner container will be shown as this parametric search is not performing any automatic update', 'wpv-views' ),
+					'add_toolbar_spinner_button_title_useless' => __( 'No spinner container will be shown as this custom search is not performing any automatic update', 'wpv-views' ),
 					
-					'add_search_shortcode_button' => __('Content search', 'wpv-views'),
-					'add_search_shortcode_dialog_title' => __( 'Create a search box for this parametric search', 'wpv-views' ),
-					'add_search_shortcode_dialog_title_override' => __( 'Complete the search filter for this parametric search', 'wpv-views' ),
-					'add_toolbar_search_button_title' => __( 'You can add a search box to this form', 'wpv-views' ),
-					'add_toolbar_search_button_title_complete' => __( 'This form contains a search box already', 'wpv-views' ),
-					'add_toolbar_search_button_title_missing' => __( 'You have a search box in this form, click here to create the search filter that is missing', 'wpv-views' ),
-					'add_toolbar_search_button_title_wrong' => __( 'You have a search box in this form, but it is linked to a broken search filter', 'wpv-views' ),
+					'add_search_shortcode_button' => __('Text search', 'wpv-views'),
+					'add_search_shortcode_dialog_title' => __( 'Create a text search for this custom search', 'wpv-views' ),
+					'add_search_shortcode_dialog_title_override' => __( 'Complete the search filter for this custom search', 'wpv-views' ),
+					'add_toolbar_search_button_title' => __( 'You can add a text search to this form', 'wpv-views' ),
+					'add_toolbar_search_button_title_complete' => __( 'This form contains a text search already', 'wpv-views' ),
+					'add_toolbar_search_button_title_missing' => __( 'You have a text search in this form, click here to create the search filter that is missing', 'wpv-views' ),
+					'add_toolbar_search_button_title_wrong' => __( 'You have a text search in this form, but it is linked to a broken search filter', 'wpv-views' ),
 
 					'add_submit_button_to_shortcode_input_default' => __('Search', 'wpv-views'),// MAYBE DEPRECATED
 

@@ -100,6 +100,7 @@ class WPV_WordPress_Archive_Frontend {
 		add_filter( 'wpv_filter_wpv_get_dependant_extended_query_args',		array( $this, 'wpv_get_dependant_archive_query_args' ), 10, 3 );
 		
 		add_filter( 'wpv_filter_wpv_get_current_archive',					array( $this, 'wpv_get_current_archive' ) );
+		add_filter( 'wpv_filter_wpv_get_current_archive_loop',				array( $this, 'wpv_get_current_archive_loop' ) );
 		
 		add_filter( 'wpv_filter_wpv_get_archive_unique_hash',				array( $this, 'wpv_get_archive_unique_hash' ) );
 		
@@ -357,9 +358,11 @@ class WPV_WordPress_Archive_Frontend {
 												),
 				'orderby'					=> 'post_date',
 				'order'						=> 'DESC',
+				'orderby_second'			=> '',
+				'order_second'				=> 'DESC',
 				'pagination'				=> array(
 													'type'						=> 'paged',
-													'posts_per_page'			=> 'global',
+													'posts_per_page'			=> 'default',
 													'effect'					=> 'fade',
 													'duration'					=> 500,
 													'manage_history'			=> 'off',
@@ -480,6 +483,9 @@ class WPV_WordPress_Archive_Frontend {
 		$orderby	= $archive_settings['orderby'];
 		$orderby_as	= $archive_settings['orderby_as'];
 		
+		$order_second	= $archive_settings['order_second'];
+		$orderby_second	= $archive_settings['orderby_second'];
+		
 		// Modern order URL override
 		if ( $is_view_posted ) {
 			if (
@@ -503,9 +509,24 @@ class WPV_WordPress_Archive_Frontend {
 			) {
 				$orderby_as = strtoupper( esc_attr( $_GET['wpv_sort_orderby_as'] ) );
 			}
+			
+			// Secondary sorting
+			if (
+				isset( $_GET['wpv_sort_order_second'] ) 
+				&& in_array( strtoupper( esc_attr( $_GET['wpv_sort_order_second'] ) ), array( 'ASC', 'DESC' ) )
+			) {
+				$order_second = strtoupper( esc_attr( $_GET['wpv_sort_order_second'] ) );
+			}
+			
+			if (
+				isset( $_GET['wpv_sort_orderby_second'] ) 
+				&& esc_attr( $_GET['wpv_sort_orderby_second'] ) != 'undefined' 
+				&& esc_attr( $_GET['wpv_sort_orderby_second'] ) != '' 
+				&& in_array( $_GET['wpv_sort_orderby_second'], array( 'post_date', 'post_title', 'ID', 'modified', 'menu_order', 'rand' ) )
+			) {
+				$orderby_second = esc_attr( $_GET['wpv_sort_orderby_second'] );
+			}
 		}
-		
-		$query->set( 'order', $order );
 		
 		if ( strpos( $orderby, 'field-' ) === 0 ) {
 			$meta_key = substr( $orderby, 6 );
@@ -524,22 +545,37 @@ class WPV_WordPress_Archive_Frontend {
 				) {
 					switch ( $orderby_as ) {
 						case "STRING":
-							$query->set( 'orderby',	'meta_value' );
+							$orderby = 'meta_value';
 							break;
 						case "NUMERIC":
-							$query->set( 'orderby',	'meta_value_num' );
+							$orderby = 'meta_value_num';
 							break;
 					}
 				} elseif ( in_array( $is_types_field_data['type'], array( 'numeric', 'date' ) ) ) {	// Auto-Discover
-					$query->set( 'orderby',	'meta_value_num' );
+					$orderby = 'meta_value_num';
 				} else {
-					$query->set( 'orderby',	'meta_value' );
+					$orderby = 'meta_value';
 				}
 			}
 			$query->set( 'meta_key', $meta_key );
 			
+		}
+		
+		global $wp_version;
+		if ( 
+			! version_compare( $wp_version, '4.0', '<' ) 
+			&& $orderby != 'rand' 
+			&& $orderby_second != '' 
+			&& $orderby != $orderby_second 
+		) {
+			$orderby_array = array(
+				$orderby		=> $order,
+				$orderby_second	=> $order_second
+			);
+			$query->set( 'orderby',	$orderby_array );
 		} else {
 			$query->set( 'orderby',	$orderby );
+			$query->set( 'order', $order );
 		}
 		
 	}
@@ -660,11 +696,16 @@ class WPV_WordPress_Archive_Frontend {
 			}
 		}
 		
-		$parametric_search_data_to_cache = WPV_Cache::get_parametric_search_data_to_cache( $archive_settings );
+		$query_args = $post_query->query_vars;
+		
+		$override_settings = array();
+		if ( isset( $query_args['post_type'] ) ) {
+			$override_settings['post_type'] = is_array( $query_args['post_type'] ) ? $query_args['post_type'] : array( $query_args['post_type'] );
+		}
+		
+		$parametric_search_data_to_cache = WPV_Cache::get_parametric_search_data_to_cache( $archive_settings, $override_settings );
 		
 		WPV_Cache::generate_native_cache( $already, $parametric_search_data_to_cache );
-		
-		$query_args = $post_query->query_vars;
 		
 		if ( isset ( $query_args['pr_filter_post__in'] ) ) {
 			$query_args['post__in'] = $query_args['pr_filter_post__in'];
@@ -822,6 +863,13 @@ class WPV_WordPress_Archive_Frontend {
 			$output_post = get_post( $wpa_id );
             if ( $output_post ) {
 				// Save the original query.
+				$action_args = array(
+					'wpa_id'		=> $wpa_id,
+					'wpa_slug'		=> $wpa_slug,
+					'wpa_settings'	=> $this->wpa_settings,
+					'wpa_object'	=> $this
+				);
+				do_action( 'wpv_action_wpv_before_clone_archive_loop', $wp_query, $action_args );
 				$this->query = ( $wp_query instanceof WP_Query ) ? clone $wp_query : null;
 				add_action( 'loop_start',	array( $this, 'loop_start' ), 1, 1 );
 				add_action( 'loop_end',		array( $this, 'loop_end' ), 999, 1 );
@@ -873,6 +921,7 @@ class WPV_WordPress_Archive_Frontend {
 		if (
 			! $this->in_head 
 			&& $this->header_started 
+			&& $query->is_main_query()
 			&& (
 				$query->query_vars_hash == $this->query->query_vars_hash 
 				|| $query->request == $this->query->request
@@ -887,7 +936,10 @@ class WPV_WordPress_Archive_Frontend {
 
 
 	function loop_end( $query ) {
-		if ( $this->loop_found ) {
+		if ( 
+			$this->loop_found 
+			&& $query->is_main_query()
+		) {
 			ob_end_clean();
 
 			if ( $this->loop_has_no_posts ) {
@@ -1174,7 +1226,7 @@ class WPV_WordPress_Archive_Frontend {
 					<li>
 						<p>
 							<input type="radio" name="wpv_wpa_purpose" class="js-wpv-purpose js-wpv-purpose-parametric" id="wpv_wpa_purpose_parametric" value="parametric" />
-							<label for="wpv_wpa_purpose_parametric"><?php _e('Display the items as a parametric search','wpv-views'); ?></label>
+							<label for="wpv_wpa_purpose_parametric"><?php _e('Display the items using a custom search','wpv-views'); ?></label>
 							<span class="wpv-helper-text"><?php _e('Visitors will be able to search through your content using different search criteria.', 'wpv-views'); ?></span>
 						</p>
 					</li>
@@ -1462,6 +1514,14 @@ class WPV_WordPress_Archive_Frontend {
 		return $this->wpa_id;
 	}
 	
+	function wpv_get_current_archive_loop( $current_archive_loop = array() ) {
+		return array(
+			'type'	=> $this->wpa_type,
+			'name'	=> $this->wpa_name,
+			'data'	=> $this->wpa_data
+		);
+	}
+	
 	function wpv_get_archive_unique_hash( $unique_hash = '' ) {
 		$unique_hash = $this->get_archive_unique_hash();
 		return $unique_hash;
@@ -1676,7 +1736,7 @@ class WPV_WordPress_Archive_Frontend {
 		$query_args['paged'] = (int) $page;
 		
 		foreach ( $sort as $sort_key => $sort_value ) {
-			if ( in_array( $sort_key, array( 'wpv_sort_orderby', 'wpv_sort_order', 'wpv_sort_orderby_as' ) ) ) {
+			if ( in_array( $sort_key, array( 'wpv_sort_orderby', 'wpv_sort_order', 'wpv_sort_orderby_as', 'wpv_sort_orderby_second', 'wpv_sort_order_second' ) ) ) {
 				$_GET[ $sort_key ] = esc_attr( $sort_value );
 			}
 		}
@@ -1805,6 +1865,27 @@ class WPV_WordPress_Archive_Frontend {
 		$paged				= $query_args['paged'];
 		
 		$this->initialize_archive_loop();
+		if ( $this->loop_has_no_posts ) {
+			// Reset everything if the loop has no posts.
+			// Then the WPA will render with no posts.
+			global $post;
+			$this->post_count = 0;
+			$this->query->post_count = 0;
+			$wp_query->post_count = 0;
+			$wp_query->posts = array();
+			$this->query->posts = array();
+			$post = null;
+		}
+		
+		if ( $this->loop_has_no_posts ) {
+			// Reset everything if the loop has no posts.
+			// Then the WPA will render with no posts.
+			$this->post_count = 0;
+			$this->query->post_count = 0;
+			$wp_query->post_count = 0;
+			$wp_query->posts = array();
+			$this->query->posts = array();
+		}
 		
 		$this->in_the_loop = true;
 		$data = array(
@@ -1839,10 +1920,14 @@ class WPV_WordPress_Archive_Frontend {
 			$query_args_remove[]			= 'lang';
 			$query_args_remove[]			= 'wpv_sort_orderby';
 			$query_args_remove[]			= 'wpv_sort_order';
+			$query_args_remove[]			= 'wpv_sort_orderby_as';
+			$query_args_remove[]			= 'wpv_sort_orderby_second';
+			$query_args_remove[]			= 'wpv_sort_order_second';
 			$query_args_remove[]			= 'wpv_aux_current_post_id';
 			$query_args_remove[]			= 'wpv_aux_parent_post_id';
 			$query_args_remove[]			= 'wpv_aux_parent_term_id';
 			$query_args_remove[]			= 'wpv_aux_parent_user_id';
+			$query_args_remove[]			= 'wpv_view_count';
 			$data['parametric_permalink']	= remove_query_arg(
 				$query_args_remove,
 				$pagination_permalink

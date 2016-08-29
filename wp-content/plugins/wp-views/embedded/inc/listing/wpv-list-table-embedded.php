@@ -113,6 +113,7 @@ abstract class WPV_List_Table_Embedded implements IWPV_Table_Decorator {
      */
     private function get_column_slug_by_orderby( $orderby ) {
         $columns = $this->get_column_info();
+
         foreach( $columns as $column_slug => $column ) {
             $column_orderby = wpv_getarr( $column, 'orderby', '' );
             if( $column_orderby == $orderby ) {
@@ -136,7 +137,7 @@ abstract class WPV_List_Table_Embedded implements IWPV_Table_Decorator {
 
         if( '' == $current_orderby ) {
             // Try to get information from column definitions.
-            $current_orderby_column = $this->get_presorted_column();
+            $current_orderby_column = $this->get_column_slug_by_orderby($this->get_default_sort_column());
             $current_orderby = $columns[ $current_orderby_column ]['orderby'];
             $is_presorted = ( '' != $current_orderby );
         } else {
@@ -204,8 +205,7 @@ abstract class WPV_List_Table_Embedded implements IWPV_Table_Decorator {
                 $title = wpv_getarr( $column, 'title', $column_slug );
             }
 
-            printf(
-                '<th scope="col" class="%s">%s</th>', join( ' ', $class ), $title );
+            printf('<th scope="col" class="%s">%s</th>', join( ' ', $class ), $title );
         }
     }
 

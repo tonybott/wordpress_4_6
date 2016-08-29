@@ -53,7 +53,7 @@ class WP_Views_Integration_API {
 		*/
 		
 		$this->auto_detect_list = array(
-			'optionsframework_init'	=> array(
+			'Options_Framework'	=> array(
 				'id'			=> 'options_framework',
 				'name'			=> __( 'Options Framework', 'wpv-views'  ),
 				'api_mode'		=> 'function',
@@ -76,13 +76,6 @@ class WP_Views_Integration_API {
 				'link'			=> 'https://reduxframework.com/'
 			),
 			*/
-			'getCherryVersion'	=> array(// TBD
-				'id'			=> 'cherry',
-				'name'			=> __( 'Cherry', 'wpv-views'  ),
-				'api_mode'		=> 'function',
-				'api_handler'	=> 'of_get_option',
-				'link'			=> 'http://www.cherryframework.com/'
-			),
 			'upfw_init'			=> array(// TBD
 				'id'			=> 'upthemes',
 				'name'			=> __( 'UpThemes', 'wpv-views'  ),
@@ -166,11 +159,13 @@ class WP_Views_Integration_API {
 		add_filter( 'wpv_filter_extend_framework_options_for_termmeta_field',		array( $this, 'extend_view_settings_as_array_options_for_filters' ), 10 );
 		add_filter( 'wpv_filter_extend_framework_options_for_users',				array( $this, 'extend_view_settings_as_array_options_for_filters' ), 10 );
 		add_filter( 'wpv_filter_extend_framework_options_for_usermeta_field',		array( $this, 'extend_view_settings_as_array_options_for_filters' ), 10 );
-		
+
 		// API
 		add_filter( 'wpv_filter_framework_has_valid_framework',						array( $this, 'has_valid_framework' ) );
-		
-    }
+
+		// Filter to check available Cherry Framework(s) and to populate (add to) auto_detect_list accordingly
+		add_filter( 'wpv_filter_extend_framework_auto_detect_list', array( $this, 'detect_cherry_frameworks' ) );
+	}
 	
 	/**
 	* init
@@ -189,6 +184,68 @@ class WP_Views_Integration_API {
 		);
 		wp_localize_script( 'views-framework-integration-js', 'views_framework_integration_texts', $framework_translations );
 		add_shortcode( 'wpv-theme-option', array( $this, 'wpv_shortcode_wpv_theme_option' ) );
+
+		$this->auto_detect_list = apply_filters('wpv_filter_extend_framework_auto_detect_list', $this->auto_detect_list);
+	}
+
+	/**
+	 * Check for available Cherry Framework(s)
+	 *
+	 * @param array $auto_detected_list An array of auto detected list of frameworks.
+	 * @return array Extended list of auto detected frameworks, after detection of available cherry frameworks.
+	 *
+	 * @see $this->auto_detect_list
+	 * @since 2.2
+	 */
+	function detect_cherry_frameworks( $auto_detected_list ) {
+		$known_foot_prints = array (
+			'getCherryVersion'	=> array(// Version < 4
+				'id'			=> 'cherry_three',
+				'name'			=> __( 'Cherry Framework', 'wpv-views'  ),
+				'api_mode'		=> 'function',
+				'api_handler'	=> 'of_get_option',
+				'link'			=> 'https://github.com/CherryFramework/CherryFramework',
+				'version'		=> '< v4'
+			),
+			'Cherry_Options_Framework'	=> array(// Version 4
+				'id'			=> 'cherry_four',
+				'name'			=> __( 'Cherry Framework', 'wpv-views'  ),
+				'api_mode'		=> 'function',
+				'api_handler'	=> 'cherry_get_option',
+				'link'			=> 'http://www.cherryframework.com/',
+				'version'		=> 'v4'
+			)
+		);
+
+		// Check how many are available
+		$available_frameworks = array();
+		foreach( $known_foot_prints as $framework => $data ) {
+			if( function_exists( $framework ) || class_exists( $framework ) ) {
+				$available_frameworks[$framework] = $data;
+			}
+		}
+
+		// Prepare data and extend auto_detect_list
+		$framework_count = sizeof( $available_frameworks );
+
+		if( $framework_count > 0 ) {
+			// Found cherry...!
+			foreach( $available_frameworks as $framework => $data ) {
+				if( $framework_count > 1 ) {
+					// Stress framework version with the name
+					// For this, concatenate 'version' with 'name'
+					$data['name'] .= ' '.$data['version'];
+				}
+
+				$auto_detected_list[$framework] = $data;
+			}
+		} else {
+			// Cherry doesn't exist here
+			// Add foot prints to the latest version - for the sake of list items.
+			$auto_detected_list['Cherry_Options_Framework'] = $known_foot_prints['Cherry_Options_Framework'];
+		}
+
+		return $auto_detected_list;
 	}
 	
 	/**
@@ -1277,7 +1334,6 @@ class WP_Views_Integration_API {
 		$status = $this->framework_valid;
 		return $status;
 	}
-	
 }
 
 global $WP_Views_fapi;

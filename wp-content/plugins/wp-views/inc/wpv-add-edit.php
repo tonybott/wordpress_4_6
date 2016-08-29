@@ -184,7 +184,7 @@ function views_redesign_html() {
 		</div><!-- .wpv-query-section -->
 
 		<div class="wpv-filter-section">
-			<span class="wpv-section-title"><?php _e('The Filter section lets you set up pagination and parametric search, which let visitors control the View query','wpv-views') ?></span>
+			<span class="wpv-section-title"><?php _e('The Filter section lets you set up pagination and custom search, which let visitors control the View query','wpv-views') ?></span>
 			
 			<div class="js-wpv-metasection-message-container js-wpv-metasection-message-container-filter"></div>
 			

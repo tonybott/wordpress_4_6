@@ -20,7 +20,7 @@ class WPV_Editor_Filter_Editor {
 	
 	static function wpv_screen_options_filter_editor( $sections ) {
 		$sections['filter-extra-parametric'] = array(
-			'name'		=> __( 'Parametric Search Settings', 'wpv-views' ),
+			'name'		=> __( 'Custom Search Settings', 'wpv-views' ),
 			'disabled'	=> false,
 		);
 		$sections['filter-extra'] = array(
@@ -52,7 +52,7 @@ class WPV_Editor_Filter_Editor {
 		
 			<div class="wpv-settings-header">
 				<h2>
-					<?php _e( 'Parametric Search Settings', 'wpv-views' ) ?>
+					<?php _e( 'Custom Search Settings', 'wpv-views' ) ?>
 					<i class="icon-question-sign fa fa-question-circle js-display-tooltip" 
 						data-header="<?php echo esc_attr( $section_help_pointer['title'] ); ?>" 
 						data-content="<?php echo esc_attr( $section_help_pointer['content'] ); ?>">
@@ -72,7 +72,7 @@ class WPV_Editor_Filter_Editor {
 				}
 				?>			
 				<p class="toolset-alert toolset-alert-info wpv-settings-query-type-taxonomy wpv-settings-query-type-users<?php echo $listing == 'posts' ? ' hidden' : ''; ?>">
-					<?php _e('Only Views listing posts can have parametric search inputs.', 'wpv-views'); ?>
+					<?php _e('Only Views listing posts can have custom search inputs.', 'wpv-views'); ?>
 				</p>
 				<div class="wpv-settings-query-type-posts<?php echo $listing == 'posts' ? '' : ' hidden'; ?>">
 					<?php
@@ -231,7 +231,7 @@ class WPV_Editor_Filter_Editor {
 							<?php
 							$glue = __( ' and ', 'wpv-views' );
 							$no_intersection_text = implode( $glue , $no_intersection );
-							echo sprintf( __( 'Your %s filters are using an internal "OR" kind of relationship, and dependant parametric search for those filters needs "AND" relationships.', 'wpv-views' ), $no_intersection_text );
+							echo sprintf( __( 'Your %s filters are using an internal "OR" kind of relationship, and dependant custom search for those filters needs "AND" relationships.', 'wpv-views' ), $no_intersection_text );
 							?>
 							<br /><br />
 							<button class="button-secondary js-make-intersection-filters" data-nonce="<?php echo wp_create_nonce( 'wpv_view_make_intersection_filters' ); ?>" data-cf="<?php echo ( in_array( 'cf', $no_intersection ) ) ? 'true' : 'false'; ?>" data-tax="<?php echo ( in_array( 'tax', $no_intersection ) ) ? 'true' : 'false'; ?>">
@@ -456,7 +456,7 @@ class WPV_Editor_Filter_Editor {
 			?>
 			<div class="toolset-alert js-wpv-no-filters-container"<?php if ( $listing == 'posts' && $purpose == 'parametric' ) { if ( $controls_count != 0 ) { echo ' style="display:none"'; } } else { echo ' style="display:none"'; } ?>">
 				<p>
-					<?php _e('Remember to add filters here. Right now, this parametric search has no filter items.', 'wpv-views'); ?>
+					<?php _e('Remember to add filters here. Right now, this custom search has no filter items.', 'wpv-views'); ?>
 				</p>
 			</div>
 
@@ -472,7 +472,7 @@ class WPV_Editor_Filter_Editor {
 							do_action( 'wpv_views_fields_button', 'wpv_filter_meta_html_content' );
 							if ( 'normal' == $mode ) {
 							?>
-							<li class="js-editor-pagination-button-wrapper">
+							<li class="js-wpv-editor-pagination-button-wrapper"<?php if ( isset( $view_settings['pagination']['type'] ) && $view_settings['pagination']['type'] == 'disabled' ) { echo ' style="display:none"'; } ?>>
 								<button class="button-secondary js-code-editor-toolbar-button js-wpv-pagination-popup" data-content="wpv_filter_meta_html_content">
 									<i class="icon-pagination fa fa-wpv-custom"></i>
 									<span class="button-label"><?php _e('Pagination controls','wpv-views'); ?></span>
@@ -481,6 +481,14 @@ class WPV_Editor_Filter_Editor {
 							<?php
 							}
 							?>
+							<!--
+							<li class="js-editor-sorting-button-wrapper">
+								<button class="button-secondary js-code-editor-toolbar-button js-wpv-sorting-dialog" data-content="wpv_filter_meta_html_content">
+									<i class="fa fa-sort"></i>
+									<span class="button-label"><?php _e('Sorting controls','wpv-views'); ?></span>
+								</button>
+							</li>
+							-->
 							<li>
 								<button class="button-secondary js-code-editor-toolbar-button js-wpv-media-manager" data-id="<?php echo esc_attr( $view_id ); ?>" data-content="wpv_filter_meta_html_content">
 									<i class="icon-picture fa fa-picture-o"></i>
@@ -496,7 +504,7 @@ class WPV_Editor_Filter_Editor {
 					?>
 					<div class="wpv-editor-metadata-toggle js-wpv-editor-metadata-toggle js-wpv-assets-editor-toggle" data-instance="filter-css-editor" data-target="js-wpv-assets-filter-css-editor" data-type="css">
 						<span class="wpv-toggle-toggler-icon js-wpv-toggle-toggler-icon">
-							<i class="icon-caret-down fa fa-caret-down icon-large fa-lg"></i>
+							<i class="fa fa-caret-down icon-large fa-lg"></i>
 						</span>
 						<i class="icon-pushpin fa fa-thumb-tack js-wpv-textarea-full" style="<?php echo ( empty( $filter_extra_css ) ) ? 'display:none;' : ''; ?>"></i>
 						<strong><?php _e( 'CSS editor', 'wpv-views' ); ?></strong>
@@ -507,7 +515,7 @@ class WPV_Editor_Filter_Editor {
 					
 					<div class="wpv-editor-metadata-toggle js-wpv-editor-metadata-toggle js-wpv-assets-editor-toggle" data-instance="filter-js-editor" data-target="js-wpv-assets-filter-js-editor" data-type="js">
 						<span class="wpv-toggle-toggler-icon js-wpv-toggle-toggler-icon">
-							<i class="icon-caret-down fa fa-caret-down icon-large fa-lg"></i>
+							<i class="fa fa-caret-down icon-large fa-lg"></i>
 						</span>
 						<i class="icon-pushpin fa fa-thumb-tack js-wpv-textarea-full" style="<?php echo ( empty( $filter_extra_js ) ) ? 'display:none;' : ''; ?>"></i>
 						<strong><?php _e( 'JS editor', 'wpv-views' ); ?></strong>
@@ -546,16 +554,20 @@ class WPV_Editor_Filter_Editor {
 					<h3>
 						<?php _e( 'Where to search', 'wpv-views' ); ?>
 					</h3>
-					<p>
-						<input value="full_content" name="wpv-post-search-options-dialog" class="js-wpv-post-search-options-dialog" checked="checked" id="search-shortcode-full" type="radio">
-						<label for="search-shortcode-full" class="label-alignleft"><?php _e('Post content and title', 'wpv-views'); ?></label>
-						<span class="wpv-helper-text"><?php _e( 'Use this to search in both post contents and titles', 'wpv-views' ); ?></span>
-					</p>
-					<p>
-						<input value="just_title" name="wpv-post-search-options-dialog" class="js-wpv-post-search-options-dialog" id="search-shortcode-title" type="radio">
-						<label for="search-shortcode-title" class="label-alignleft"><?php _e('Just post title', 'wpv-views'); ?></label>
-						<span class="wpv-helper-text"><?php _e( 'Use this to search just in titles', 'wpv-views' ); ?></span>
-					</p>
+					<?php
+					$post_search_content_options = WPV_Search_Frontend_Filter::get_post_search_content_options();
+					$checked = false;
+					foreach ( $post_search_content_options as $post_search_content_options_key => $post_search_content_options_data ) {
+						?>
+						<p>
+							<input value="<?php echo esc_attr( $post_search_content_options_key ); ?>" name="wpv-post-search-options-dialog" class="js-wpv-post-search-options-dialog" <?php checked( $checked, false ); ?> id="wpv-search-shortcode-<?php echo esc_attr( $post_search_content_options_key ); ?>" type="radio">
+							<label for="wpv-search-shortcode-<?php echo esc_attr( $post_search_content_options_key ); ?>" class="label-alignleft"><?php echo esc_html( $post_search_content_options_data['label'] ); ?></label>
+							<span class="wpv-helper-text"><?php echo $post_search_content_options_data['description']; ?></span>
+						</p>
+						<?php
+						$checked = true;
+					}
+					?>
 					<h3><?php _e( 'Styling options', 'wpv-views' ); ?></h3>
 					<p>
 						<label for="search_box_shortcode_button_classname" class="label-alignleft"><?php _e('Input classname:', 'wpv-views'); ?></label>
@@ -571,17 +583,17 @@ class WPV_Editor_Filter_Editor {
 				
 				<div class="js-errors-in-parametric-box"></div>
 				
-			</div> <!-- End of popup for the search box addition -->
+			</div> <!-- End of popup for the text search addition -->
 			
 			<div class="toolset-shortcode-gui-dialog-container wpv-shortcode-gui-dialog-container wpv-dialog-parametric-filter wpv-dialog-search-override js-dialog-search-override-button">
 				
 				<div class="wpv-dialog wpv-shortcode-gui-content-wrapper js-search_shortcode_override_label-wrap">
 					<h3><?php _e( 'Complete the search filter', 'wpv-views' ); ?></h3>
 					<p class="js-wpv-search-filter-override-var js-wpv-search-filter-override-valid">
-					<?php _e('This View already has a valid search filter, but it is missing the search box.', 'wpv-views' ); ?>
+					<?php _e('This View already has a valid search filter, but it is missing the text search.', 'wpv-views' ); ?>
 					</p>
 					<p class="js-wpv-search-filter-override-var js-wpv-search-filter-override-valid">
-					<?php _e( 'You can override the filter settings and add the search box here.', 'wpv-views'); ?>
+					<?php _e( 'You can override the filter settings and add the text search here.', 'wpv-views'); ?>
 					</p>
 					<p class="js-wpv-search-filter-override-var js-wpv-search-filter-override-specific">
 					<?php _e('This View already has a filter set to filter by a specific string.', 'wpv-views' ); ?>
@@ -590,7 +602,7 @@ class WPV_Editor_Filter_Editor {
 					<?php _e( 'You can fix this filter here.', 'wpv-views'); ?>
 					</p>
 					<p class="js-wpv-search-filter-override-var js-wpv-search-filter-override-missing">
-					<?php _e('This View already has a content search box, but the relevant filter is missing.', 'wpv-views' ); ?>
+					<?php _e('This View already has a content text search, but the relevant filter is missing.', 'wpv-views' ); ?>
 					</p>
 					<p class="js-wpv-search-filter-override-var js-wpv-search-filter-override-missing">
 					<?php _e( 'You can add this filter here.', 'wpv-views'); ?>
@@ -599,16 +611,20 @@ class WPV_Editor_Filter_Editor {
 					<h3>
 						<?php _e( 'Where to search', 'wpv-views' ); ?>
 					</h3>
-					<p>
-						<input value="full_content" name="wpv-post-search-override-dialog" class="js-wpv-post-search-override-dialog" checked="checked" id="search-override-full" type="radio">
-						<label for="search-override-full" class="label-alignleft"><?php _e('Post content and title', 'wpv-views'); ?></label>
-						<span class="wpv-helper-text"><?php _e( 'Use this to search in both post contents and titles', 'wpv-views' ); ?></span>
-					</p>
-					<p>
-						<input value="just_title" name="wpv-post-search-override-dialog" class="js-wpv-post-search-override-dialog" id="search-override-title" type="radio">
-						<label for="search-override-title" class="label-alignleft"><?php _e('Just post title', 'wpv-views'); ?></label>
-						<span class="wpv-helper-text"><?php _e( 'Use this to search just in titles', 'wpv-views' ); ?></span>
-					</p>
+					<?php
+					$post_search_content_options = WPV_Search_Frontend_Filter::get_post_search_content_options();
+					$checked = false;
+					foreach ( $post_search_content_options as $post_search_content_options_key => $post_search_content_options_data ) {
+						?>
+						<p>
+							<input value="<?php echo esc_attr( $post_search_content_options_key ); ?>" name="wpv-post-search-override-dialog" class="js-wpv-post-search-override-dialog" <?php checked( $checked, false ); ?> id="wpv-search-override-shortcode-<?php echo esc_attr( $post_search_content_options_key ); ?>" type="radio">
+							<label for="wpv-search-override-shortcode-<?php echo esc_attr( $post_search_content_options_key ); ?>" class="label-alignleft"><?php echo esc_html( $post_search_content_options_data['label'] ); ?></label>
+							<span class="wpv-helper-text"><?php echo $post_search_content_options_data['description']; ?></span>
+						</p>
+						<?php
+						$checked = true;
+					}
+					?>
 					
 					<h3><?php _e( 'Styling options', 'wpv-views' ); ?></h3>
 					<p>
@@ -1142,13 +1158,13 @@ function wpv_get_dps_related() {
 		}
 		// Existence
 		if ( $controls_count == 0 ) {
-			$return_result['existence'] = '<p>' . __('Remember to add filters here. Right now, this parametric search has no filter items.', 'wpv-views') . '</p>';
+			$return_result['existence'] = '<p>' . __('Remember to add filters here. Right now, this custom search has no filter items.', 'wpv-views') . '</p>';
 		}
 		// Intersection
 		if ( count( $no_intersection ) > 0 ) {
 			$glue = __( ' and ', 'wpv-views' );
 			$no_intersection_text = implode( $glue , $no_intersection );
-			$return_result['intersection'] = sprintf( __( 'Your %s filters are using an internal "OR" kind of relationship, and dependant parametric search for those filters needs "AND" relationships.', 'wpv-views' ), $no_intersection_text );
+			$return_result['intersection'] = sprintf( __( 'Your %s filters are using an internal "OR" kind of relationship, and dependant custom search for those filters needs "AND" relationships.', 'wpv-views' ), $no_intersection_text );
 			$return_result['intersection'] .= '<br /><br />';
 			$return_result['intersection'] .= '<button class="button-secondary js-make-intersection-filters" data-nonce="' . wp_create_nonce( 'wpv_view_make_intersection_filters' ) .'"';
 			if ( in_array( 'cf', $no_intersection ) ) {
@@ -1205,7 +1221,7 @@ function wpv_get_parametric_search_hints_data( $view_id ) {
 	
 	// Existence
 	if ( $controls_count == 0 ) {
-		$return_result['existence'] = '<p>' . __('Remember to add filters here. Right now, this parametric search has no filter items.', 'wpv-views') . '</p>';
+		$return_result['existence'] = '<p>' . __('Remember to add filters here. Right now, this custom search has no filter items.', 'wpv-views') . '</p>';
 	}
 	
 	// Intersection

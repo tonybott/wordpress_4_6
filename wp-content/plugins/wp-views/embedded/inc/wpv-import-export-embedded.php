@@ -843,6 +843,11 @@ class WPV_Export_Import_Embedded {
 							}
 						}
 						$duplicated_template['post_title'] = $template_title;
+						$proposed_name = sanitize_text_field( sanitize_title( $template_title ) );
+						if ( empty( $proposed_name ) ) {
+							$proposed_name = 'view-template-rand-' . uniqid();
+						}
+						$duplicated_template['post_name'] = $proposed_name;
 						$id = wp_insert_post( $duplicated_template, true );
 						if ( is_object( $id ) ) {
 							// it's an WP_Error object.
@@ -1352,6 +1357,11 @@ class WPV_Export_Import_Embedded {
 							}
 						}
 						$duplicated_view['post_title'] = $view_title;
+						$proposed_name = sanitize_text_field( sanitize_title( $view_title ) );
+						if ( empty( $proposed_name ) ) {
+							$proposed_name = 'view-rand-' . uniqid();
+						}
+						$duplicated_view['post_name'] = $proposed_name;
 						$id = wp_insert_post( $duplicated_view, true );
 						if ( is_object( $id ) ) {
 							// it's an WP_Error object.

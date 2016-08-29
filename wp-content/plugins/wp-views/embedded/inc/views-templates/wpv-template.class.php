@@ -48,6 +48,10 @@ class WPV_template{
 		add_filter( 'wpv_filter_wpv_the_content_suppressed', array( $this, 'restore_wpautop' ), 999, 1 );
 
         add_filter('the_excerpt', array($this, 'the_excerpt_for_archives'), 1, 1);
+		
+		add_filter( 'the_content',								array( $this, 'prevent_double_wpautop' ), 99 );
+		add_filter( 'wpv_filter_wpv_the_content_suppressed',	array( $this, 'prevent_double_wpautop' ), 99 );
+		add_filter( 'the_excerpt',								array( $this, 'prevent_double_wpautop' ), 99 );
 
         if(is_admin()){
             global $pagenow;
@@ -511,14 +515,6 @@ class WPV_template{
             }
         }
 
-
-		// If it's in progress then just return the un-filtered content
-		// to avoid recursion
-		static $in_progress = array();
-		if ( in_array( $id, array_keys( $in_progress ) ) ) {
-			return $content;
-		}
-
 		// Here we will store what kind of place this template is being used on: single-{post-type}, singular, archive-{post-type}, archive-{taxonomy}, archive, listing-{post-type}
 		$kind = '';
 		if ( is_singular() ) {
@@ -538,8 +534,6 @@ class WPV_template{
 				$kind = 'singular';
 			}
 		}
-
-		$in_progress[$id] = true;
 
         // FIXME: I understand that static variables are being used here to provide a temporal cache.
         // If so, please document.
@@ -648,6 +642,15 @@ class WPV_template{
 		    //$WPVDebug->add_log( 'info' , "wpv_filter_force_template\n" . __('ID: ', 'wpv-views') . $id . "\n" . __('Content Template: from ', 'wpv-views') . $old_template_selected . __(' to ', 'wpv-views') . $template_selected, 'filters', 'Filter: wpv_filter_force_template' );
 		    //The debug is not being added, I will need a better way to show this
 		}
+		
+		// If we already rendered this post with this CT on this same filter just return the un-filtered content
+		// to avoid recursion
+		static $in_progress = array();
+		if ( isset( $in_progress[ $id . '#' . $template_selected ] ) ) {
+			return $content;
+		}
+
+		$in_progress[ $id . '#' . $template_selected ] = true;
 
 		$WPVDebug->update_template_id( $template_selected );
 
@@ -658,9 +661,10 @@ class WPV_template{
 			toolset_wplog( 'Using Content Template: ' . $template_selected . ' on post: ' . $post->ID, null, __FILE__, 'WPV_template::the_content', 598 );
 
             $content_aux = $this->get_template_content( $template_selected );
+			
 			// If this function returns null, $template_selected does not exist or is not a Content Template
 			if ( is_null( $content_aux ) ) {
-				unset( $in_progress[$id] );
+				unset( $in_progress[ $id . '#' . $template_selected ] );
 				return $content;
 			} else {
 				$content = $content_aux;
@@ -671,6 +675,7 @@ class WPV_template{
 
 				$this->remove_wpautop();
 			}
+			
         }
 
 		$WPVDebug->add_log_item( 'shortcodes', $content );
@@ -690,7 +695,7 @@ class WPV_template{
 		*/
 		$content = apply_filters( 'wpv_filter_content_template_output', $content, $template_selected, $id, $kind );
 		
-		unset( $in_progress[$id] );
+		unset( $in_progress[ $id . '#' . $template_selected ] );
 
 		return $content;
 
@@ -762,6 +767,22 @@ class WPV_template{
         }
 
         return $content;
+	}
+	
+	/**
+	* prevent_double_wpautop
+	*
+	* Prevent empty open or close paragraph tags that can come when wpautop is fired twice, maybe from a page builder.
+	*
+	* @since 2.2
+	*/
+	
+	function prevent_double_wpautop( $content ) {
+		$content = str_replace( '<p><p>', '<p>', $content );
+		$content = str_replace( '</p></p>', '</p>', $content );
+		$content = str_replace( "</p>\n</p>", '</p>', $content );
+		
+		return $content;
 	}
 
 

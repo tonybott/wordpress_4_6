@@ -49,19 +49,43 @@ class WPV_Views_List_Table_Embedded extends WPV_List_Table_Embedded {
 
     public function get_columns() {
         return array(
+            'id' => array(
+                'title' => __( 'ID', 'wpv-views' ),
+                'is_sortable' => true,
+                'default_sort' => false,
+                'orderby' => 'ID',
+                'default_order' => 'ASC',
+                'title_asc' => ' <i class="icon-sort-by-attributes fa fa-sort-amount-asc"></i>',
+                'title_desc' => ' <i class="icon-sort-by-attributes-alt fa fa-sort-amount-desc"></i>'
+            ),
             'title' => array(
                 'title' => __( 'Title', 'wpv-views' ),
                 'is_sortable' => true,
+                'default_sort' => true,
                 'orderby' => 'post_title',
                 'default_order' => 'ASC',
                 'title_asc' => ' <i class="icon-sort-by-alphabet fa fa-sort-alpha-asc"></i>',
-                'title_desc' => ' <i class="icon-sort-by-alphabet-alt fa fa-sort-alpha-desc"></i>' ),
+                'title_desc' => ' <i class="icon-sort-by-alphabet-alt fa fa-sort-alpha-desc"></i>'
+            ),
             'content_to_load' => array( 'title' => __( 'Content to load', 'wpv-views' ) ) );
     }
 
 
     protected function get_table_classes() {
         return array_merge( parent::get_table_classes(), array( 'wpv-embedded-listing-table' ) );
+    }
+
+    /**
+     * ID column.
+     *
+     * Show ID of the view.
+     *
+     * @param $item WPV_View_Embedded View.
+     *
+     * @return string Content of the table cell.
+     */
+    public function column_id( $item ) {
+        return $item->id;
     }
 
 
@@ -105,5 +129,20 @@ class WPV_Views_List_Table_Embedded extends WPV_List_Table_Embedded {
         return $item->content_summary;
     }
 
+    /**
+     * Returns default orderby column
+     *
+     * @return string Column slug set as default orderby
+     */
+    public function get_default_sort_column() {
+        $columns = $this->get_columns();
 
+        foreach ( $columns as $column => $args ) {
+            if( array_key_exists( 'default_sort', $args ) && $args['default_sort'] ) {
+                return $args['orderby'];
+            }
+        }
+
+        return '';
+    }
 }

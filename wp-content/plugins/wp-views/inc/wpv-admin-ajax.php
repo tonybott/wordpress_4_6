@@ -131,7 +131,15 @@ function wpv_scan_view_usage_callback() {
     $view = get_post( $post_id );
 	$needle = '[wpv-view name="' . $view->post_title . '"';
 	$needle = '%' . wpv_esc_like( $needle ) . '%';
-	$needle_name = '[wpv-view name="' . $view->post_name . '"';
+	if (
+		'trash' == $view->post_status
+		&& '__trashed' === substr( $view->post_name, -9 )
+	) {
+		$view_name = substr( $view->post_name, 0, -9 );
+	} else {
+		$view_name = $view->post_name;
+	}
+	$needle_name = '[wpv-view name="' . $view_name . '"';
 	$needle_name = '%' . wpv_esc_like( $needle_name ) . '%';
 	
 	$values_to_prepare[] = $needle;
@@ -567,9 +575,16 @@ function wp_ajax_wpv_wp_archive_create_new_callback() {
 		);
 		wp_send_json_error( $data );
 	}
+	
+	$proposed_name = sanitize_text_field( sanitize_title( $new_title ) );
+	
+	if ( empty( $proposed_name ) ) {
+		$proposed_name = 'view-rand-' . uniqid();
+	}
+	
 	$new_archive = array(
 		'post_title'    => sanitize_text_field( $new_title ),
-		'post_name'		=> sanitize_text_field( sanitize_title( $new_title ) ),
+		'post_name'		=> $proposed_name,
 		'post_type'     => 'view',
 		'post_content'  => "[wpv-filter-meta-html]\n[wpv-layout-meta-html]",
 		'post_status'   => 'publish',
@@ -617,9 +632,16 @@ function wp_ajax_wpv_create_wpa_for_archive_loop_callback() {
 		);
 		wp_send_json_error( $data );
 	}
+	
+	$proposed_name = sanitize_text_field( sanitize_title( $_POST["title"] ) );
+	
+	if ( empty( $proposed_name ) ) {
+		$proposed_name = 'view-rand-' . uniqid();
+	}
+	
 	$new_archive = array(
 		'post_title'    => sanitize_text_field( $_POST["title"] ),
-		'post_name'		=> sanitize_text_field( sanitize_title( $_POST["title"] ) ),
+		'post_name'		=> $proposed_name,
 		'post_type'     => 'view',
 		'post_content'  => "[wpv-filter-meta-html]\n[wpv-layout-meta-html]",
 		'post_status'   => 'publish',
@@ -851,13 +873,19 @@ function wpv_view_change_post_name_callback(){
 	) {
 		$_POST['post_name'] = sanitize_title( get_the_title( $_POST['id'] ) );
 	}
+	
+	$proposed_name = sanitize_text_field( sanitize_title( $_POST['post_name'] ) );
+		
+	if ( empty( $proposed_name ) ) {
+		$proposed_name = 'view-rand-' . uniqid();
+	}
 
 	$my_post = array(
 		'ID'        => $_POST['id'],
-		'post_name' => sanitize_text_field($_POST['post_name']),
+		'post_name' => $proposed_name,
 	);
 
-	if ( WPV_View_Base::is_name_used( $_POST['post_name'], $_POST['id'] ) ) {
+	if ( WPV_View_Base::is_name_used( $proposed_name, $_POST['id'] ) ) {
 		$data = array(
 			'message' => __( 'This slug already exists. Please use another slug.', 'wpv-views' )
 		);
@@ -867,7 +895,7 @@ function wpv_view_change_post_name_callback(){
 	$id = wp_update_post( $my_post );
 	$post_data = get_post($id, ARRAY_A);
 
-	wp_send_json_success( array( 'id' => $id, 'slug' => $post_data['post_name'], ) );
+	wp_send_json_success( array( 'id' => $id, 'slug' => $proposed_name ) );
 }
 
 /**
@@ -1320,8 +1348,8 @@ function wpv_ct_create_new_save_callback()
 		wp_send_json_error( $data );
     }
 
-	$type	= wpv_getarr( $_POST, 'type', 0 );
-	$apply	= wpv_getarr( $_POST, 'apply', 0 );
+	$type	= wpv_getarr( $_POST, 'type', array() );
+	$apply	= wpv_getarr( $_POST, 'apply', array() );
 
 	if( WPV_Content_Template::is_name_used( $title ) ) {
 		$data = array(
@@ -1340,20 +1368,16 @@ function wpv_ct_create_new_save_callback()
 		);
 		wp_send_json_error( $data );
 	} else {	// Success
-		if ( $type[0] != '0' ) {
-			global $WPV_settings;
+		$settings = WPV_Settings::get_instance();
 
-			foreach ( $type as $type_to_save ) {
-				$type_to_save = sanitize_text_field( $type_to_save );
-				$WPV_settings[ $type_to_save ] = $create_template->id;
-			}
-
-			$WPV_settings->save();
+		foreach ( $type as $type_to_save ) {
+			$type_to_save = sanitize_text_field( $type_to_save );
+			$settings[ $type_to_save ] = $create_template->id;
 		}
+
+		$settings->save();
 		
-		if ( $apply[0] != '0' ) {
-			$create_template->kill_dissident_posts( $apply );
-		}
+		$create_template->kill_dissident_posts( $apply );
 
 		$data = array(
 			'id' => $create_template->id

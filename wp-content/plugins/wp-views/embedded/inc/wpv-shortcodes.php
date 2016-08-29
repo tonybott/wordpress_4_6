@@ -70,6 +70,9 @@ $wpv_shortcodes['wpv-current-user'] = array('wpv-current-user', __('Current user
 $wpv_shortcodes['wpv-user'] = array('wpv-user', __('Show user data', 'wpv-views'), 'wpv_user');
 $wpv_shortcodes['wpv-login-form'] = array('wpv-login-form', __('Login form', 'wpv-views'), 'wpv_shortcode_wpv_login_form');
 $wpv_shortcodes['wpv-logout-link'] = array('wpv-logout-link', __('Logout link', 'wpv-views'), 'wpv_shortcode_wpv_logout_link');
+$wpv_shortcodes['wpv-forgot-password-form'] = array('wpv-forgot-password-form', __('Forgot password form', 'wpv-views'), 'wpv_shortcode_wpv_forgot_password_form');
+$wpv_shortcodes['wpv-forgot-password-link'] = array('wpv-forgot-password-link', __('Forgot password link', 'wpv-views'), 'wpv_shortcode_wpv_forgot_password_link');
+$wpv_shortcodes['wpv-reset-password-form'] = array('wpv-reset-password-form', __('Reset password form', 'wpv-views'), 'wpv_shortcode_wpv_reset_password_form');
 
 if (defined('WPV_WOOCOMERCE_VIEWS_SHORTCODE')) {
 	$wpv_shortcodes['wpv-wooaddcart'] = array('wpv-wooaddcart', __('Add to cart button', 'wpv-views'), 'wpv-wooaddcart');
@@ -483,22 +486,28 @@ function wpv_current_user($attr){
 			case 'logged_in':
 				$out = 'true';
 				break;
-		case 'role':
-				$out = $current_user->roles[0];
+			case 'role':
+				if (
+					isset( $current_user->roles ) 
+					&& is_array( $current_user->roles ) 
+					&& isset( $current_user->roles[0] )
+				) {
+					$out = $current_user->roles[0];
+				}
 				break;
 			default:
 				$out = $current_user->display_name;
 				break;
 		}
 	} else {
-	switch ($info) {
-		case 'logged_in':
-		$out = 'false';
-		break;
-		default:
-		$out = '';
-		break;
-	}
+		switch ($info) {
+			case 'logged_in':
+				$out = 'false';
+				break;
+			default:
+				$out = '';
+				break;
+		}
 	}
 	apply_filters('wpv_shortcode_debug','wpv-current-user', json_encode($attr), '', 'Data received from cache', $out);
 	return $out;
@@ -669,7 +678,7 @@ function wpv_login_form( $args = array() ) {
 		'id_remember'		=> 'rememberme',
 		'id_submit'			=> 'wp-submit',
 		'remember'			=> true,
-		'value_username'	=> '',
+		'value_username'	=> isset( $_REQUEST['username'] ) ? $_REQUEST['username'] : '',
 		'value_remember'	=> false,
 	);
 
@@ -744,17 +753,176 @@ function wpv_login_form( $args = array() ) {
 		return $form;
 }
 
-add_action( 'wp_login_failed', 'wpv_login_form_fail_redirect' );
+/**
+ * The authenticate filter hook is used to perform additional validation/authentication any time a user logs in to WordPress.
+ *
+ * @param $user (null|WP_User|WP_Error) WP_User if the user is authenticated. WP_Error or null otherwise.
+ * @param $username (string) Username or email address.
+ * @param $password (string) User password
+ * @return mixed either a WP_User object if authenticating the user or, if generating an error, a WP_Error object.
+ *
+ * @see https://codex.wordpress.org/Plugin_API/Filter_Reference/authenticate
+ *
+ * More info: http://wordpress.stackexchange.com/a/183208
+ */
 
-function wpv_login_form_fail_redirect( $username ) {
-	if (
-		isset( $_REQUEST['wpv_login_form'] ) 
-		&& isset( $_REQUEST['wpv_login_form_redirect_on_fail'] )
-		&& $_REQUEST['wpv_login_form_redirect_on_fail'] != ''
-	) {
-		wp_safe_redirect( $_REQUEST['wpv_login_form_redirect_on_fail'] );
-        exit;
+add_filter( 'authenticate', 'wpv_authenticate', 30, 3 );
+
+function wpv_authenticate ( $user, $username, $password ) {
+	// forcefully capture login failed to forcefully open wpv_wp_login_failed action,
+	// so that this event can be captured
+	if ( is_wp_error( $user ) ) {
+		do_action( 'wpv_wp_login_failed', $username, $user );
 	}
+	return $user;
+};
+
+/**
+ * Action to forcefully redirect the user on failed authentication.
+ * Redirects to the page where the [wpv-login-form] short code is inserted, if 'redirect_fail_url' attribute is not defined.
+ *
+ * @param $username (string) Username or email address.
+ * @param $user (WP_Error) WP_Error object.
+ */
+
+add_action( 'wpv_wp_login_failed', 'wpv_login_form_fail_redirect', 30, 2 );
+
+function wpv_login_form_fail_redirect( $username, $user ) {
+	$redirect_url = '';
+
+	if ( isset( $_REQUEST['wpv_login_form'] ) ) {
+		if ( isset( $_REQUEST['wpv_login_form_redirect_on_fail'] ) && $_REQUEST['wpv_login_form_redirect_on_fail'] != '' ) {
+			$redirect_url = $_REQUEST['wpv_login_form_redirect_on_fail'];
+		} elseif ( wp_get_referer() ) {
+			$redirect_url = wp_get_referer();
+		}
+	}
+
+	if( !empty( $redirect_url ) ) {
+		$redirect_url = add_query_arg(
+			array(
+				'username' => $username,
+				'fail_reason' => $user->get_error_code()
+			),
+			$redirect_url
+		);
+
+		wp_safe_redirect( $redirect_url );
+
+		exit;
+	}
+}
+
+/**
+ * Filter to add error messages on top of the login form.
+ *
+ * @param $content (string) HTML content.
+ * @param $args (array) Default arguments array.
+ *
+ * @return string
+ *
+ * @see wpv_login_form()
+ */
+
+add_filter( 'login_form_top', 'wpv_authenticate_errors', 30, 2 );
+
+function wpv_authenticate_errors ( $content, $args ) {
+	if (
+		isset( $_REQUEST['fail_reason'] )
+		&& $_REQUEST['fail_reason'] != ''
+	) {
+		$error_string = __( '<strong>ERROR</strong>: ', 'wpv-views' );
+
+		switch( $_REQUEST['fail_reason'] ) {
+			case 'invalid_username':
+				$error_string .= __( 'Invalid username.', 'wpv-views' );
+				break;
+
+			case 'incorrect_password':
+				$error_string .= __( 'The password you entered for the username <strong>' . $args['value_username'] . '</strong> is incorrect.', 'wpv-views' );
+				break;
+
+			case 'empty_password':
+				$error_string .= __( 'The password field is empty.', 'wpv-views' );
+				break;
+
+			case 'empty_username':
+				$error_string .= __( 'The username field is empty.', 'wpv-views' );
+				break;
+
+			default:
+				$error_string .= __( 'Unknown error.', 'wpv-views' );
+				break;
+		}
+
+		$content .= apply_filters('wpv_filter_override_auth_errors' , $error_string, 'wp-error', $_REQUEST[ 'fail_reason' ]);
+	}
+
+	return $content;
+}
+
+/**
+ * Filter to override default error messages, with own message strings and/or to add some CSS cosmetics.
+ *
+ * @param string $message Error message.
+ * @param string $class (optional) CSS class to highlight the error message. If supplied, $message is encapsulated in <div>...</div>
+ * @param string $code (optional) An error code to identify supplied errors.
+ *
+ * @return string
+ *
+ * @see wpv_authenticate_errors() for failed login error codes.
+ */
+add_filter( 'wpv_filter_override_auth_errors', 'wpv_override_auth_errors', 10, 3 );
+
+function wpv_override_auth_errors( $message, $class = '', $code = '' ) {
+	if( !empty( $class ) ) {
+		$message = '<div class="' . $class . '">' . $message . '</div>';
+	}
+
+	return $message;
+}
+
+/**
+ * Filter to add general/success messages on top of the login form.
+ *
+ * @param $content (string) HTML content.
+ * @param $args (array) Default arguments array.
+ *
+ * @return string
+ *
+ * @since 2.2
+ * @see wpv_login_form()
+ */
+
+add_filter( 'login_form_top', 'wpv_shortcodes_wpv_login_messages', 30, 2 );
+add_filter( 'forgot_password_form_top', 'wpv_shortcodes_wpv_login_messages', 30, 2 );
+add_filter( 'reset_password_form_top', 'wpv_shortcodes_wpv_login_messages', 30, 2 );
+
+function wpv_shortcodes_wpv_login_messages ( $content, $args ) {
+	$msg_code = '';
+	$msg_string = '';
+
+	if ( isset( $_REQUEST['checkemail'] ) && $_REQUEST['checkemail'] != '' ) {
+		$msg_code = $_REQUEST['checkemail'];
+	}
+
+	if ( isset( $_REQUEST['password'] ) && $_REQUEST['password'] != '' ) {
+		$msg_code = $_REQUEST['password'];
+	}
+
+	switch( $msg_code ) {
+		case 'confirm':
+			$msg_string .= __( 'Check your email for the confirmation link.', 'wpv-views' );
+			break;
+
+		case 'changed':
+			$msg_string .= __( 'Your password has been reset.', 'wpv-views' );
+			break;
+	}
+
+	$content .= apply_filters( 'wpv_filter_override_auth_errors' , $msg_string, 'wp-success', $msg_code );
+
+	return $content;
 }
 
 /**
@@ -784,14 +952,14 @@ function wpv_shortcodes_get_wpv_login_form_data()  {
                 'header' => __('Display options', 'wpv-views'),
                 'fields' => array(
                     'redirect_url' => array(
-                        'label' => __( 'Redirect to this URL', 'wpv-views'),
+                        'label' => __( 'Redirect to this URL on success', 'wpv-views'),
                         'type' => 'url',
 						'description' => __( 'URL to redirect users after login in. Defaults to the current URL.', 'wpv-views' ),
                     ),
 					'redirect_url_fail' => array(
                         'label' => __( 'Redirect to this URL on failure', 'wpv-views'),
                         'type' => 'url',
-						'description' => __( 'URL to redirect users when the login fails. Defaults to the WordPress login page.', 'wpv-views' ),
+						'description' => __( 'URL to redirect users when the login fails. Defaults to the current URL.', 'wpv-views' ),
                     ),
                     'allow_remember' => array(
                         'label' => __( 'Remember me checkbox', 'wpv-views'),
@@ -838,8 +1006,8 @@ function wpv_shortcodes_get_wpv_login_form_data()  {
  *  [wpv-logout-link redirect_url="[wpv-post-url]"]Sign out and go to [wpv-post-title][/wpv-logout-link]
  *
  *
- * Link:
- * @todo: public documentation link?
+ * User Guide: https://wp-types.com/documentation/views-shortcodes/#wpv-logout-link
+ *
  * @todo: find a way to allow redirect to external links
  *
  * Note:
@@ -984,6 +1152,806 @@ function wpv_shortcodes_get_wpv_logout_link_data()  {
 	return $data;
 }
 
+////////////////////////// Forgot/Reset Password Flow Starts ///////////////////////////////////
+/**
+ * Views-Shortcode: wpv-forgot-password-form
+ *
+ * Description: Display WordPress forgot password form.
+ *
+ * Parameters:
+ *  "redirect_url" redirects to this URL after successful operation. Absolute URL.
+ *  "redirect_fail" redirects to this URL after failed operation. Absolute URL.
+ *  "reset_password_url" redirects to this URL to reset the password. Absolute URL. This link is sent in email.
+ *
+ * Example usage:
+ *     [wpv-forgot-password-form]
+ *
+ * Link:
+ *
+ * @since 2.2
+ */
+function wpv_shortcode_wpv_forgot_password_form( $atts ) {
+
+	if ( is_user_logged_in() ) {
+		/* Do not display anything if a user is already logged in */
+		return '';
+	}
+
+	// WordPress gets the current URL this way
+	$current_url = set_url_scheme( 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] );
+	if (
+		defined( 'DOING_AJAX' )
+		&& DOING_AJAX
+		&& isset( $_REQUEST['action'] )
+		&& (
+			$_REQUEST['action'] == 'wpv_get_view_query_results'
+			|| $_REQUEST['action'] == 'wpv_get_archive_query_results'
+		)
+	) {
+		$current_url = wp_get_referer();
+	}
+
+	extract(
+		shortcode_atts(
+			array(
+				'redirect_url'		=> remove_query_arg( array( 'error' ), $current_url ), //$current_url, //wp_login_url(),
+				'redirect_url_fail'	=> remove_query_arg( array( 'checkemail' ), $current_url ), //$current_url,
+				'reset_password_url' => ''
+			),
+			$atts
+		)
+	);
+
+	$args = array(
+		'redirect'			=> $redirect_url, /* Use absolute URLs */
+		'redirect_fail'		=> $redirect_url_fail,
+		'reset_password' => $reset_password_url
+	);
+
+	$out = wpv_forgot_password_form( $args );
+
+	apply_filters( 'wpv_shortcode_debug', 'wpv-forgot-password-form', json_encode( $atts ), '', '', $out );
+	return $out;
+}
+
+/**
+ * Provides a simple forgot password form for use anywhere within WordPress.
+ *
+ * @since 2.2
+ *
+ * @param array $args {
+ *     Optional. Array of options to control the form output. Default empty array.
+ *
+ *     @type string $redirect       URL to redirect to. Must be absolute, as in "https://example.com/mypage/".
+ *     @type string $redirect_fail  URL to redirect to on failure. Must be absolute, as in "https://example.com/mypage/".
+ *     @type string $reset_password URL to redirect to custom reset password page. Must be absolute URL.
+ *     @type string $form_id        ID attribute value for the form. Default 'forgotpasswordform'.
+ *     @type string $label_username Label for the username or email address field. Default 'Username or Email'.
+ *     @type string $id_username    ID attribute value for the username field. Default 'user_login'.
+ *     @type string $label_submit	Label for submit buttion. Default 'Get New Password'.
+ *     @type string $id_submit      ID attribute value for the submit button. Default 'wp-submit'.
+ *     @type string $value_username Default value for the username field. Default empty.
+ *
+ * }
+ * @return string|void String when retrieving.
+ */
+function wpv_forgot_password_form( $args = array() ) {
+	$defaults = array(
+		'redirect'			=> ( is_ssl() ? 'https://' : 'http://' ) . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'],
+		'redirect_fail'		=> ( is_ssl() ? 'https://' : 'http://' ) . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'],
+		'reset_password'	=> '',
+		'form_id'			=> 'forgotpasswordform',
+		'label_username'	=> __( 'Username or Email' ),
+		'id_username'		=> 'user_login',
+		'label_submit'		=> 'Get New Password',
+		'id_submit'			=> 'wp-submit',
+		'value_username'	=> isset( $_REQUEST['username'] ) ? $_REQUEST['username'] : '',
+	);
+
+	/**
+	 * Filters the default forgot password form output arguments.
+	 *
+	 * @param array $defaults An array of default login form arguments.
+	 */
+	$args = wp_parse_args( $args, apply_filters( 'forgot_password_form_defaults', $defaults ) );
+
+	/**
+	 * Filters content to display at the top of the form.
+	 *
+	 * The filter evaluates just following the opening form tag element.
+	 *
+	 * @param string $content Content to display. Default empty.
+	 * @param array  $args    Array of form arguments.
+	 */
+	$form_top = apply_filters( 'forgot_password_form_top', '', $args );
+
+	/**
+	 * Filters content to display in the middle of the form.
+	 *
+	 * The filter evaluates just before the submit button.
+	 *
+	 * @param string $content Content to display. Default empty.
+	 * @param array  $args    Array of form arguments.
+	 */
+	$form_middle = apply_filters( 'forgot_password_form_middle', '', $args );
+
+	/**
+	 * Filters content to display at the bottom of the login form.
+	 *
+	 * The filter evaluates just preceding the closing form tag element.
+	 *
+	 * @param string $content Content to display. Default empty.
+	 * @param array  $args    Array of form arguments.
+	 */
+	$form_bottom = apply_filters( 'forgot_password_form_bottom', '', $args );
+
+	$form_bottom .= '<input type="hidden" name="wpv_forgot_password_form" value="on"/>';
+	if ( $args['redirect_fail'] != '' ) {
+		$form_bottom .= '<input type="hidden" name="wpv_forgot_password_form_redirect_on_fail" value="' . esc_url( $args['redirect_fail'] ) . '" />';
+	}
+
+	if ( $args['reset_password'] != '' ) {
+		$form_bottom .= '<input type="hidden" name="wpv_forgot_password_form_reset_password_url" value="' . esc_url( $args['reset_password'] ) . '" />';
+	}
+
+	$form = '
+		<form name="' . $args['form_id'] . '" id="' . $args['form_id'] . '" action="' . wp_lostpassword_url() . '" method="post">
+			' . $form_top . '
+			<p class="login-username">
+				<label for="' . esc_attr( $args['id_username'] ) . '">' . esc_html( $args['label_username'] ) . '</label>
+				<input type="text" name="' . esc_attr( $args['id_username'] ) . '" id="' . esc_attr( $args['id_username'] ) . '" class="input" value="' . esc_attr( $args['value_username'] ) . '" size="20" />
+			</p>
+			' . $form_middle . '
+			<p class="login-submit">
+				<input type="submit" name="wp-submit" id="' . esc_attr( $args['id_submit'] ) . '" class="button-primary" value="' . esc_attr( $args['label_submit'] ) . '" />
+				<input type="hidden" name="redirect_to" value="' . esc_url( $args['redirect'] ) . '" />
+			</p>
+			' . $form_bottom . '
+		</form>';
+
+	return $form;
+}
+
+/**
+ * wpv_shortcodes_register_wpv_forgot_password_form_data
+ *
+ * Register the wpv-forgot-password-form shortcode in the GUI API.
+ *
+ * @since 2.2
+ */
+
+add_filter( 'wpv_filter_wpv_shortcodes_gui_data', 'wpv_shortcodes_register_wpv_forgot_password_form_data' );
+
+function wpv_shortcodes_register_wpv_forgot_password_form_data( $views_shortcodes ) {
+	$views_shortcodes['wpv-forgot-password-form'] = array(
+		'callback' => 'wpv_shortcodes_get_wpv_forgot_password_form_data'
+	);
+
+	return $views_shortcodes;
+}
+
+function wpv_shortcodes_get_wpv_forgot_password_form_data()  {
+	$data = array(
+		'name' => __( 'Forgot Password Form', 'wpv-views' ),
+		'label' => __( 'Forgot Password Form', 'wpv-views' ),
+		'attributes' => array(
+			'display-options' => array(
+				'label' => __('Display options', 'wpv-views'),
+				'header' => __('Display options', 'wpv-views'),
+				'fields' => array(
+					'redirect_url' => array(
+						'label' => __( 'Redirect to this URL on success', 'wpv-views'),
+						'type' => 'url',
+						'description' => __( 'URL to redirect users after sending password retrieval link. Defaults to the current URL.', 'wpv-views' ),
+					),
+					'redirect_url_fail' => array(
+						'label' => __( 'Redirect to this URL on failure', 'wpv-views'),
+						'type' => 'url',
+						'description' => __( 'URL to redirect users after failed password retrieval operation. Defaults to the current URL.', 'wpv-views' ),
+					),
+					'reset_password_url' => array(
+						'label' => __( 'URL to custom password reset page', 'wpv-views'),
+						'type' => 'url',
+						'description' => __( 'URL to custom password reset page when reset password link is clicked in reset password email. Defaults to WordPress reset password URL.', 'wpv-views' ),
+					)
+				),
+			),
+		),
+	);
+
+	return $data;
+}
+
+/**
+ * wpv_shortcodes_wpv_do_password_lost
+ *
+ * Handles custom forgot password form errors.
+ *
+ * @since 2.2
+ */
+
+add_action( 'login_form_lostpassword', 'wpv_shortcodes_wpv_do_password_lost' );
+
+function wpv_shortcodes_wpv_do_password_lost() {
+	if (
+		'POST' == $_SERVER['REQUEST_METHOD']
+		&& isset( $_REQUEST['wpv_forgot_password_form'] )
+		&& 'on' == $_REQUEST['wpv_forgot_password_form']
+	) {
+		$redirect_to = $_REQUEST['redirect_to'];
+		$redirect_fail = $_REQUEST['wpv_forgot_password_form_redirect_on_fail'];
+
+		$errors = retrieve_password();
+
+		if ( is_wp_error( $errors ) ) {
+			// Errors found
+			$redirect_url = add_query_arg( 'error', join( ',', $errors->get_error_codes() ), $redirect_fail );
+		} else {
+			// Email sent
+			$redirect_url = add_query_arg( 'checkemail', 'confirm', $redirect_to );
+		}
+
+		wp_safe_redirect( $redirect_url );
+		exit;
+	}
+}
+
+/**
+ * Returns the message body for the password reset email.
+ * Called through the retrieve_password_message filter.
+ *
+ * @param string  $message    Default mail message.
+ * @param string  $key        The activation key.
+ * @param string  $user_login The username for the user.
+ * @param WP_User $user_data  WP_User object.
+ *
+ * @return string   The mail message to send.
+ *
+ * @since 2.2
+ * @see https://developer.wordpress.org/reference/hooks/retrieve_password_message/
+ */
+
+add_filter( 'retrieve_password_message', 'wpv_filter_wpv_replace_retrieve_password_email_body', 10, 4 );
+
+function wpv_filter_wpv_replace_retrieve_password_email_body( $message, $key, $user_login, $user_data ) {
+	$reset_password = '';
+
+	if(
+		isset( $_REQUEST['wpv_forgot_password_form_reset_password_url'] )
+		&& !empty( $_REQUEST['wpv_forgot_password_form_reset_password_url'] )
+	) {
+		$reset_password = add_query_arg(
+			array(
+				'action' => 'rp',
+				'key' => $key,
+				'login' => rawurlencode( $user_login )
+			),
+			$_REQUEST['wpv_forgot_password_form_reset_password_url']
+		);
+
+		// Create new message
+		$message  = __( 'Someone has requested a password reset for the following account:', 'wpv-views' ) . "\r\n\r\n";
+		$message .= sprintf( __( '%s.', 'wpv-views' ), get_home_url() ) . "\r\n\r\n";
+		$message .= sprintf( __( 'Username: %s.', 'wpv-views' ), $user_login ) . "\r\n\r\n";
+		$message .= __( "If this was a mistake, just ignore this email and nothing will happen.", 'wpv-views' ) . "\r\n\r\n";
+		$message .= __( 'To reset your password, visit the following address:', 'wpv-views' ) . "\r\n\r\n";
+		$message .= sprintf( __( '%s', 'wpv-views' ), $reset_password ) . "\r\n\r\n";
+	}
+
+	return $message;
+}
+
+/**
+ * Views-Shortcode: wpv-reset-password-form
+ *
+ * Description: Display custom reset password form.
+ *
+ * Parameters:
+ *  "redirect_url" redirects to this URL after successful operation. Absolute URL.
+ *  "redirect_fail" redirects to this URL after failed operation. Absolute URL.
+ *
+ * Example usage:
+ *     [wpv-reset-password-form]
+ *
+ * Link:
+ *
+ * @since 2.2
+ */
+function wpv_shortcode_wpv_reset_password_form( $atts ) {
+
+	if ( is_user_logged_in() ) {
+		/* Do not display anything if a user is already logged in */
+		return '';
+	}
+
+	// WordPress gets the current URL this way
+	$current_url = set_url_scheme( 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] );
+	if (
+		defined( 'DOING_AJAX' )
+		&& DOING_AJAX
+		&& isset( $_REQUEST['action'] )
+		&& (
+			$_REQUEST['action'] == 'wpv_get_view_query_results'
+			|| $_REQUEST['action'] == 'wpv_get_archive_query_results'
+		)
+	) {
+		$current_url = wp_get_referer();
+	}
+
+	extract(
+		shortcode_atts(
+			array(
+				'redirect_url'		=> remove_query_arg( array( 'error' ), $current_url ), //wp_login_url(),
+				'redirect_url_fail'	=> remove_query_arg( array( 'password' ), $current_url )
+			),
+			$atts
+		)
+	);
+
+	$login = isset( $_REQUEST['login'] ) ? $_REQUEST['login'] : '';
+	$key = isset( $_REQUEST['key'] ) ? $_REQUEST['key'] : '';
+
+	$args = array(
+		'redirect'			=> $redirect_url, /* Use absolute URLs */
+		'redirect_fail'		=> $redirect_url_fail,
+		'rp_login'				=> $login,
+		'rp_key'				=> $key
+	);
+
+	$out = wpv_reset_password_form( $args );
+
+	apply_filters( 'wpv_shortcode_debug', 'wpv-reset-password-form', json_encode( $atts ), '', '', $out );
+	return $out;
+}
+
+/**
+ * Provides a simple reset password form for use anywhere within WordPress.
+ *
+ * @since 2.2
+ *
+ * @param array $args {
+ *     Optional. Array of options to control the form output. Default empty array.
+ *
+ *     @type string $redirect       URL to redirect to. Must be absolute, as in "https://example.com/mypage/".
+ *     @type string $redirect_fail  URL to redirect to on failure. Must be absolute, as in "https://example.com/mypage/".
+ *     @type string $form_id        ID attribute value for the form. Default 'resetpasswordform'.
+ *     @type string $label_pass1 	Label for the new password field. Default 'New password'.
+ *     @type string $id_pass1 		ID for the new password field. Default 'pass1'.
+ *     @type string $label_pass2 	Label for repeat password field. Default 'Repeat new password'.
+ *     @type string $id_pass2   	ID for repeat password field. Default 'pass2'.
+ *     @type string $label_submit	Label for submit button. Default 'Reset Password'.
+ *     @type string $id_submit      ID attribute value for the submit button. Default 'wp-submit'.
+ *     @type string $rp_login       Login name for reset password hidden field. Default empty.
+ *     @type string $rp_key		 	Reset password key for the hidden field. Default empty.
+ *
+ * }
+ * @return string|void String when retrieving.
+ */
+function wpv_reset_password_form( $args = array() ) {
+	$defaults = array(
+		'redirect'			=> ( is_ssl() ? 'https://' : 'http://' ) . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'],
+		'redirect_fail'		=> ( is_ssl() ? 'https://' : 'http://' ) . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'],
+		'form_id'			=> 'resetpasswordform',
+		'label_pass1'		=> __( 'New password', 'wpv-views' ),
+		'id_pass1'			=> 'pass1',
+		'label_pass2'		=> __( 'Repeat new password', 'wpv-views' ),
+		'id_pass2'			=> 'pass2',
+		'label_submit'		=> __( 'Reset Password', 'wpv-views' ),
+		'id_submit'			=> 'wp-submit',
+		'rp_login'			=> '',
+		'rp_key'			=> ''
+	);
+
+	/**
+	 * Filters the default reset password form output arguments.
+	 *
+	 * @param array $defaults An array of default login form arguments.
+	 */
+	$args = wp_parse_args( $args, apply_filters( 'reset_password_form_defaults', $defaults ) );
+
+	/**
+	 * Filters content to display at the top of the form.
+	 *
+	 * The filter evaluates just following the opening form tag element.
+	 *
+	 * @param string $content Content to display. Default empty.
+	 * @param array  $args    Array of form arguments.
+	 */
+	$form_top = apply_filters( 'reset_password_form_top', '', $args );
+
+	// Add required hidden fields to form top
+	$form_top .= '<input type="hidden" id="user_login" name="rp_login" value="' . esc_attr( $args['rp_login'] ) . '" />';
+	$form_top .= '<input type="hidden" name="rp_key" value="' . esc_attr( $args['rp_key'] ) . '" autocomplete="off" />';
+
+	/**
+	 * Filters content to display in the middle of the form.
+	 *
+	 * The filter evaluates just before the submit button.
+	 *
+	 * @param string $content Content to display. Default empty.
+	 * @param array  $args    Array of form arguments.
+	 */
+	$form_middle = apply_filters( 'reset_password_form_middle', '', $args );
+
+	/**
+	 * Filters content to display at the bottom of the login form.
+	 *
+	 * The filter evaluates just preceding the closing form tag element.
+	 *
+	 * @param string $content Content to display. Default empty.
+	 * @param array  $args    Array of form arguments.
+	 */
+	$form_bottom = apply_filters( 'reset_password_form_bottom', '', $args );
+
+	$form_bottom .= '<input type="hidden" name="wpv_reset_password_form" value="on"/>';
+
+	if ( $args['redirect_fail'] != '' ) {
+		$form_bottom .= '<input type="hidden" name="wpv_reset_password_form_redirect_on_fail" value="' . esc_url( $args['redirect_fail'] ) . '" />';
+	}
+
+	$form = '
+		<form name="' . $args['form_id'] . '" id="' . $args['form_id'] . '" action="' . site_url( 'wp-login.php?action=resetpass' ) . '" method="post">
+			' . $form_top . '
+			<p class="reset-pass">
+				<label for="' . esc_attr( $args['id_pass1'] ) . '">' . esc_html( $args['label_pass1'] ) . '</label>
+				<input type="password" name="' . esc_attr( $args['id_pass1'] ) . '" id="' . esc_attr( $args['id_pass1'] ) . '" class="input" value="" size="20" />
+			</p>
+			<p class="reset-pass">
+				<label for="' . esc_attr( $args['id_pass2'] ) . '">' . esc_html( $args['label_pass2'] ) . '</label>
+				<input type="password" name="' . esc_attr( $args['id_pass2'] ) . '" id="' . esc_attr( $args['id_pass2'] ) . '" class="input" value="" size="20" />
+			</p>
+			
+			<p class="description">' . wp_get_password_hint() . '</p>
+			' . $form_middle . '
+			<p class="login-submit">
+				<input type="submit" name="wp-submit" id="' . esc_attr( $args['id_submit'] ) . '" class="button-primary" value="' . esc_attr( $args['label_submit'] ) . '" />
+				<input type="hidden" name="redirect_to" value="' . esc_url( $args['redirect'] ) . '" />
+			</p>
+			' . $form_bottom . '
+		</form>';
+
+	return $form;
+}
+
+/**
+ * wpv_shortcodes_wpv_do_password_reset
+ *
+ * Performs password reset based on custom reset password form.
+ * Also handles errors and redirects accordingly.
+ *
+ * @since 2.2
+ */
+
+add_action( 'login_form_rp', 'wpv_shortcodes_wpv_do_password_reset' );
+add_action( 'login_form_resetpass', 'wpv_shortcodes_wpv_do_password_reset' );
+
+function wpv_shortcodes_wpv_do_password_reset() {
+	if (
+		'POST' == $_SERVER['REQUEST_METHOD']
+		&& isset( $_REQUEST['wpv_reset_password_form'] )
+		&& 'on' == $_REQUEST['wpv_reset_password_form']
+	) {
+		$rp_key = isset( $_REQUEST['rp_key'] ) ? $_REQUEST['rp_key'] : '';
+		$rp_login = isset( $_REQUEST['rp_login'] ) ? $_REQUEST['rp_login'] : '';
+		$pass1 = isset( $_REQUEST['pass1'] ) ? $_REQUEST['pass1'] : '';
+		$pass2 = isset( $_REQUEST['pass2'] ) ? $_REQUEST['pass2'] : '';
+
+		$redirect_to = $_REQUEST['redirect_to'];
+		$redirect_fail = $_REQUEST['wpv_reset_password_form_redirect_on_fail'];
+
+		$fail_code = '';
+
+		$user = check_password_reset_key( $rp_key, $rp_login );
+
+		if ( ! $user || is_wp_error( $user ) ) {
+			if ( $user && $user->get_error_code() ) {
+				$fail_code = $user->get_error_code();
+			}
+
+			$redirect_fail = add_query_arg(
+				array(
+					'login' => $rp_login,
+					'key' => $rp_key,
+					'error' => $fail_code
+				),
+				$redirect_fail
+			);
+
+			wp_safe_redirect( $redirect_fail );
+			exit;
+		}
+
+		if ( empty( $pass1 ) || empty( $pass2 ) ) {
+			// Password is empty
+			$redirect_fail = add_query_arg(
+				array(
+					'login' => $rp_login,
+					'key' => $rp_key,
+					'error' => 'password_reset_empty'
+				),
+				$redirect_fail
+			);
+
+			wp_safe_redirect( $redirect_fail );
+			exit;
+		}
+
+		if ( !empty( $pass1 ) && !empty( $pass2 ) ) {
+			if ( $pass1 != $pass2 ) {
+				// Passwords don't match
+				$redirect_fail = add_query_arg(
+					array(
+						'login' => $rp_login,
+						'key' => $rp_key,
+						'error' => 'password_reset_mismatch'
+					),
+					$redirect_fail
+				);
+
+				wp_safe_redirect( $redirect_fail );
+                exit;
+            }
+
+			// Parameter checks OK, reset password
+			reset_password( $user, $pass1 );
+
+			$redirect_to = add_query_arg(
+				array(
+					'password' => 'changed'
+				),
+				$redirect_to
+			);
+
+			wp_safe_redirect( $redirect_to );
+			exit;
+		}
+	}
+}
+
+/**
+ * wpv_shortcodes_register_wpv_reset_password_form_data
+ *
+ * Register the wpv-forgot-password-form shortcode in the GUI API.
+ *
+ * @since 2.2
+ */
+
+add_filter( 'wpv_filter_wpv_shortcodes_gui_data', 'wpv_shortcodes_register_wpv_reset_password_form_data' );
+
+function wpv_shortcodes_register_wpv_reset_password_form_data( $views_shortcodes ) {
+	$views_shortcodes['wpv-reset-password-form'] = array(
+		'callback' => 'wpv_shortcodes_get_wpv_reset_password_form_data'
+	);
+
+	return $views_shortcodes;
+}
+
+function wpv_shortcodes_get_wpv_reset_password_form_data()  {
+	$data = array(
+		'name' => __( 'Reset Password Form', 'wpv-views' ),
+		'label' => __( 'Reset Password Form', 'wpv-views' ),
+		'attributes' => array(
+			'display-options' => array(
+				'label' => __('Display options', 'wpv-views'),
+				'header' => __('Display options', 'wpv-views'),
+				'fields' => array(
+					'redirect_url' => array(
+						'label' => __( 'Redirect to this URL on success', 'wpv-views'),
+						'type' => 'url',
+						'description' => __( 'URL to redirect users after resetting the password. Defaults to the current URL.', 'wpv-views' ),
+					),
+					'redirect_url_fail' => array(
+						'label' => __( 'Redirect to this URL on failure', 'wpv-views'),
+						'type' => 'url',
+						'description' => __( 'URL to redirect users after failed password reset operation. Defaults to the current URL.', 'wpv-views' ),
+					)
+				),
+			),
+		),
+	);
+
+	return $data;
+}
+
+/**
+ * Filter to add error messages on top of the custom forgot/reset password forms.
+ *
+ * @param $content (string) HTML content.
+ * @param $args (array) Default arguments array.
+ *
+ * @return string
+ *
+ * @see wpv_forgot_password_form()
+ * @see wpv_reset_password_form()
+ */
+
+add_filter( 'forgot_password_form_top', 'wpv_resetpass_errors', 30, 2 );
+add_filter( 'reset_password_form_top', 'wpv_resetpass_errors', 30, 2 );
+
+function wpv_resetpass_errors ( $content, $args ) {
+	$error_code = '';
+
+	if (
+		isset( $_REQUEST['error'] )
+		&& $_REQUEST['error'] != ''
+	) {
+		$error_string = __( '<strong>ERROR</strong>: ', 'wpv-views' );
+		$error_code = $_REQUEST['error'];
+
+		switch( $error_code ) {
+			case 'expiredkey':
+			case 'invalidkey':
+			case 'invalid_key':
+				$error_string .= __( 'Your password reset link appears to be invalid. Please request a new link.', 'wpv-views' );
+				break;
+
+			case 'invalid_email':
+				$error_string .= __( 'There is no user registered with that email address.', 'wpv-views' );
+				break;
+
+			case 'invalidcombo':
+				$error_string .= __( 'Invalid username or email.', 'wpv-views' );
+				break;
+
+			case 'password_reset_mismatch':
+				$error_string .= __( 'Your entered passwords don\'t match.', 'wpv-views' );
+				break;
+
+			case 'password_reset_empty':
+				$error_string .= __( 'The password field is empty.', 'wpv-views' );
+				break;
+
+			case 'empty_username':
+				$error_string .= __( 'Enter a username or email address.', 'wpv-views' );
+				break;
+
+			default:
+				$error_string .= __( 'Unknown error.', 'wpv-views' );
+				break;
+		}
+
+		$content .= apply_filters( 'wpv_filter_override_auth_errors' , $error_string, 'wp-error', $error_code );
+	}
+
+	return $content;
+}
+////////////////////////// Forgot/Reset Password Flow Ends ///////////////////////////////////
+
+/**
+ * Views-Shortcode: wpv-forgot-password-link
+ *
+ * Description: Display WordPress forgot password link and uses supplied content as a link label.
+ * If no label is supplied, it outputs 'Lost password?' as a default label.
+ *
+ * Parameters:
+ *  "redirect_url" URL to redirect to after retrieving the lost password. Absolute URL.
+ *  "class" HTML class attribute for generated A tag
+ *  "style" HTML style attribute for generated A tag
+ *
+ * Example usage:
+ *  [wpv-forgot-password-link]Forgot password[/wpv-forgot-password-link]
+ *  [wpv-forgot-password-link class="my-class" style="text-decoration: none;" redirect_url="http://example.com"]
+ *  [wpv-forgot-password-link redirect_url="[wpv-post-url]"]Forgot password?[/wpv-forgot-password-link]
+ *
+ *
+ * Link:
+ * @todo: public documentation link?
+ * @todo: find a way to allow redirect to external links
+ *
+ * Note:
+ *  https://codex.wordpress.org/Function_Reference/wp_lostpassword_url
+ *
+ * @since 2.2
+ */
+function wpv_shortcode_wpv_forgot_password_link( $atts, $content = '' ) {
+	global $current_user;
+
+	if((int)$current_user->ID > 0) {
+		/* Do not display anything if a user is already logged in */
+		return '';
+	}
+
+	// Check for current URL, either it's an AJAX request or a non-AJAX request
+	$url_request = $_SERVER['REQUEST_URI'];
+
+	if (
+		defined( 'DOING_AJAX' )
+		&& DOING_AJAX
+		&& isset( $_REQUEST['action'] )
+		&& (
+			$_REQUEST['action'] == 'wpv_get_view_query_results' 
+			|| $_REQUEST['action'] == 'wpv_get_archive_query_results'
+		)
+	) {
+		// It's an AJAX request - Views AJAX Pagination or Parametric Search Request
+		$current_url = wp_get_referer();
+	} else {
+		// It's non-AJAX request
+		// WordPress gets the current URL this way
+		$current_url = set_url_scheme( 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] );
+	}
+
+	extract( shortcode_atts(
+			array(
+				'redirect_url' => $current_url,
+				'class' => '',
+				'style' => '',
+			), $atts )
+	);
+
+	// Get forgot password URL
+	$url = wp_lostpassword_url( $redirect_url );
+
+	// Parse the content (if any) for inline short codes
+	$outContent = !empty( $content ) ? wpv_do_shortcode( $content ) : '';
+
+	// Assemble the output
+	$out = '<a href="' . $url . '"';
+	$out .= !empty( $class ) ? ' class="' . esc_attr( $class ) . '"' : '';
+	$out .= !empty( $style ) ? ' style="' . esc_attr( $style ) . '"' : '';
+	$out .= '>';
+	$out .= $outContent;
+	$out .= '</a>';
+
+	apply_filters( 'wpv_shortcode_debug', 'wpv-forgot-password-link', json_encode( $atts ), '', '', $out );
+	return $out;
+}
+
+/**
+ * wpv_shortcodes_register_wpv_forgot_password_link_data
+ *
+ * Register the wpv-forgot-password-link shortcode in the GUI API.
+ *
+ * @since 2.1
+ */
+
+add_filter( 'wpv_filter_wpv_shortcodes_gui_data', 'wpv_shortcodes_register_wpv_forgot_password_link_data' );
+
+function wpv_shortcodes_register_wpv_forgot_password_link_data( $views_shortcodes ) {
+	$views_shortcodes['wpv-forgot-password-link'] = array(
+		'callback' => 'wpv_shortcodes_get_wpv_forgot_password_link_data'
+	);
+	return $views_shortcodes;
+}
+
+function wpv_shortcodes_get_wpv_forgot_password_link_data()  {
+	$data = array(
+		'name' => __( 'Forgot Password Link', 'wpv-views' ),
+		'label' => __( 'Forgot Password Link', 'wpv-views' ),
+		'attributes' => array(
+			'display-options' => array(
+				'label' => __( 'Display options', 'wpv-views' ),
+				'header' => __( 'Display options', 'wpv-views' ),
+				'fields' => array(
+					'redirect_url' => array(
+						'label' => __( 'Redirect URL', 'wpv-views' ),
+						'type' => 'url',
+						'description' => __( 'URL to redirect to after retrieving the lost password. Defaults to the current URL. Redirect is only supported to the URLs within the current blog (or site). Redirection to external URLs (or sites) is not supported.', 'wpv-views' ),
+					),
+					'class' => array(
+						'label' => __( 'Class', 'wpv-views' ),
+						'type' => 'text',
+						'description' => __( 'Space-separated list of class names that will be added to the anchor HTML tag.', 'wpv-views' ),
+						'placeholder' => 'class1 class2',
+					),
+					'style' => array(
+						'label' => __( 'Style', 'wpv-views' ),
+						'type' => 'text',
+						'description' => __( 'Inline styles that will be added to the anchor HTML tag.', 'wpv-views' ),
+						'placeholder' => 'border: 1px solid red; font-size: 2em;',
+					),
+				),
+				'content' => array(
+					'label' => __( 'Link label', 'wpv-views' ),
+					'description' => __( 'This will be displayed as a text or label for the link.', 'wpv-views' ),
+					'default' => __('Lost password?', 'wpv-views'),
+				),
+			),
+		),
+	);
+	return $data;
+}
+
 /**
  * Views-Shortcode: wpv-user
  *
@@ -1088,6 +2056,11 @@ function wpv_user( $attr ) {
 		case 'email':
 		case 'user_email':
 			$field = 'user_email';
+			$out = $data->$field;
+			break;
+		case 'nicename':
+		case 'user_nicename':
+			$field = 'user_nicename';
 			$out = $data->$field;
 			break;
 		case 'user_url':
@@ -1561,6 +2534,9 @@ function wpv_shortcode_wpv_post_body($atts){
 		return apply_filters( 'wpv_filter_post_protected_body', $post_protected_password_form, $post, $atts );
 	}
 
+	do_action( 'wpv_before_shortcode_post_body' );
+
+
 	global $WPV_templates, $WPVDebug;
 
 	static $stop_infinite_loop_keys;
@@ -1601,6 +2577,8 @@ function wpv_shortcode_wpv_post_body($atts){
 				unset( $post->view_template_override );
 			}
 		}
+
+		do_action( 'wpv_after_shortcode_post_body' );
 		return;
 	}
 	
@@ -1715,8 +2693,9 @@ function wpv_shortcode_wpv_post_body($atts){
 
 	$WPVDebug->add_log_item( 'output', $out );
 	$WPVDebug->wpv_debug_end();
-
 	apply_filters('wpv_shortcode_debug','wpv-post-body', json_encode($atts), '', 'Output shown in the Nested elements section');
+
+	do_action( 'wpv_after_shortcode_post_body' );
 	return $out;
 }
 
@@ -1947,18 +2926,22 @@ function wpv_shortcode_wpv_post_excerpt( $atts ) {
 		&& $post->post_type != 'view-template'
 	) {
 		
-		if ( isset( $wpv_post_excerpt_infinite_loop_keys[ $post->ID ] ) ) {
+		// Clone the current global $post as wpv_do_shortcode might modify it
+		// For example, an excerpt contining a CRED form hijacks the current global $post
+		$post_clone = $post;
+		
+		if ( isset( $wpv_post_excerpt_infinite_loop_keys[ $post_clone->ID ] ) ) {
 			return '';
 		}
 		
-		$wpv_post_excerpt_infinite_loop_keys[ $post->ID ] = true;
+		$wpv_post_excerpt_infinite_loop_keys[ $post_clone->ID ] = true;
 
 		// verify if displaying the real excerpt field or part of the content one
 		$display_real_excerpt = false;
-		if ( empty( $post->post_excerpt ) ) {
-			$excerpt = $post->post_content;
+		if ( empty( $post_clone->post_excerpt ) ) {
+			$excerpt = $post_clone->post_content;
 		} else {
-			$excerpt = $post->post_excerpt;
+			$excerpt = $post_clone->post_excerpt;
 			$display_real_excerpt = true;
 		}
 		$excerpt = str_replace( ']]>', ']]&gt;', $excerpt );
@@ -1984,7 +2967,7 @@ function wpv_shortcode_wpv_post_excerpt( $atts ) {
 		* This filter lets you modify the string that will generate the excerpt before it's passed through wpv_do_shortcode() and before the length attribute is applied
 		* This way you can parse and delete specific shortcodes from the excerpt, like the [caption] one
 		*
-		* @param $excerpt the string we will generate the excerpt from (the real $post->excerpt or the $post->content) before stretching and parsing the inner shortcodes
+		* @param $excerpt the string we will generate the excerpt from (the real $post_clone->excerpt or the $post_clone->content) before stretching and parsing the inner shortcodes
 		*
 		* @return $excerpt
 		*
@@ -2032,7 +3015,10 @@ function wpv_shortcode_wpv_post_excerpt( $atts ) {
 			$WPV_templates->restore_wpautop('');
 		}
 		
-		unset( $wpv_post_excerpt_infinite_loop_keys[ $post->ID ] );
+		unset( $wpv_post_excerpt_infinite_loop_keys[ $post_clone->ID ] );
+		
+		// Restore the current global $post
+		$post = $post_clone;
 	}
 	
 	apply_filters( 'wpv_shortcode_debug','wpv-post-excerpt', json_encode( $atts ), '', 'Filter the_excerpt applied.' . $debug, $out );
@@ -2740,8 +3726,18 @@ function wpv_shortcodes_get_wpv_post_format_data() {
  * Description: Display the featured image of the current post
  *
  * Parameters:
- * 'size' => thumbnail|medium|large|full|#custom# - defaults to thumbnail
+ * 'size' => thumbnail|medium|large|full|custom - defaults to thumbnail
  * 'output' => img|url|alt|id|author|date|description|title|caption - what to display - if empty, will display the IMG tag for legacy, so defaults to img de facto
+ *
+ * Optional parameters:
+ * 'width' => Width of the image - in case of 'size' is 'custom'
+ * 'height' => Height of the image - in case of 'size' is 'custom'
+ * 'crop' => true|false - default to 'false' Resizing method - crop or proportional - in case of 'size' is 'custom'
+ * 				If 'crop' is 'true', image is cropped on 'width' and 'height'
+ * 				If 'crop' is 'false', image is resized proportionally, based on 'width' and 'height'
+ * 'crop_horizontal' => left|center|right - default to 'center' - if 'crop' is 'true'
+ * 'crop_vertical' => top|center|bottom - default to 'center' - if 'crop' is 'true'
+ * 'class' => CSS class to be applied - if 'output' is 'img'
  *
  * Legacy prameters:
  * 'raw' => Show url (true) or HTML tag (false) - default to false (HTML tag)
@@ -2775,7 +3771,12 @@ function wpv_shortcode_wpv_post_featured_image( $atts ) {
 			'raw'   => 'false',// DEPRECATED
 			'data'  => '',// DEPRECATED
 			'attr'  => '',
-			'class' => ''
+			'class' => '',
+			'width' => '',
+			'height' => '',
+			'crop' => false,
+			'crop_horizontal' => 'center',
+			'crop_vertical' => 'center'
 		), $atts )
 	);
 	$out = '';
@@ -2804,6 +3805,20 @@ function wpv_shortcode_wpv_post_featured_image( $atts ) {
 		}
 	}
 	// END LEGACY - backwards compatibility
+
+	/**
+	 * @todo: OBSOLETE - REMOVE AFTER FINALIZING
+	 * Custom image size
+
+	$image_size = $size;
+
+	if (
+			'custom' == $size
+			&& ( !empty( $width ) || !empty( $height ) )
+	) {
+		$image_size = array( $width, $height );
+	}*/
+
 	if ( 'img' == $output ) {
 		if ( ! empty( $attr ) ) {
 			// first, escape and strip tags
@@ -2834,7 +3849,31 @@ function wpv_shortcode_wpv_post_featured_image( $atts ) {
 		if ( ! empty( $class ) ) {
 			$attr_array['class'] = 'attachment-' . esc_attr( $size ) . '  ' . esc_attr( $class );
 		}
-		$out = get_the_post_thumbnail( null, $size, $attr_array );
+
+		// Custom Image Size
+		if ( 'custom' == $size ) {
+			$post_thumbnail_id = get_post_thumbnail_id( get_the_ID() );
+			$out_array = wp_get_attachment_image_src($post_thumbnail_id, 'full' );
+
+			if ( $out_array ) {
+				if ( $crop ) {
+					$crop = array ( $crop_horizontal, $crop_vertical );
+				}
+
+				/**
+				 * @see wpv_shortcodes_resize_image()
+				 */
+				$image = apply_filters( 'wpv_filter_wpv_shortcodes_resize_image', $out_array[0], $width, $height, $crop );
+
+				if ( !is_wp_error( $image ) ) {
+					$attr_array['src'] = $image;
+					$out = wpv_shortcodes_apply_html_tag_attrs( 'img', $attr_array, true, '' );
+				}
+			}
+		} else {
+			$out = get_the_post_thumbnail( null, $size, $attr_array );
+		}
+
 		$out = apply_filters( 'wpv-post-featured-image', $out );
 	} else {
 		$post_thumbnail_id = get_post_thumbnail_id( get_the_ID() );
@@ -2866,9 +3905,24 @@ function wpv_shortcode_wpv_post_featured_image( $atts ) {
 					} else {
 						$out_array = wp_get_attachment_image_src($post_thumbnail_id, $size );
 						$file_info = $out_array[0];
+
+						if( 'custom' == $size ) {
+							if ( $crop ) {
+								$crop = array ( $crop_horizontal, $crop_vertical );
+							}
+
+							$image = apply_filters( 'wpv_filter_wpv_shortcodes_resize_image', $out_array[0], $width, $height, $crop );
+
+							if ( !is_wp_error( $image ) ) {
+								$file_info = $image;
+							}
+						}
 					}
-					break;
+
+					$file_info = apply_filters( 'wpv_filter_wpv_shortcodes_set_url_scheme', $file_info );
+				break;
 			}
+
 			$out = apply_filters( 'wpv-post-featured-image', $file_info );
 		}
 	}
@@ -2876,6 +3930,129 @@ function wpv_shortcode_wpv_post_featured_image( $atts ) {
 	apply_filters('wpv_shortcode_debug','wpv-post-featured-image', json_encode($atts), '', 'Filter wpv-post-featured-image applied', $out);
 
 	return $out;
+}
+
+/**
+ * Scale down an image to fit a particular size and save a new copy of the image.
+ * Uses WP_Image_Editor class.
+ *
+ * @since 2.2
+ *
+ * @param string $file Image file path.
+ * @param int $max_w Maximum width to resize to.
+ * @param int $max_h Maximum height to resize to.
+ * @param bool $crop Optional. Whether to crop image or resize.
+ * @param string $suffix Optional. File suffix.
+ * @param string $dest_path Optional. New image file path.
+ * @param int $jpeg_quality Optional, default is 90. Image quality percentage.
+ *
+ * @return mixed WP_Error on failure. String with new destination path.
+ *
+ * @see https://codex.wordpress.org/Class_Reference/WP_Image_Editor
+ */
+function wpv_image_resize( $file, $max_w, $max_h, $crop = false,
+							$suffix = null, $dest_path = null, $jpeg_quality = 90 ) {
+
+	$image = wp_get_image_editor( $file ); // Return an implementation that extends WP_Image_Editor
+
+	if ( ! is_wp_error( $image ) ) {
+		if ( !$suffix ) {
+			$suffix = $image->get_suffix();
+		}
+
+		$new_file = $image->generate_filename( $suffix, $dest_path );
+
+		$image->set_quality( $jpeg_quality );
+		$image->resize( $max_w, $max_h, $crop );
+		$image->save( $new_file );
+
+		return $new_file;
+	} else {
+		return new WP_Error( 'error_loading_image', $image, $file );
+	}
+}
+
+add_filter( 'wpv_filter_wpv_shortcodes_resize_image', 'wpv_shortcodes_resize_image', 10, 4 );
+
+/**
+ * wpv_shortcodes_resize_image
+ *
+ * Filter to apply image resizing, based on width/height and proportional/cropping.
+ * Supports wp_upload_dir() based image locations only.
+ *
+ * @param $image_url URL of the image
+ * @param $width Intended maximum width of the image
+ * @param $height Intended maximum height of the image
+ * @param bool|array $crop Array of crop positions or 'false'
+ *
+ * @return mixed Resized image URL or WP_Error
+ *
+ * @see wpv_image_resize()
+ */
+function wpv_shortcodes_resize_image( $image_url, $width, $height, $crop )
+{
+	$uploads = wp_upload_dir();
+	// Get image absolute path
+	$file = str_replace($uploads['baseurl'], $uploads['basedir'], $image_url);
+	$suffix = "{$width}x{$height}";
+
+	if ( false !== $crop ) {
+		$suffix .= '_' . implode( '_', $crop );
+	}
+
+	$image = wpv_image_resize($file, $width, $height, $crop, $suffix);
+
+	if (!is_wp_error($image)) {
+		// Get image URL
+		$image = str_replace($uploads['basedir'], $uploads['baseurl'], $image);
+	}
+
+	return $image;
+}
+
+/**
+ * wpv_shortcodes_apply_html_tag_attrs
+ *
+ * Filter to apply HTML attributes on an intended tag.
+ * Also supports self-enclosure of tags or tags enclosing content.
+ *
+ * @param string $tag An HTML tag
+ * @param array $attrs Array of HTML tag attributes (i.e. class, src, width, height, alt and etc)
+ * @param bool $self_enclosure Is the tag self enclosed (i.e. <img ... />
+ * @param string $optional_content In case if tag isn't self enclosed (i.e. <p>...</p>), the content can be passed to be surrounded by the opening/closing tags as-it-is.
+ *
+ * @return string
+ */
+function wpv_shortcodes_apply_html_tag_attrs( $tag = 'img', $attrs = array(), $self_enclosure = true, $optional_content = '' ) {
+	$out = '<' . $tag . ' ';
+
+	foreach( $attrs as $key => $val ) {
+		$out .= $key . '="' . $val . '" ';
+	}
+
+	if( $self_enclosure ) {
+		$out .= '/>';
+	} else {
+		$out .= '>' . $optional_content . '</' . $tag . '>';
+	}
+
+	return $out;
+}
+
+add_filter( 'wpv_filter_wpv_shortcodes_set_url_scheme', 'wpv_shortcodes_set_url_scheme' );
+
+/**
+ * wpv_shortcodes_set_url_scheme
+ *
+ * Set the scheme for a URL.
+ *
+ * @param $url
+ * @return string URL after setting the scheme as of is_ssl().
+ *
+ * @see https://codex.wordpress.org/Function_Reference/set_url_scheme
+ */
+function wpv_shortcodes_set_url_scheme( $url ) {
+	return set_url_scheme( $url );
 }
 
 /**
@@ -2927,6 +4104,14 @@ function wpv_shortcodes_get_wpv_post_featured_image_data() {
 			);
 		}
 	}
+
+	/**
+	 * Custom size support
+	 *
+	 * @since 2.2
+	 */
+	$options['custom'] = __( 'Custom size...', 'wpv-views' );
+
     $data = array(
         'name' => __( 'Post featured image', 'wpv-views' ),
         'label' => __( 'Post featured image', 'wpv-views' ),
@@ -2942,6 +4127,46 @@ function wpv_shortcodes_get_wpv_post_featured_image_data() {
                         'options' => $options,
                         'default' => 'thumbnail',
                     ),
+					'width' => array(
+						'label' => __( 'Featured image width', 'wpv-views' ),
+						'type' => 'text',
+						'description' => __( 'Custom width of image in pixels.', 'wpv-views' )
+					),
+					'height' => array(
+						'label' => __( 'Featured image height', 'wpv-views' ),
+						'type' => 'text',
+						'description' => __( 'Custom height of image in pixels.', 'wpv-views' )
+					),
+					'crop' => array(
+						'label' => __( 'Crop image', 'wpv-views'),
+						'type' => 'radio',
+						'options' => array(
+							'true' => __('Yes', 'wpv-views'),
+							'false' => __('No', 'wpv-views'),
+						),
+						'default' => 'false',
+						//'description' => __( 'Apply image cropping.', 'wpv-views' )
+					),
+					'crop_horizontal' => array(
+						'label' => __('Horizontal crop position', 'wpv-views'),
+						'type' => 'select',
+						'options' => array(
+							'left' => __( 'Left', 'wpv-views' ),
+							'center' => __('Center', 'wpv-views'),
+							'right' => __('Right', 'wpv-views')
+						),
+						'default' => 'center',
+					),
+					'crop_vertical' => array(
+						'label' => __('Vertical crop position', 'wpv-views'),
+						'type' => 'select',
+						'options' => array(
+							'top' => __( 'Top', 'wpv-views' ),
+							'center' => __('Center', 'wpv-views'),
+							'bottom' => __('Bottom', 'wpv-views')
+						),
+						'default' => 'center',
+					),
 					'output' => array(
                         'label' => __('What to display', 'wpv-views'),
                         'type' => 'select',
@@ -2949,7 +4174,7 @@ function wpv_shortcodes_get_wpv_post_featured_image_data() {
 							'img' => __( 'Image HTML tag', 'wpv-views' ),
 							'url' => __('URL of the image', 'wpv-views'),
 							'title' => __('Title of the image', 'wpv-views'),
-							'caption' => __('Caption of the mage', 'wpv-views'),
+							'caption' => __('Caption of the image', 'wpv-views'),
 							'description' => __('Description of the image', 'wpv-views'),
                             'alt' => __('ALT text for the image', 'wpv-views'),
                             'author' => __('Author of the image', 'wpv-views'),
@@ -3610,9 +4835,10 @@ function wpv_shortcode_wpv_tax_field( $atts ) {
 		)
 	);
 	global $WP_Views;
-	$out = '';
-	$filters = '';
-	$term = $WP_Views->get_current_taxonomy_term();
+	$out		= '';
+	$filters	= '';
+	$term		= $WP_Views->get_current_taxonomy_term();
+	$meta		= false;
 
 	if ( ! empty( $term ) ) {
 		$meta = get_term_meta( $term->term_id, $name );
@@ -3930,6 +5156,10 @@ function add_short_codes_to_js( $types, $editor ) {
 			'display_name'		=> array(
 				'label'	=> __('Display Name', 'wpv-views'),
 				'code'	=> 'wpv-user field="display_name"'
+			),
+			'user_nicename'			=> array(
+				'label'	=> __('Nicename', 'wpv-views'),
+				'code'	=> 'wpv-user field="user_nicename"'
 			),
 			'description'		=> array(
 				'label'	=> __('Description', 'wpv-views'),

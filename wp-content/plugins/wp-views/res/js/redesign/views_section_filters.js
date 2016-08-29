@@ -294,7 +294,7 @@ WPViews.QueryFilters = function( $ ) {
 			case 'dayofweek':
 			case 'numeric_natural':
 				if ( self.validation_patterns[ type ].test( value ) == false ) {
-					message = wpv_filters_strings.validation.param_ilegal.type;
+					message = wpv_filters_strings.validation.param_ilegal[type];
 					input_valid = false;
 				}
 				break;

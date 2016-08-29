@@ -13,6 +13,49 @@ You're done!
 
 = Changelog =
 
+v. 2.2, AKA Dr. Dick Somolon
+    - Added Relevanssi compatibility with custom searches to support searching in some custom fields content.
+	- Added Beaver Builder compatibility with Content Templates.
+	- Added a shortcode [wpv-forgot-password-link] for Lost Password link.
+	- Added a shortcode [wpv-forgot-password-form] for custom Forgot Password Form.
+	- Added a shortcode [wpv-reset-password-form] for custom Reset Password Form.
+	- Added support for selecting multiple roles in Views listing users on WordPress 4.4 and above.
+	- Added a sortable ID column to admin listing screens for Views, Content Templates and WordPress Archives.
+	- Added a sub-section in “Third-party shortcode arguments” to display custom shortcodes registered using Views' PHP API.
+	- Added support for sorting a View listing users by usermeta fields.
+	- Added support for a secondary sorting setting on Views listing posts.
+	- Added two new rollover effects that replace the old slideUp and slideRight, to make them move in the right pagination order.
+	- Added support for the user_nicename field value on the [wpv-user] shortcode.
+	- Added the [wpv-theme-option] shortcode to the list of automatically registered shortcodes supported inside other shortcodes.
+	- Removed the shortcode [wpv-forgot-password-link] from the GUI.
+	- Improved the Views pagination settings GUI, following the schema we introduced for the WordPress Archives pagination settings.
+	- Improved the Views and WordPress Archives editing experience by encouraging the usage of the Loop Wizard for new elements.
+	- Improved the way we sanitize and validate slugs for Views, Content Templates and WordPress Archives, specially when they contain non-latin characters.
+	- Improved the way we fire the automatic AJAX pagination in Views sliders, so we also support rollovers in nested Views.
+	- Improved the user experience by renaming Views "parametric search" to "custom search" instead.
+	- Improved support for HTTP/HTTPS based URLs output in the [wpv-post-featured-image] shortcode.
+	- Improved support for image resize and crop in the [wpv-post-featured-image] shortcode.
+	- Improved compatibility with PHP 7.
+	- Fixed and improved Cherry Framework detection for the Views integrations.
+	- Fixed an issue with shortcode attributes containing special characters used in a View with AJAX pagination.
+	- Fixed an issue with AJAX pagination when a View search form and results are rendered using different shortcodes.
+	- Fixed an issue with frontend custom search when it should get results without reloading the page and display all options for all filters.
+	- Fixed an issue with frontend custom search when the form is placed on a widget and the results are in the main page content.
+	- Fixed an issue with frontend custom search when a filter by post relationships is used on a WordPress Archive.
+	- Fixed an issue with Views AJAX pagination and shortcode attributes with numeric values, when the View is rendered using the PHP API.
+	- Fixed an issue with the content to display when there are no posts on a WordPress Archive.
+	- Fixed the redirection for the [wpv-login-form] shortcode, specially in case of failed authentication attempts.
+	- Fixed the ability to sort a View by a numeric field created outside Types.
+	- Fixed the quick links on the Fields and Views dialog, to move between field sections.
+	- Fixed a problem with taxonomy filters in custom searches used on another taxonomy archive loop.
+	- Fixed a problem with custom search and frontend URL management when using a BETWEEN comparison for a custom field filter.
+	- Fixed a problem with old Views combining pagination, limit and offset and failing to calculate the right number of pages.
+	- Fixed an issue with datepickers on custom search filters not working after performing an AJAX pagination.
+	- Fixed an issue with AJAX pagination on Views used in taxonomy archive pages containing query filters by the term set on the current archive.
+	- Fixed an issue with WordPress Archives pagination controls, as ellipsis were getting the same classnames as the current page number.
+	- Fixed a problem with the [wpv-current-user field="role"] shortcode when a superadmin does not have a specific role in a network site.
+	- Fixed an issue with conditional shortcodes having a zero as their only content.
+
 v. 2.1.1
 	- Improved compatibility with WPML 3.5.
 

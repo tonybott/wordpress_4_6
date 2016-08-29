@@ -96,8 +96,7 @@ abstract class WPV_Embedded_ViewsPostType_ItemProvider_Decorator implements IWPV
         $paged = ( 0 == $paged ) ? 1 : $paged;
 
         $order = wpv_getarr( $args, 'order', 'ASC', array( 'ASC', 'DESC' ) );
-
-        $orderby = wpv_getarr( $args, 'orderby', 'post_title', array( 'post_title' ) );
+        $orderby = wpv_getarr( $args, 'orderby', 'post_title', array( 'ID', 'post_title' ) );
 
         $query_args = array(
             'post_type' => 'view',

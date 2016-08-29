@@ -133,10 +133,10 @@ abstract class WPV_Listing_Embedded implements IWPV_Listing {
             'page' => $this->page_name,
             'items_per_page' => $this->pagination_decorator->get_items_per_page(),
             'paged' => $this->pagination_decorator->get_paged(),
-            'orderby' => sanitize_text_field( wpv_getget( 'orderby' ) ),
+            'orderby' => sanitize_text_field( wpv_getget( 'orderby', $this->table_decorator->get_default_sort_column() ) ),
             'order' => wpv_getget( 'order', 'ASC', array( 'ASC', 'DESC' ) ),
             'search' => urldecode( sanitize_text_field( wpv_getget( 'search', '' ) ) ) );
-
+        
         return $args;
     }
 

@@ -116,7 +116,7 @@ function views_embedded_html() {
 		
 		<div class="wpv-filter-section">
 			<h3 class="wpv-section-title">
-				<?php _e('The Filter section lets you set up pagination and parametric search, which let visitors control the View query','wpv-views') ?>
+				<?php _e('The Filter section lets you set up pagination and custom search, which let visitors control the View query','wpv-views') ?>
 			</h3>
 			<?php
 				// Commented out in Views 1.8

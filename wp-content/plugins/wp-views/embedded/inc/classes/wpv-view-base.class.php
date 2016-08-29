@@ -242,12 +242,18 @@ abstract class WPV_View_Base extends WPV_Post_Object_Wrapper {
         }
 
         WPV_View_Base::validate_title( $title );
+		
+		$proposed_name = sanitize_text_field( sanitize_title( $title ) );
+		
+		if ( empty( $proposed_name ) ) {
+			$proposed_name = WPV_View_Base::POST_TYPE . '-rand-' . uniqid();
+		}
 
         // Create the post
         $post_data = array(
             'post_type'	=> WPV_View_Base::POST_TYPE,
             'post_title' => $title,
-			'post_name' => sanitize_text_field( sanitize_title( $title ) ),
+			'post_name' => $proposed_name,
             'post_status' => 'publish',
             'post_content' => "[wpv-filter-meta-html]\n[wpv-layout-meta-html]"
         );
@@ -353,7 +359,7 @@ abstract class WPV_View_Base extends WPV_Post_Object_Wrapper {
             if( WPV_View_Base::is_wppost_view( $view ) ) {
                 // Store the data we got;
                 $this->object_id = $view->ID;
-                $this->post = clone( $view );
+                $this->post = clone $view;
             } else {
                 throw new InvalidArgumentException( "Invalid WP_Post object provided (not a View): " . print_r( $view, true ) );
             }
@@ -2094,12 +2100,16 @@ abstract class WPV_View_Base extends WPV_Post_Object_Wrapper {
 		}
 
 		// Clone existing View post object
-		$new_post = (array) clone( $this->post() );
+		$new_post = (array) clone $this->post();
 		$new_post['post_title'] = $sanitized_title;
 
 		$keys_to_unset = array( 'ID', 'post_name', 'post_date', 'post_date_gmt' );
 		foreach( $keys_to_unset as $key ) {
 			unset( $new_post[ $key ] );
+		}
+		
+		if ( empty( $new_post_slug ) ) {
+			$new_post_slug = WPV_View_Base::POST_TYPE . '-rand-' . uniqid();
 		}
 
 		$new_post['post_name'] = $new_post_slug;

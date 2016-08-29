@@ -406,6 +406,13 @@ function wpv_admin_content_template_listing_name( $search_term ) {
 						 * thead and tfoot tags. */
 						ob_start();
 					?>
+					<?php
+						// Common for table header
+						$status = '';
+						if ( isset($_GET['status']) && $_GET['status'] == 'trash' ){
+							$status = 'trash';
+						}
+					?>
 					<tr>
 						<td class="wpv-admin-listing-col-bulkactions check-column">
 							<input type="checkbox" />
@@ -414,14 +421,39 @@ function wpv_admin_content_template_listing_name( $search_term ) {
 							$column_active = '';
 							$column_sort_to = 'ASC';
 							$column_sort_now = 'ASC';
-							$status = '';
-							if ( $wpv_args['orderby'] === 'title' ) {
+							if ( $wpv_args['orderby'] === 'ID' ) {
 								$column_active = ' views-list-sort-active';
 								$column_sort_to = ( $wpv_args['order'] === 'ASC' ) ? 'DESC' : 'ASC';
 								$column_sort_now = $wpv_args['order'];
 							}
-							if ( isset($_GET['status']) && $_GET['status'] == 'trash' ){
-								$status = 'trash';
+						?>
+						<th class="wpv-admin-listing-col-id">
+							<?php
+							printf(
+								'<a href="%s" class="%s" data-orderby="ID">%s <i class="%s"></i></a>',
+								wpv_maybe_add_query_arg(
+									array(
+										'page' => 'view-templates',
+										'status' => $status,
+										'orderby' => 'ID',
+										'order' => $column_sort_to,
+										's' => $mod_url['s'],
+										'items_per_page' => $mod_url['items_per_page'],
+										'paged' => $mod_url['paged'] ),
+									admin_url( 'admin.php' ) ),
+								'js-views-list-sort views-list-sort ' . $column_active,
+								__( 'ID', 'wpv-views' ),
+								( 'DESC' === $column_sort_now ) ? 'icon-sort-by-attributes-alt fa fa-sort-amount-desc' : 'icon-sort-by-attributes fa fa-sort-amount-asc' );
+							?>
+						</th>
+						<?php
+							$column_active = '';
+							$column_sort_to = 'ASC';
+							$column_sort_now = 'ASC';
+							if ( $wpv_args['orderby'] === 'title' ) {
+								$column_active = ' views-list-sort-active';
+								$column_sort_to = ( $wpv_args['order'] === 'ASC' ) ? 'DESC' : 'ASC';
+								$column_sort_now = $wpv_args['order'];
 							}
 						?>
 						<th class="wpv-admin-listing-col-title">
@@ -529,6 +561,9 @@ function wpv_admin_content_template_listing_name( $search_term ) {
 									}
 								?>
 							</th>
+							<td class="wpv-admin-listing-col-id post-id page-title column-id">
+								<?php echo $template_id; ?>
+							</td>
 							<td class="wpv-admin-listing-col-title post-title page-title column-title">
 								<span class="row-title">
 									<?php

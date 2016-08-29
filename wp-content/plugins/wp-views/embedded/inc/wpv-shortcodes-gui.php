@@ -36,7 +36,7 @@ function wpv_ajax_wpv_insert_view_dialog_callback() {
 		die();
 	}
 	
-	global $wpdb, $WP_Views;
+	global $wpdb, $WP_Views, $wp_version;
 	
 	$view_id = intval( $_GET['view_id'] );
 	$view_title = sanitize_text_field( $_GET['view_title'] );
@@ -66,7 +66,7 @@ function wpv_ajax_wpv_insert_view_dialog_callback() {
 		<div id="js-wpv-shortcode-gui-dialog-tabs" class="wpv-shortcode-gui-tabs js-wpv-shortcode-gui-tabs">
 			<ul>
 				<?php if ( $has_parametric_search ) { ?>
-				<li><a href="#js-wpv-insert-view-parametric-search-container"><?php _e( 'Parametric search', 'wpv-views' ); ?></a></li>
+				<li><a href="#js-wpv-insert-view-parametric-search-container"><?php _e( 'Custom search', 'wpv-views' ); ?></a></li>
 				<?php } ?>
 				<li><a href="#js-wpv-insert-view-override-container"><?php _e( 'Override settings', 'wpv-views' ); ?></a></li>
 				<?php if ( ! empty( $has_extra_attributes ) ) { ?>
@@ -83,14 +83,14 @@ function wpv_ajax_wpv_insert_view_dialog_callback() {
 				<ul>
 					<li>
 						<label for="wpv-insert-view-shortcode-limit" class="label-alignleft"><?php _e( 'Limit', 'wpv-views' ); ?></label>
-						<input type="text" id="wpv-insert-view-shortcode-limit" class="js-wpv-insert-view-shortcode-limit js-wpv-has-placeholder" data-type="numberextended" placeholder="<?php echo esc_attr( __( 'A number', 'wpv-views' ) ); ?>" data-placeholder="<?php echo esc_attr( __( 'A number', 'wpv-views' ) ); ?>" />
+						<input type="text" id="wpv-insert-view-shortcode-limit" class="regular-text js-wpv-insert-view-shortcode-limit js-wpv-has-placeholder" data-type="numberextended" placeholder="<?php echo esc_attr( __( 'Numerical value', 'wpv-views' ) ); ?>" data-placeholder="<?php echo esc_attr( __( 'Numerical value', 'wpv-views' ) ); ?>" />
 						<span class="wpv-helper-text">
 							<?php echo __( 'Get only some results. -1 means no limit', 'wpv-views' ); ?>
 						</span>
 					</li>
 					<li>
 						<label for="wpv-insert-view-shortcode-offset" class="label-alignleft"><?php _e( 'Offset', 'wpv-views' ); ?></label>
-						<input type="text" id="wpv-insert-view-shortcode-offset" class="js-wpv-insert-view-shortcode-offset js-wpv-has-placeholder" data-type="number" placeholder="<?php echo esc_attr( __( 'A number', 'wpv-views' ) ); ?>" data-placeholder="<?php echo esc_attr( __( 'A number', 'wpv-views' ) ); ?>" />
+						<input type="text" id="wpv-insert-view-shortcode-offset" class="regular-text js-wpv-insert-view-shortcode-offset js-wpv-has-placeholder" data-type="number" placeholder="<?php echo esc_attr( __( 'Numerical value', 'wpv-views' ) ); ?>" data-placeholder="<?php echo esc_attr( __( 'Numerical value', 'wpv-views' ) ); ?>" />
 						<span class="wpv-helper-text">
 							<?php echo __( 'Skip some results. 0 means skip nothing', 'wpv-views' ); ?>
 						</span>
@@ -101,12 +101,11 @@ function wpv_ajax_wpv_insert_view_dialog_callback() {
 						$helper = '';
 						switch ( $query_type ) {
 							case 'posts':
-								$placeholder = __( 'ID, date, title or field-slug', 'wpv-views' );
+								$placeholder = __( 'ID, date, author, title or field-slug', 'wpv-views' );
 								$helper = __( 'You can sort by a custom field simply using the value <em>field-xxx</em> where xxx is the custom field slug.', 'wpv-views' );
 								break;
 							case 'taxonomy':
 								$placeholder = __( 'id, count, name, slug or taxonomy-field-slug', 'wpv-views' );
-								global $wp_version;
 								if ( version_compare( $wp_version, '4.5', '<' ) ) {
 									$helper = __( 'Use values like <em>id</em>, <em>count</em>, <em>name</em> or <em>slug</em>.', 'wpv-views' );
 								} else {
@@ -114,13 +113,13 @@ function wpv_ajax_wpv_insert_view_dialog_callback() {
 								}
 								break;
 							case 'users':
-								$placeholder = __( 'user_email, user_login...', 'wpv-views' );
-								$helper = __( 'Use values like <em>user_email</em>, <em>user_login</em>, <em>display_name</em>, <em>user_url</em>, <em>user_registered</em> or <em>include</em>.', 'wpv-views' );
+								$placeholder = __( 'user_email, user_login, user-field-slug...', 'wpv-views' );
+								$helper = __( 'Use values like <em>user_email</em>, <em>user_login</em>, <em>display_name</em>, <em>user_nicename</em>, <em>user_url</em>, <em>user_registered</em> or <em>include</em>. You can sort by a usermeta field simply using the value <em>user-field-xxx</em> where xxx is the user field slug.', 'wpv-views' );
 								break;
 						}
 						?>
-						<label for="wpv-insert-view-shortcode-orderby" class="label-alignleft"><?php _e( 'Orderby', 'wpv-views' ); ?></label>
-						<input type="text" id="wpv-insert-view-shortcode-orderby" class="js-wpv-insert-view-shortcode-orderby js-wpv-has-placeholder" data-type="holdon" placeholder="<?php echo esc_attr( $placeholder ); ?>" data-placeholder="<?php echo esc_attr( $placeholder ); ?>" />
+						<label for="wpv-insert-view-shortcode-orderby" class="label-alignleft"><?php _e( 'Order by', 'wpv-views' ); ?></label>
+						<input type="text" id="wpv-insert-view-shortcode-orderby" class="regular-text js-wpv-insert-view-shortcode-orderby js-wpv-has-placeholder" data-type="holdon" placeholder="<?php echo esc_attr( $placeholder ); ?>" data-placeholder="<?php echo esc_attr( $placeholder ); ?>" />
 						<span class="wpv-helper-text">
 							<?php 
 							echo __( 'Change how the results will be ordered.', 'wpv-views' ) . '<br />';
@@ -130,7 +129,7 @@ function wpv_ajax_wpv_insert_view_dialog_callback() {
 					</li>
 					<li>
 						<label for="wpv-insert-view-shortcode-order" class="label-alignleft"><?php _e( 'Order', 'wpv-views' ); ?></label>
-						<select id="wpv-insert-view-shortcode-order" class="js-wpv-insert-view-shortcode-order">
+						<select id="wpv-insert-view-shortcode-order" class="wpv-regular-select js-wpv-insert-view-shortcode-order">
 							<option value=""><?php _e( 'Default setting', 'wpv-views' ); ?></option>
 							<option value="asc"><?php _e( 'Ascending', 'wpv-views' ); ?></option>
 							<option value="desc"><?php _e( 'Descending', 'wpv-views' ); ?></option>
@@ -139,12 +138,9 @@ function wpv_ajax_wpv_insert_view_dialog_callback() {
 							<?php echo __( 'Change the order of the results.', 'wpv-views' ); ?>
 						</span>
 					</li>
-					<?php
-					if ( in_array( $query_type, array( 'posts', 'taxonomy' ) ) ) {
-					?>
 					<li class="js-wpv-insert-view-shortcode-orderby_as-setting" style="display:none">
-						<label for="wpv-insert-view-shortcode-orderby_as" class="label-alignleft"><?php _e( 'Orderby as', 'wpv-views' ); ?></label>
-						<select id="wpv-insert-view-shortcode-orderby_as" class="js-wpv-insert-view-shortcode-orderby_as">
+						<label for="wpv-insert-view-shortcode-orderby_as" class="label-alignleft"><?php _e( 'Order by as', 'wpv-views' ); ?></label>
+						<select id="wpv-insert-view-shortcode-orderby_as" class="wpv-regular-select js-wpv-insert-view-shortcode-orderby_as">
 							<option value=""><?php _e( 'Default setting', 'wpv-views' ); ?></option>
 							<option value="string"><?php _e( 'String', 'wpv-views' ); ?></option>
 							<option value="numeric"><?php _e( 'Numeric', 'wpv-views' ); ?></option>
@@ -154,52 +150,94 @@ function wpv_ajax_wpv_insert_view_dialog_callback() {
 						</span>
 					</li>
 					<?php
+					if ( 
+						in_array( $query_type, array( 'posts' ) ) 
+						&& ! version_compare( $wp_version, '4.0', '<' )
+					) {
+						$placeholder = __( 'ID, date, author or title', 'wpv-views' );
+					?>
+					<li class="wpv-insert-views-shortcode-advanced-toggler js-wpv-insert-views-shortcode-advanced-toggler">
+						<span>
+							<i class="fa fa-caret-down" aria-hidden="true"></i>
+							<?php _e( 'Secondary sorting', 'wpv-views' ); ?>
+						</span>
+					</li>
+					<li class="js-wpv-insert-view-shortcode-orderby_second-setting js-wpv-insert-views-shortcode-advanced-wrapper hidden">
+						<label for="wpv-insert-view-shortcode-orderby_second" class="label-alignleft"><?php _e( 'Secondary Order by', 'wpv-views' ); ?></label>
+						<select id="wpv-insert-view-shortcode-orderby_second" class="wpv-regular-select js-wpv-insert-view-shortcode-orderby_second" data-type="holdon">
+							<option value=""><?php _e( 'No secondary sorting', 'wpv-views' ); ?></option>
+							<option value="post_date"><?php _e('Post date', 'wpv-views'); ?></option>
+							<option value="post_title"><?php _e('Post title', 'wpv-views'); ?></option>
+							<option value="ID"><?php _e('Post ID', 'wpv-views'); ?></option>
+							<option value="post_author"><?php _e('Post author', 'wpv-views'); ?></option>
+						</select>
+						<span class="wpv-helper-text">
+							<?php 
+							echo __( 'Change how the results that share the same value on the orderby setting will be ordered.', 'wpv-views' ) . '<br />';
+							//echo $helper;
+							?>
+						</span>
+					</li>
+					<li class="js-wpv-insert-view-shortcode-order_second-setting js-wpv-insert-views-shortcode-advanced-wrapper hidden">
+						<label for="wpv-insert-view-shortcode-order_second" class="label-alignleft"><?php _e( 'Secondary Order', 'wpv-views' ); ?></label>
+						<select id="wpv-insert-view-shortcode-order_second" class="wpv-regular-select js-wpv-insert-view-shortcode-order_second" disabled="disabled">
+							<option value=""><?php _e( 'Default setting', 'wpv-views' ); ?></option>
+							<option value="asc"><?php _e( 'Ascending', 'wpv-views' ); ?></option>
+							<option value="desc"><?php _e( 'Descending', 'wpv-views' ); ?></option>
+						</select>
+						<span class="wpv-helper-text">
+							<?php echo __( 'Change the secondary order of the results.', 'wpv-views' ); ?>
+						</span>
+					</li>
+					<?php
 					}
 					?>
 				</ul>
 			</div>
 			<?php if ( ! empty( $has_extra_attributes ) ) { ?>
 			<div id="js-wpv-insert-view-extra-attributes-container" class="wpv-insert-view-extra-attributes-container js-wpv-insert-view-extra-attributes-container">
-				<h2><?php _e( 'Fill some Query Filters settings', 'wpv-views' ); ?></h2>
+				<h2><?php _e( 'Fill in some Query Filters settings', 'wpv-views' ); ?></h2>
 				<p>
 					<?php _e( 'This View can be filtered by the values listed here.', 'wpv-views' ); ?>
 				</p>
+				<ul>
 				<?php 
 				foreach ( $has_extra_attributes as $attr_settings ) {
 					?>
-					<div>
+					<li>
 						<label for="wpv-insert-view-shortcode-extra-attribute-<?php echo $attr_settings['filter_type']; ?>" class="label-alignleft"><?php echo $attr_settings['filter_label']; ?></label>
 						<input type="text" 
 							id="wpv-insert-view-shortcode-extra-attribute-<?php echo $attr_settings['filter_type']; ?>" 
-							class="js-wpv-insert-view-shortcode-extra-attribute js-wpv-has-placeholder" 
+							class="regular-text js-wpv-insert-view-shortcode-extra-attribute js-wpv-has-placeholder" 
 							placeholder="<?php echo $attr_settings['placeholder']; ?>" 
 							data-placeholder="<?php echo $attr_settings['placeholder']; ?>" 
 							data-attribute="<?php echo $attr_settings['attribute']; ?>"
 							data-type="<?php echo $attr_settings['expected']; ?>" />
 						<span class="wpv-helper-text"><?php echo $attr_settings['description']; ?></span>
-					</div>
+					</li>
 					<?php
 				}
 				?>
+				</ul>
 			</div>
 			<?php } ?>
 			<?php if ( $has_parametric_search ) { ?>
 			<div id="js-wpv-insert-view-parametric-search-container" class="wpv-insert-view-parametric-search-container js-wpv-insert-view-parametric-search-container">
-				<h2><?php _e( 'Parametric search settings', 'wpv-views' ); ?></h2>
+				<h2><?php _e( 'Custom search settings', 'wpv-views' ); ?></h2>
 				<div class="js-wpv-insert-view-form-display-container">
 					<p><strong><?php _e( 'What do you want to include here?', 'wpv-views' ); ?></strong></p>
 					<ul>
 						<li>
 							<label for="wpv-filter-form-display-both">
 								<input id="wpv-filter-form-display-both" value="both" type="radio" name="wpv-insert-view-form-display" class="js-wpv-insert-view-form-display" checked="checked" />
-								<?php _e('Both the search box and results', 'wpv-views'); ?>
+								<?php _e('Both the search form and results', 'wpv-views'); ?>
 							</label>
 							<span class="wpv-helper-text"><?php _e( 'This will display the full View.', 'wpv-views' ); ?></span>
 						</li>
 						<li>
 							<label for="wpv-filter-form-display-form">
 								<input id="wpv-filter-form-display-form" value="form" type="radio" name="wpv-insert-view-form-display" class="js-wpv-insert-view-form-display" />
-								<?php _e('Only the search box', 'wpv-views'); ?>
+								<?php _e('Only the search form', 'wpv-views'); ?>
 							</label>
 							<span class="wpv-helper-text"><?php _e( 'This will display just the form, you can then select where to display the results.', 'wpv-views' ); ?></span>
 						</li>
@@ -1231,7 +1269,8 @@ function wpv_create_form_target_page() {
 * Even when displaying data for Views listing taxonomy terms or users
 *
 * Right now, we enforce:
-* 'wpv-bloginfo', 'wpv-current-user', 'wpv-search-term', 'wpv-login-form', 'wpv-archive-link', 'wpv-logout-link'
+* 'wpv-bloginfo', 'wpv-current-user', 'wpv-search-term', 'wpv-login-form', 'wpv-archive-link',
+* 'wpv-logout-link', 'wpv-forgot-password-link'
 *
 * @since 1.10
 */
@@ -1281,6 +1320,34 @@ function wpv_force_shortcodes_gui_basic_items( $menu = array() ) {
 				'wpv-logout-link',
 				$basic,
 				"WPViews.shortcodes_gui.wpv_insert_popup('wpv-logout-link', '" . $logout_link_title . "', {}, '" . $nonce . "', this )"
+		);
+		// Add wpv-forgot-password-link
+		/*
+		 * GUI button removed because of new short codes for Forgot/Reset Password.
+		 * However, the short code is left active for backward compatibility.
+		 */
+		/*$forgot_password_link_title = __('Forgot password link', 'wpv-views');
+		$menu[$basic][$forgot_password_link_title] = array(
+			$forgot_password_link_title,
+			'wpv-forgot-password-link',
+			$basic,
+			"WPViews.shortcodes_gui.wpv_insert_popup('wpv-forgot-password-link', '" . $forgot_password_link_title . "', {}, '" . $nonce . "', this )"
+		);*/
+		// Add wpv-forgot-password-form
+		$forgot_password_form_title = __('Forgot password form', 'wpv-views');
+		$menu[$basic][$forgot_password_form_title] = array(
+			$forgot_password_form_title,
+			'wpv-forgot-password-form',
+			$basic,
+			"WPViews.shortcodes_gui.wpv_insert_popup('wpv-forgot-password-form', '" . $forgot_password_form_title . "', {}, '" . $nonce . "', this )"
+		);
+		// Add wpv-reset-password-form
+		$reset_password_form_title = __('Reset password form', 'wpv-views');
+		$menu[$basic][$reset_password_form_title] = array(
+			$reset_password_form_title,
+			'wpv-reset-password-form',
+			$basic,
+			"WPViews.shortcodes_gui.wpv_insert_popup('wpv-reset-password-form', '" . $reset_password_form_title . "', {}, '" . $nonce . "', this )"
 		);
 		// Add wpv-archive-link
 		$archive_link_title = __('Post archive link', 'wpv-views');

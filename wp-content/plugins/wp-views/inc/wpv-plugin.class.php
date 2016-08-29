@@ -483,6 +483,10 @@ class WP_Views_plugin extends WP_Views {
             if( $already_exists ) {
                 die( __( 'A WordPress Archive with that name already exists. Please use another name.', 'wpv-views' ) );
             }
+			
+			if ( empty( $name ) ) {
+				$name = 'view-rand-' . uniqid();
+			}
             
             $args = array(
                 'post_title'    => $title,
@@ -940,7 +944,7 @@ class WP_Views_plugin extends WP_Views {
 		$editor_translations = array(
 			'screen_options'							=> array(
 															'pagination_needs_filter'			=> __('Pagination requires the Filter HTML section to be visible.', 'wpv-views'),
-															'parametric_search_needs_filter'	=> __('The parametric search settings require the Filter HTML section to be visible.', 'wpv-views'),
+															'parametric_search_needs_filter'	=> __('The custom search settings require the Filter HTML section to be visible.', 'wpv-views'),
 															'can_not_hide'						=> __('This section has unsaved changes, so you can not hide it', 'wpv-views'),
 															'nonce'								=> wp_create_nonce( 'wpv_view_show_hide_nonce' )
 														),
@@ -949,9 +953,10 @@ class WP_Views_plugin extends WP_Views {
 															'effect'									=> __( '(string) The View AJAX pagination effect', 'wpv-views' ),
 															'speed'										=> __( '(integer) The View AJAX pagination speed in miliseconds', 'wpv-views' ),
 															'form'										=> __( '(object) The jQuery object for the View form', 'wpv-views' ),
+															'form_updated'								=> __( '(object) The jQuery object for the View form after being updated', 'wpv-views' ),
 															'layout'									=> __( '(object) The jQuery object for the View layout wrapper', 'wpv-views' ),
-															'update_form'								=> __( '(bool) Whether the parametric search form will be updated', 'wpv-views' ),
-															'update_results'							=> __( '(bool) Whether the parametric search results will be updated', 'wpv-views' ),
+															'update_form'								=> __( '(bool) Whether the custom search form will be updated', 'wpv-views' ),
+															'update_results'							=> __( '(bool) Whether the custom search results will be updated', 'wpv-views' ),
 															'view_changed_form_additional_forms_only'	=> __( '(object) The jQuery object containing additional forms from other instances of the same View inserted using the [wpv-form-view] shortcode', 'wpv-views' ),
 															'view_changed_form_additional_forms_full'	=> __( '(object) The jQuery object containing additional forms from other instances of the same View inserted using the [wpv-view] shortcode', 'wpv-views' )
 														),
@@ -963,6 +968,10 @@ class WP_Views_plugin extends WP_Views {
 															'post_types_for_archive_loop'	=> array(
 																								'title'		=> __( 'Choose post types', 'wpv-views' )
 																							),
+														),
+			'dialog_pagination'							=> array(
+															'title'		=> __( 'Insert transition controls for the pagination', 'wpv-views' ),
+															'insert'	=> __( 'Insert controls', 'wpv-views' ),
 														),
 			'pointer'									=> array(
 															'close'		=> __( 'Close', 'wpv-views' ),
@@ -978,9 +987,6 @@ class WP_Views_plugin extends WP_Views {
 																								),
 														),
 			'frontend_events_dialog_title' 				=> __( 'Insert Views frontend event handler', 'wpv-views'),
-			'add_archive_pagination_dialog_title' 		=> __( 'Archive pagination controls', 'wpv-views'),
-			'add_archive_pagination_dialog_cancel' 		=> __( 'Cancel', 'wpv-views' ),
-			'add_archive_pagination_dialog_insert' 		=> __( 'Insert pagination controls', 'wpv-views' ),
 			'add_event_trigger_callback_dialog_insert'	=> __( 'Insert event trigger callback', 'wpv-views' ),
 			'dialog_close'								=> __( 'Close', 'wpv-views'),
 			'codemirror_autoresize'						=> apply_filters( 'wpv_filter_wpv_codemirror_autoresize', false ),
@@ -1050,22 +1056,6 @@ class WP_Views_plugin extends WP_Views {
 		wp_register_script( 'views-filters-js', ( WPV_URL . "/res/js/redesign/views_section_filters.js" ), array( 'jquery', 'jquery-ui-dialog', 'views-utils-script', 'toolset-event-manager', 'underscore' ), WPV_VERSION, true );
 		wp_localize_script( 'views-filters-js', 'wpv_filters_strings', $filters_strings );
 		
-		$pagination_translation = array(
-			'add_pagination_dialog_title' 				=> __( 'Would you like to insert transition controls for the pagination?', 'wpv-views' ),
-			'add_pagination_dialog_cancel' 				=> __( 'Cancel', 'wpv-views' ),
-			'add_pagination_dialog_insert' 				=> __( 'Insert pagination controls', 'wpv-views' ),
-			'close' 									=> __( 'Close', 'wpv-views' ),
-			'wpv_page_pagination_shortcode_definition'	=> __('This is an optional placeholder to wrap the pagination shortcodes. The content of this shortcode will only be displayed if there is more than one page of results.', 'wpv-views'),
-			'wpv_page_num_shortcode_definition'			=> __('Displays the current page number', 'wpv-views'),
-			'wpv_page_total_shortcode_definition'		=> __('Displays the maximum number of pages found by the Views Query.', 'wpv-views'),
-			'wpv_page_selector_shortcode_definition'	=> __('Displays a pager with the current page selected. Depending on the value of the <em>style</em> parameter it displays a list of links to the other pages or a drop-down list to select another page.', 'wpv-views'),
-			'wpv_page_pre_shortcode_definition'			=> __('Display a <em>Previous</em> link to move to the previous page.', 'wpv-views'),
-			'wpv_page_next_shortcode_definition'		=> __('Display a <em>Next</em> link to move to the next page.', 'wpv-views')
-			
-		);
-		wp_register_script( 'views-pagination-js', ( WPV_URL . "/res/js/redesign/views_section_pagination.js" ), array( 'views-editor-js'), WPV_VERSION, true );
-		wp_localize_script( 'views-pagination-js', 'wpv_pagination_texts', $pagination_translation );
-
 		$inline_content_templates_translations = array(
             'new_template_name_in_use'		=> __( 'A Content Template with that name already exists. Please try with another name.', 'wpv-views' ),
 			'pointer_close'					=> __( 'Close', 'wpv-views' ),
@@ -1319,9 +1309,6 @@ class WP_Views_plugin extends WP_Views {
 			}
 			if ( ! wp_script_is( 'views-filters-js' ) ) {
 				wp_enqueue_script( 'views-filters-js' );
-			}
-			if ( ! wp_script_is( 'views-pagination-js' ) ) {
-				wp_enqueue_script( 'views-pagination-js' );
 			}
 			if ( ! wp_script_is( 'views-layout-template-js' ) ) {
 				wp_enqueue_script( 'views-layout-template-js' );

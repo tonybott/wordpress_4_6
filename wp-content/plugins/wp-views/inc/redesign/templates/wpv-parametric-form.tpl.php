@@ -9,7 +9,7 @@
 				<?php /* <legend id="js_legend_default"><?php _e('Defaults', 'wpv-views');?></legend> */ ?>
 
 				<p>
-					<label for="selectFilter" id="js_select_parametric_filter" class="label-alignleft"><?php _e('Select what to filter by :', 'wpv-views');?></label>
+					<label for="selectFilter" id="js_select_parametric_filter" class="label-alignleft"><?php _e('Filter by:', 'wpv-views');?></label>
 
 					<!-- Main select. We do it this way to group values with <optgroup> not supported otherwise-->
 					<select data-bind="foreach: selectFilter, value:fieldRaw" class="js-wpv-select-filter">
@@ -30,7 +30,7 @@
 				<hr style="color:#ededed;background:#ededed" />
 
 				<p data-bind="visible:fieldRaw">
-					<label for="selectInputKind" id="js-parametric-input-default" class="label-alignleft"><?php _e('Use this kind of input:', 'wpv-views'); ?></label>
+					<label for="selectInputKind" id="js-parametric-input-default" class="label-alignleft"><?php _e('Input type:', 'wpv-views'); ?></label>
 					<select data-bind="options: selectInputKind, value:type, optionsCaption: 'Choose input type:'" id="selectInputKind"></select>
 					<span class="wpv-helper-text"><?php _e( 'You can use any of those form elements.', 'wpv-views' ); ?></span>
 				</p>

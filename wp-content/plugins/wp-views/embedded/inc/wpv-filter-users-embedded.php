@@ -107,13 +107,26 @@ function get_users_query( $view_settings ) {
 add_filter( 'wpv_filter_user_query', 'wpv_users_query_include_role', 20, 2 );
 
 function wpv_users_query_include_role( $args, $view_settings ) {
-	$args['role'] = 'administrator';
-	if ( isset( $view_settings['roles_type'][0] ) ){
-        $args['role'] = $view_settings['roles_type'][0];
-    }
-	if ( $args['role'] == 'any' ) {
-		unset( $args['role'] );
+	global $wp_version;
+
+	// Check for WP Version and adjust $args accordingly.
+	// - WP 4.4 and above: role__in
+	// - WP below 4.4: role
+	$role_arg = 'role__in';
+
+	if ( version_compare( $wp_version, '4.4', '<' ) ) {
+		$role_arg = 'role';
 	}
+
+	$args[$role_arg] = ( $role_arg == 'role__in' ) ? array( 'administrator' ) : 'administrator';
+
+	if ( isset( $view_settings['roles_type'][0] ) ){
+		$args[$role_arg] = ( $role_arg == 'role__in' ) ? $view_settings['roles_type'] : $view_settings['roles_type'][0];
+    }
+	if( in_array( 'any', $view_settings['roles_type'] ) ) {
+		unset( $args[$role_arg] );
+	}
+
 	return $args;
 }
 

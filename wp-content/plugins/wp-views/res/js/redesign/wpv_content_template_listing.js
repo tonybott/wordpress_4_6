@@ -200,14 +200,16 @@ WPViews.CTListingScreen = function( $ ) {
 		showSpinnerAfter( thiz );
 
 		$( ".js-wpv-dialog-add-new-content-template .js-wpv-ct-assign-to-object:checked").each( function() {
-			type.push( $( this ).val() );
-			if ( $( this ).hasClass( 'js-wpv-ct-assign-to-post-type-single' ) ) {
-				var need_apply = $( this ).closest( '.js-wpv-ct-assign-to-object-container' ).find( '.js-wpv-ct-assign-to-object-apply' );
-				if (
-					need_apply.length > 0 
-					&& need_apply.prop( 'checked' )
-				) {
-					apply.push( need_apply.val() );
+			if ( $( this ).val() != '0' ) {
+				type.push( $( this ).val() );
+				if ( $( this ).hasClass( 'js-wpv-ct-assign-to-post-type-single' ) ) {
+					var need_apply = $( this ).closest( '.js-wpv-ct-assign-to-object-container' ).find( '.js-wpv-ct-assign-to-object-apply' );
+					if (
+						need_apply.length > 0 
+						&& need_apply.prop( 'checked' )
+					) {
+						apply.push( need_apply.val() );
+					}
 				}
 			}
 		});

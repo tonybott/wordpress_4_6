@@ -107,7 +107,7 @@ class WPV_Admin_Messages {
 		?>
 		<span class="<?php echo $classname; ?>" data-target="<?php echo $target; ?>">
 			<span class="wpv-toggle-toggler-icon js-wpv-toggle-toggler-icon">
-				<i class="icon-caret-down fa fa-caret-down icon-large fa-lg"></i>
+				<i class="fa fa-caret-down icon-large fa-lg"></i>
 			</span>
 			<?php echo $title; ?>
 		</span>
@@ -303,7 +303,7 @@ class WPV_Admin_Messages {
 			case 'filter_the_results':
 				$return = array(
 					'title' => __('Query Filter', 'wpv-views'),
-					'content' => __("You can filter the View query by status, custom fields, taxonomy, users fields and even content search depending on the content that you are going to load. Click on 'Add a filter' and then select the filter type. A View may have as many filters as you like.", 'wpv-views')
+					'content' => __("You can filter the View query by status, custom fields, taxonomy, users fields and even text search depending on the content that you are going to load. Click on 'Add a filter' and then select the filter type. A View may have as many filters as you like.", 'wpv-views')
 				);
 				break;
 			case 'filter_the_archive_results':
@@ -327,24 +327,24 @@ class WPV_Admin_Messages {
 			case 'filters_html_css_js':
 				$return = array(
 					'title' => __('Filter', 'wpv-views'),
-					'content' => __("In this section you can add pagination controls, slider controls and parametric searches. If you have enabled pagination, you need to insert the pagination controls here. They are used for both paged results and sliders. For parametric searches, insert 'filter' elements. The output of this section is displayed via the [wpv-filter-meta-html] shortcode in the Filter and Loop Output Integration section.", 'wpv-views')
+					'content' => __("In this section you can add pagination controls, slider controls and custom searches. If you have enabled pagination, you need to insert the pagination controls here. They are used for both paged results and sliders. For custom searches, insert 'filter' elements. The output of this section is displayed via the [wpv-filter-meta-html] shortcode in the Filter and Loop Output Integration section.", 'wpv-views')
 				);
 				break;
 			case 'filters_archive_html_css_js':
 				$return = array(
 					'title' => __('Filter', 'wpv-views'),
-					'content' => __("In this section you can add parametric searches. For parametric searches, insert 'filter' elements. The output of this section is displayed via the [wpv-filter-meta-html] shortcode in the Filter and Loop Output Integration section.", 'wpv-views')
+					'content' => __("In this section you can add custom searches. For custom searches, insert 'filter' elements. The output of this section is displayed via the [wpv-filter-meta-html] shortcode in the Filter and Loop Output Integration section.", 'wpv-views')
 				);
 				break;
 			case 'parametric_search':
 				$return = array(
-					'title' => __('Parametric search', 'wpv-views'),
+					'title' => __('Custom search', 'wpv-views'),
 					'content' => __("In this section you can choose when to refresh the Views results and which options to show in form inputs.", 'wpv-views')
 				);
 				break;
 			case 'parametric_search_archive':
 				$return = array(
-					'title' => __('Parametric search', 'wpv-views'),
+					'title' => __('Custom search', 'wpv-views'),
 					'content' => __("In this section you can choose when to refresh the WordPress Archive results and which options to show in form inputs.", 'wpv-views')
 				);
 				break;
@@ -521,14 +521,14 @@ function wpv_get_view_introduction_data() {
 	);
 	wpv_toolset_help_box($slider);
 	$parametric = array(
-		'text'			=> '<h3>' . __('Building a View for a parametric search:', 'wpv-views') . '</h3>'
+		'text'			=> '<h3>' . __('Building a View for a custom search:', 'wpv-views') . '</h3>'
 						. '<ol><li>' . __('Select which content to load in the \'Content Selection\' section.', 'wpv-views') . '</li>'
 						. '<li>' . __('Add filter input to the Filter section.', 'wpv-views') . '</li>'
-						. '<li>' . __('Select advanced search options in the \'Parametric Search Settings\' section.', 'wpv-views') . '</li>'
+						. '<li>' . __('Select advanced search options in the \'Custom Search Settings\' section.', 'wpv-views') . '</li>'
 						. '<li>' . __('Design the search results in the Loop Output section.', 'wpv-views') . '</li>'
 						. '<li class="js-layouts-search-help" style="display:none">' . __('Select if you want the form, the results or both displayed in the Layouts cell.', 'wpv-views') . '</li></ol>'
 						. '<p>' . __('Remember to click on Update after you complete each section and before you continue to the next section.', 'wpv-views') . '</p>',
-		'tutorial-button-text'	=> htmlentities( __('Creating parametric searches with Views', 'wpv-views'), ENT_QUOTES ),
+		'tutorial-button-text'	=> htmlentities( __('Creating custom searches with Views', 'wpv-views'), ENT_QUOTES ),
 		'tutorial-button-url'	=> WPV_LINK_CREATE_PARAMETRIC_SEARCH,
 		'close'			=> 'true',
 		'hidden'		=> 'true',
@@ -540,7 +540,7 @@ function wpv_get_view_introduction_data() {
 						. __('The Query section lets you choose the content to load.', 'wpv-views') . WPV_MESSAGE_SPACE_CHAR
 						. __('A basic query selects all items of a chosen type.', 'wpv-views') . '</p>'
 						. '<ul><li>' . __('You can refine the selection by adding filters.','wpv-views') . '</li>'
-						. '<li>' . __('The Front-end filter section lets you add pagination, slider controls and parametric search to the View.', 'wpv-views') . '</li>'
+						. '<li>' . __('The Front-end filter section lets you add pagination, slider controls and custom search to the View.', 'wpv-views') . '</li>'
 						. '<li>' .  __('At the bottom of this page you will find the Loop Output section, where you control the output.', 'wpv-views') . '</li></ul>',
 		'close'			=> 'true',
 		'hidden'		=> 'true',
@@ -569,7 +569,7 @@ function wpv_get_view_filter_introduction_data() {
 						. __('Select how many results to show in each page and how pages transition.', 'wpv-views') . '</li>'
 						. '<li>' . __('The second part of this section lets you design the pagination controls that would appear on the page for visitors.', 'wpv-views') . WPV_MESSAGE_SPACE_CHAR
 						. __('The toolbar above the HTML editor includes buttons for inserting various controls.', 'wpv-views') . '</li>'
-						. '<li>' . __('Besides pagination, you can also insert parametric search filters and content search controls.', 'wpv-views') . '</li></ul>',
+						. '<li>' . __('Besides pagination, you can also insert custom search filters and text search controls.', 'wpv-views') . '</li></ul>',
 		'close'			=> 'true',
 		'hidden'		=> 'true',
 		'classname'		=> 'js-metasection-help-filter js-for-view-purpose-pagination'
@@ -599,20 +599,20 @@ function wpv_get_view_filter_introduction_data() {
 						. __('Select how many results to show in each page and how pages transition.', 'wpv-views') . '</li>'
 						. '<li>' . __('The second part of this section lets you design the pagination controls that would appear on the page for visitors.', 'wpv-views') . WPV_MESSAGE_SPACE_CHAR
 						. __('The toolbar above the HTML editor includes buttons for inserting various controls.', 'wpv-views') . '</li>'
-						. '<li>' . __('Besides pagination and slider transition controls, you can also insert parametric search filters and content search controls.', 'wpv-views') . '</li></ul>'
-						. '<p><a href="' . WPV_LINK_CREATE_PARAMETRIC_SEARCH . '" target="_blank">' . __('Learn how to create parametric searches with Views.', 'wpv-views') . '</a></p>',
+						. '<li>' . __('Besides pagination and slider transition controls, you can also insert custom search filters and text search controls.', 'wpv-views') . '</li></ul>'
+						. '<p><a href="' . WPV_LINK_CREATE_PARAMETRIC_SEARCH . '" target="_blank">' . __('Learn how to create custom searches with Views.', 'wpv-views') . '</a></p>',
 		'close'			=> 'true',
 		'hidden'		=> 'true',
 		'classname'		=> 'js-metasection-help-filter js-for-view-purpose-full'
 	);
 	wpv_toolset_help_box($full);
 	$parametric = array(
-		'text'			=> '<h3>' . __(' Parametric Search Instructions', 'wpv-views' ) . '</h3>'
-						. '<p>' . __('This section controls how the search box for your parametric search will behave and appear.','wpv-views') . '</p>'
+		'text'			=> '<h3>' . __('Custom Search Instructions', 'wpv-views' ) . '</h3>'
+						. '<p>' . __('This section controls how the search form for your custom search will behave and appear.','wpv-views') . '</p>'
 						. '<ol><li>' . __('First, choose how to update the results. Depending on your selections, the Filter HTML editor will include different controls.','wpv-views') . '</li>'
 						. '<li>' . __('Then, add input filters and search-form controls to the Filter section.','wpv-views') . '</li></ul>'
 						. '<p>' . __('Use the "formatting and editing instructions" bar at the bottom of the editor to see full editing instructions.','wpv-views') . '</p>'
-						. '<p><a href="' . WPV_LINK_CREATE_PARAMETRIC_SEARCH . '" target="_blank" class="btn">' . __('Complete Views Parametric Search tutorial', 'wpv-views') . '</a></p>'
+						. '<p><a href="' . WPV_LINK_CREATE_PARAMETRIC_SEARCH . '" target="_blank" class="btn">' . __('Complete Views Custom Search tutorial', 'wpv-views') . '</a></p>'
 						. ' <input id="wpv-parametric-hint-dismiss" type="hidden" class="js-wpv-parametric-hint-dismiss" data-nonce="' . wp_create_nonce( 'wpv_view_parametric_hint_dismiss_nonce')  . '" /> ',
 		'close'			=> 'true',
 		'hidden'		=> 'true',
@@ -694,16 +694,16 @@ function wpv_display_view_howto_help_box() {
 	);
 	wpv_toolset_help_box( $general );
 	$parametric = array(
-		'text'			=> '<h3>' . __( 'How to display this Parametric Search View', 'wpfv-views' ) . '</h3>' 
-						. '<p>' . __( 'This View contains a search box and results list.', 'wpv-views' ) . WPV_MESSAGE_SPACE_CHAR
+		'text'			=> '<h3>' . __( 'How to display this Custom Search View', 'wpfv-views' ) . '</h3>' 
+						. '<p>' . __( 'This View contains a search form and results list.', 'wpv-views' ) . WPV_MESSAGE_SPACE_CHAR
 						. __( 'You can display them together, on one page, or have the search in one page and the results on another page.', 'wpv-views' ) . '</p><p>'
-						. __('Start with the location where you want the search box to appear.', 'wpv-views') . WPV_MESSAGE_SPACE_CHAR
+						. __('Start with the location where you want the search form to appear.', 'wpv-views') . WPV_MESSAGE_SPACE_CHAR
 						. __( 'You can display the search inside content or as a widget.', 'wpv-views' ) . '</p><p>'
 						. __('To display inside content (post, post, custom type), edit that content.', 'wpv-views') . WPV_MESSAGE_SPACE_CHAR
 						. __( 'You will find the <strong>Views</strong> button.', 'wpv-views' ) . WPV_MESSAGE_SPACE_CHAR
 						. __( 'Click on it and locate this View to insert it anywhere you want inside the content.', 'wpv-views' ) . '</p><p>'
 						. sprintf( __('To display as a widget, go to <a href="%s">Appearance -> Widgets</a> and select the <strong>WP Views Filter</strong> widget.', 'wpv-views'), admin_url( 'widgets.php' ) ) . '</p><p>'
-						. __( 'When you insert the search box, Views will offer you where to display the results.', 'wpv-views' )
+						. __( 'When you insert the search form, Views will offer you where to display the results.', 'wpv-views' )
 						. '</p>',
 		'classname'		=> 'js-display-view-howto js-for-view-purpose-parametric'
 	);
@@ -808,13 +808,13 @@ function wpv_get_embedded_view_introduction_data() {
 	);
 	wpv_toolset_help_box($slider);
 	$parametric = array(
-		'text'			=> $promotional . '<p>' . __('Building a View for a parametric search:', 'wpv-views') . '</p>'
+		'text'			=> $promotional . '<p>' . __('Building a View for a custom search:', 'wpv-views') . '</p>'
 						. '<ol><li>' . __('Select which content to load in the \'Content Selection\' section.', 'wpv-views') . '</li>'
 						. '<li>' . __('Add filter input to the Filter section.', 'wpv-views') . '</li>'
-						. '<li>' . __('Select advanced search options in the \'Parametric Search Settings\' section.', 'wpv-views') . '</li>'
+						. '<li>' . __('Select advanced search options in the \'Custom Search Settings\' section.', 'wpv-views') . '</li>'
 						. '<li>' . __('Design the search results in the Loop Output section.', 'wpv-views') . '</li></ol>'
 						. '<p>' . __('Remember to click on Update after you complete each section and before you continue to the next section.', 'wpv-views') . '</p>',
-		'tutorial-button-text'	=> htmlentities( __('Creating parametric searches with Views', 'wpv-views'), ENT_QUOTES ),
+		'tutorial-button-text'	=> htmlentities( __('Creating custom searches with Views', 'wpv-views'), ENT_QUOTES ),
 		'tutorial-button-url'	=> WPV_LINK_CREATE_PARAMETRIC_SEARCH,
 		'close'			=> 'false',
 		'hidden'		=> 'true',
@@ -826,7 +826,7 @@ function wpv_get_embedded_view_introduction_data() {
 						. __('The Query section lets you choose the content to load.', 'wpv-views') . WPV_MESSAGE_SPACE_CHAR
 						. __('A basic query selects all items of a chosen type.', 'wpv-views') . '</p>'
 						. '<ul><li>' . __('You can refine the selection by adding filters.','wpv-views') . '</li>'
-						. '<li>' . __('The Front-end filter section lets you add pagination, slider controls and parametric search to the View.', 'wpv-views') . '</li>'
+						. '<li>' . __('The Front-end filter section lets you add pagination, slider controls and custom search to the View.', 'wpv-views') . '</li>'
 						. '<li>' .  __('At the bottom of this page you will find the Loop Output section, where you control the output.', 'wpv-views') . '</li></ul>',
 		'close'			=> 'false',
 		'hidden'		=> 'true',
@@ -908,7 +908,7 @@ function wpv_get_embedded_view_filter_introduction_data() {
 						. __('Select how many results to show in each page and how pages transition.', 'wpv-views') . '</li>'
 						. '<li>' . __('The second part of this section lets you design the pagination controls that would appear on the page for visitors.', 'wpv-views') . WPV_MESSAGE_SPACE_CHAR
 						. __('The toolbar above the HTML editor includes buttons for inserting various controls.', 'wpv-views') . '</li>'
-						. '<li>' . __('Besides pagination, you can also insert parametric search filters and content search controls.', 'wpv-views') . '</li></ul>',
+						. '<li>' . __('Besides pagination, you can also insert custom search filters and text search controls.', 'wpv-views') . '</li></ul>',
 		'close'			=> 'false',
 		'hidden'		=> 'true',
 		'classname'		=> 'js-metasection-help-filter js-for-view-purpose-pagination'
@@ -938,20 +938,20 @@ function wpv_get_embedded_view_filter_introduction_data() {
 						. __('Select how many results to show in each page and how pages transition.', 'wpv-views') . '</li>'
 						. '<li>' . __('The second part of this section lets you design the pagination controls that would appear on the page for visitors.', 'wpv-views') . WPV_MESSAGE_SPACE_CHAR
 						. __('The toolbar above the HTML editor includes buttons for inserting various controls.', 'wpv-views') . '</li>'
-						. '<li>' . __('Besides pagination and slider transition controls, you can also insert parametric search filters and content search controls.', 'wpv-views') . '</li></ul>'
-						. '<p><a href="' . WPV_LINK_CREATE_PARAMETRIC_SEARCH . '" target="_blank">' . __('Learn how to create parametric searches with Views.', 'wpv-views') . '</a></p>',
+						. '<li>' . __('Besides pagination and slider transition controls, you can also insert custom search filters and text search controls.', 'wpv-views') . '</li></ul>'
+						. '<p><a href="' . WPV_LINK_CREATE_PARAMETRIC_SEARCH . '" target="_blank">' . __('Learn how to create custom searches with Views.', 'wpv-views') . '</a></p>',
 		'close'			=> 'false',
 		'hidden'		=> 'true',
 		'classname'		=> 'js-metasection-help-filter js-for-view-purpose-full'
 	);
 	wpv_toolset_help_box($full);
 	$parametric = array(
-		'text'			=> '<p>' . sprintf(__('To create a parametric search, position the cursor between the %s and %s shortcodes and click on the <strong>New filter</strong> button to insert filter elements.', 'wpv-views'),'<strong>[wpv-filter-controls]</strong>','<strong>[/wpv-filter-controls]</strong>') . WPV_MESSAGE_SPACE_CHAR
-						. __('Your parametric search can contain filters by custom fields, taxonomies or even post relationships.', 'wpv-views') . '</p>'
-						. '<p>' . __('You can also click on the <strong>Content search</strong> button to add a search box for visitors', 'wpv-views') . '</p>'
+		'text'			=> '<p>' . sprintf(__('To create a custom search, position the cursor between the %s and %s shortcodes and click on the <strong>New filter</strong> button to insert filter elements.', 'wpv-views'),'<strong>[wpv-filter-controls]</strong>','<strong>[/wpv-filter-controls]</strong>') . WPV_MESSAGE_SPACE_CHAR
+						. __('Your custom search can contain filters by custom fields, taxonomies or even post relationships.', 'wpv-views') . '</p>'
+						. '<p>' . __('You can also click on the <strong>Text search</strong> button to add a search box for visitors', 'wpv-views') . '</p>'
 						. '<p>'. __('Use HTML and CSS to style the filter.', 'wpv-views') . WPV_MESSAGE_SPACE_CHAR
 						. __('Remember to include the <strong>Submit</strong> button for the form.', 'wpv-views'). '</p>'
-						. '<p><a href="' . WPV_LINK_CREATE_PARAMETRIC_SEARCH . '" target="_blank">' . __('Learn how to create parametric searches with Views.', 'wpv-views') . '</a></p>'
+						. '<p><a href="' . WPV_LINK_CREATE_PARAMETRIC_SEARCH . '" target="_blank">' . __('Learn how to create custom searches with Views.', 'wpv-views') . '</a></p>'
 						. ' <input id="wpv-parametric-hint-dismiss" type="hidden" class="js-wpv-parametric-hint-dismiss" data-nonce="' . wp_create_nonce( 'wpv_view_parametric_hint_dismiss_nonce')  . '" /> ',
 		'close'			=> 'false',
 		'hidden'		=> 'true',
@@ -1068,11 +1068,11 @@ function wpv_insert_form_workflow_help_boxes( $post ) {
 		if ( ! $has_view ) {
 			// Add the basic help box for the SELF case, hidden
 			$data_def = array(
-				'text'			=> '<h2>' . __( 'Complete the parametric search setup by inserting the results', 'wpv-views' ) . '</h2>'
-								. '<p>' . sprintf( __('This page should display the results of the parametric search provided by the View <strong>%s</strong>.', 'wpv-views'), $view_name ) . WPV_MESSAGE_SPACE_CHAR
+				'text'			=> '<h2>' . __( 'Complete the custom search setup by inserting the results', 'wpv-views' ) . '</h2>'
+								. '<p>' . sprintf( __('This page should display the results of the custom search provided by the View <strong>%s</strong>.', 'wpv-views'), $view_name ) . WPV_MESSAGE_SPACE_CHAR
 								. sprintf( __( 'You can copy and paste this shortcode wherever you want to display the results: %s', 'wpv-views' ), $view_shortcode ) . '</p>'
 								. '<p>' . sprintf( __( 'Also, you can click in the <strong>Views</strong> button and select <strong>%s</strong> in the <em>View</em> section.', 'wpv-views' ), $view_name ) . WPV_MESSAGE_SPACE_CHAR
-								. __( 'Then, select the option to display just the results for the parametric search.', 'wpv-views' ) . '</p>',
+								. __( 'Then, select the option to display just the results for the custom search.', 'wpv-views' ) . '</p>',
 				'close'			=> 'true',
 				'hidden'		=> 'true',
 				'classname'		=> 'js-wpv-insert-form-workflow-help-box'
@@ -1089,8 +1089,8 @@ function wpv_insert_form_workflow_help_boxes( $post ) {
 							if ( $has_orig_completed ) {
 								// Target has shortcode, and orig has shortcode
 								$data = array(
-									'text'			=> '<h2>' . __( 'Parametric search setup completed!', 'wpv-views' ) . '</h2>'
-													. '<p>' . sprintf( __('You have finished the setup of the parametric search provided by the View <strong>%s</strong>.', 'wpv-views'), $view_name ) . WPV_MESSAGE_SPACE_CHAR
+									'text'			=> '<h2>' . __( 'Custom search setup completed!', 'wpv-views' ) . '</h2>'
+													. '<p>' . sprintf( __('You have finished the setup of the custom search provided by the View <strong>%s</strong>.', 'wpv-views'), $view_name ) . WPV_MESSAGE_SPACE_CHAR
 													. sprintf( __( 'The form will appear on the page <strong>%s</strong> and the results will be shown in this page.', 'wpv-views' ), $orig_title ) . '</p>'
 													. '<p><a href="#" class="button button-small button-primary-toolset js-wpv-insert-form-workflow-help-box-close">' . __( 'Close', 'wpv-views' ) . '</a></p>',
 									'close'			=> 'true',
@@ -1101,8 +1101,8 @@ function wpv_insert_form_workflow_help_boxes( $post ) {
 							} else {
 								// Target has shortcode, but orig lacks shortcode
 								$data = array(
-									'text'			=> '<h2>' . sprintf( __( 'Don\'t forget to insert the parametric search box into %s', 'wpv-views' ), $orig_title ) . '</h2>'
-													. '<p>' . sprintf( __('You are almost done with this parametric search provided by the View <strong>%s</strong>.', 'wpv-views'), $view_name ) . WPV_MESSAGE_SPACE_CHAR
+									'text'			=> '<h2>' . sprintf( __( 'Don\'t forget to insert the custom search form into %s', 'wpv-views' ), $orig_title ) . '</h2>'
+													. '<p>' . sprintf( __('You are almost done with this custom search provided by the View <strong>%s</strong>.', 'wpv-views'), $view_name ) . WPV_MESSAGE_SPACE_CHAR
 													. __( 'This page already has all it needs to display the results.', 'wpv-views' ) . WPV_MESSAGE_SPACE_CHAR
 													. sprintf( __( 'Remember to get back to the other tab in your browser and insert the search View into <strong>%s</strong>.', 'wpv-views' ), $orig_title ) . '</p>'
 													. '<p><a href="#" class="button button-small button-primary-toolset js-wpv-insert-form-workflow-help-box-close">' . __( 'Close', 'wpv-views' ) . '</a></p>',
@@ -1114,11 +1114,11 @@ function wpv_insert_form_workflow_help_boxes( $post ) {
 							}
 						} else {
 							$data = array(
-								'text'			=> '<h2>' . __( 'Complete the parametric search setup by inserting the results', 'wpv-views' ) . '</h2>'
-												. '<p>' . sprintf( __('This page should display the results of the parametric search provided by the View <strong>%s</strong>.', 'wpv-views'), $view_name ) . WPV_MESSAGE_SPACE_CHAR
+								'text'			=> '<h2>' . __( 'Complete the custom search setup by inserting the results', 'wpv-views' ) . '</h2>'
+												. '<p>' . sprintf( __('This page should display the results of the custom search provided by the View <strong>%s</strong>.', 'wpv-views'), $view_name ) . WPV_MESSAGE_SPACE_CHAR
 												. sprintf( __( 'You can copy and paste this shortcode wherever you want to display the results: %s', 'wpv-views' ), $view_shortcode ) . '</p>'
 												. '<p>' . sprintf( __( 'Also, you can click in the <strong>Views</strong> button and select <strong>%s</strong> in the <em>View</em> section.', 'wpv-views' ), $view_name ) . WPV_MESSAGE_SPACE_CHAR
-												. __( 'Then, select the option to display just the results for the parametric search.', 'wpv-views' ) . '</p>',
+												. __( 'Then, select the option to display just the results for the custom search.', 'wpv-views' ) . '</p>',
 								'close'			=> 'true',
 								'hidden'		=> 'false',
 								'classname'		=> 'js-wpv-insert-form-workflow-help-box' . $view_classname
@@ -1127,8 +1127,8 @@ function wpv_insert_form_workflow_help_boxes( $post ) {
 							if ( $has_orig_completed ) {
 								// After inserting the shortcode, we can call it complete!
 								$data_after = array(
-									'text'			=> '<h2>' . __( 'Parametric search setup completed!', 'wpv-views' ) . '</h2>'
-													. '<p>' . sprintf( __('You have finished the setup of the parametric search provided by the View <strong>%s</strong>.', 'wpv-views'), $view_name ) . WPV_MESSAGE_SPACE_CHAR
+									'text'			=> '<h2>' . __( 'Custom search setup completed!', 'wpv-views' ) . '</h2>'
+													. '<p>' . sprintf( __('You have finished the setup of the custom search provided by the View <strong>%s</strong>.', 'wpv-views'), $view_name ) . WPV_MESSAGE_SPACE_CHAR
 													. sprintf( __( 'The form will appear on the page <strong>%s</strong> and the results will be shown in this page.', 'wpv-views' ), $orig_title ) . '</p>'
 													. '<p><a href="#" class="button button-small button-primary-toolset js-wpv-insert-form-workflow-help-box-close">' . __( 'Close', 'wpv-views' ) . '</a></p>',
 									'close'			=> 'true',
@@ -1139,8 +1139,8 @@ function wpv_insert_form_workflow_help_boxes( $post ) {
 							} else {
 								// After inserting, origin is lacking shortcode
 								$data_after = array(
-									'text'			=> '<h2>' . sprintf( __( 'Don\'t forget to insert the parametric search box into %s', 'wpv-views' ), $orig_title ) . '</h2>'
-													. '<p>' . sprintf( __('You are almost done with this parametric search provided by the View <strong>%s</strong>.', 'wpv-views'), $view_name ) . WPV_MESSAGE_SPACE_CHAR
+									'text'			=> '<h2>' . sprintf( __( 'Don\'t forget to insert the custom search form into %s', 'wpv-views' ), $orig_title ) . '</h2>'
+													. '<p>' . sprintf( __('You are almost done with this custom search provided by the View <strong>%s</strong>.', 'wpv-views'), $view_name ) . WPV_MESSAGE_SPACE_CHAR
 													. __( 'This page already has all it needs to display the results.', 'wpv-views' ) . WPV_MESSAGE_SPACE_CHAR
 													. sprintf( __( 'Remember to get back to the other tab in your browser and insert the search View into <strong>%s</strong>.', 'wpv-views' ), $orig_title ) . '</p>'
 													. '<p><a href="#" class="button button-small button-primary-toolset js-wpv-insert-form-workflow-help-box-close">' . __( 'Close', 'wpv-views' ) . '</a></p>',
@@ -1162,8 +1162,8 @@ function wpv_insert_form_workflow_help_boxes( $post ) {
 						// Has View data and orig data from widget, so show everything
 						if ( $has_completed ) {
 							$data = array(
-								'text'			=> '<h2>' . __( 'Parametric search setup completed!', 'wpv-views' ) . '</h2>'
-													. '<p>' . sprintf( __('This page will display the results of the parametric search provided by the View <strong>%s</strong> used in a %s.', 'wpv-views'), $view_name, $orig_label ) . '</p>'
+								'text'			=> '<h2>' . __( 'Custom search setup completed!', 'wpv-views' ) . '</h2>'
+													. '<p>' . sprintf( __('This page will display the results of the custom search provided by the View <strong>%s</strong> used in a %s.', 'wpv-views'), $view_name, $orig_label ) . '</p>'
 													. '<p>' . sprintf( __( 'Remember to get back to the other tab in your browser and save the %s settings.', 'wpv-views' ), $orig_label ) . '</p>'
 													. '<p><a href="#" class="button button-small button-primary-toolset js-wpv-insert-form-workflow-help-box-close">' . __( 'Close', 'wpv-views' ) . '</a></p>',
 								'close'			=> 'true',
@@ -1172,18 +1172,18 @@ function wpv_insert_form_workflow_help_boxes( $post ) {
 							);
 						} else {
 							$data = array(
-								'text'			=> '<h2>' . __( 'Complete the parametric search setup by inserting the results', 'wpv-views' ) . '</h2>'
-												. '<p>' . sprintf( __('This page should display the results of the parametric search provided by the View <strong>%s</strong> used in a %s.', 'wpv-views'), $view_name, $orig_label ) . WPV_MESSAGE_SPACE_CHAR
+								'text'			=> '<h2>' . __( 'Complete the custom search setup by inserting the results', 'wpv-views' ) . '</h2>'
+												. '<p>' . sprintf( __('This page should display the results of the custom search provided by the View <strong>%s</strong> used in a %s.', 'wpv-views'), $view_name, $orig_label ) . WPV_MESSAGE_SPACE_CHAR
 												. sprintf( __( 'You can copy and paste this shortcode wherever you want to display the results: %s', 'wpv-views' ), $view_shortcode ) . '</p>'
 												. '<p>' . sprintf( __( 'Also, you can click in the <strong>Views</strong> button and select <strong>%s</strong> in the <em>View</em> section.', 'wpv-views' ), $view_name ) . WPV_MESSAGE_SPACE_CHAR
-												. __( 'Then, select the option to display just the results for the parametric search.', 'wpv-views' ) . '</p>',
+												. __( 'Then, select the option to display just the results for the custom search.', 'wpv-views' ) . '</p>',
 								'close'			=> 'true',
 								'hidden'		=> 'false',
 								'classname'		=> 'js-wpv-insert-form-workflow-help-box' . $view_classname
 							);
 							$data_after = array(
-								'text'			=> '<h2>' . __( 'Parametric search setup completed!', 'wpv-views' ) . '</h2>'
-													. '<p>' . sprintf( __('This page will display the results of the parametric search provided by the View <strong>%s</strong> used in a %s.', 'wpv-views'), $view_name, $orig_label ) . '</p>'
+								'text'			=> '<h2>' . __( 'Custom search setup completed!', 'wpv-views' ) . '</h2>'
+													. '<p>' . sprintf( __('This page will display the results of the custom search provided by the View <strong>%s</strong> used in a %s.', 'wpv-views'), $view_name, $orig_label ) . '</p>'
 													. '<p>' . sprintf( __( 'Remember to get back to the other tab in your browser and save the %s settings.', 'wpv-views' ), $orig_label ) . '</p>'
 													. '<p><a href="#" class="button button-small button-primary-toolset js-wpv-insert-form-workflow-help-box-close">' . __( 'Close', 'wpv-views' ) . '</a></p>',
 								'close'			=> 'true',
@@ -1199,11 +1199,11 @@ function wpv_insert_form_workflow_help_boxes( $post ) {
 				}
 				// We also need to add basic help box, for maybe future SELF cases, hidden
 				$data_def = array(
-					'text'			=> '<h2>' . __( 'Complete the parametric search setup by inserting the results', 'wpv-views' ) . '</h2>'
-									. '<p>' . sprintf( __('This page should display the results of the parametric search provided by the View <strong>%s</strong>.', 'wpv-views'), $view_name ) . WPV_MESSAGE_SPACE_CHAR
+					'text'			=> '<h2>' . __( 'Complete the custom search setup by inserting the results', 'wpv-views' ) . '</h2>'
+									. '<p>' . sprintf( __('This page should display the results of the custom search provided by the View <strong>%s</strong>.', 'wpv-views'), $view_name ) . WPV_MESSAGE_SPACE_CHAR
 									. sprintf( __( 'You can copy and paste this shortcode wherever you want to display the results: %s', 'wpv-views' ), $view_shortcode ) . '</p>'
 									. '<p>' . sprintf( __( 'Also, you can click in the <strong>Views</strong> button and select <strong>%s</strong> in the <em>View</em> section.', 'wpv-views' ), $view_name ) . WPV_MESSAGE_SPACE_CHAR
-									. __( 'Then, select the option to display just the results for the parametric search.', 'wpv-views' ) . '</p>',
+									. __( 'Then, select the option to display just the results for the custom search.', 'wpv-views' ) . '</p>',
 					'close'			=> 'true',
 					'hidden'		=> 'true',
 					'classname'		=> 'js-wpv-insert-form-workflow-help-box'
@@ -1215,8 +1215,8 @@ function wpv_insert_form_workflow_help_boxes( $post ) {
 				if ( $has_completed ) {
 					// It has View data, no orig data and is completed
 					$data_already_inserted = array(
-						'text'			=> '<h2>' . __( 'Parametric search setup completed!', 'wpv-views' ) . '</h2>'
-										. '<p>' . sprintf( __('You have finished the setup of the parametric search provided by the View <strong>%s</strong>.', 'wpv-views'), $view_name ) . '</p>'
+						'text'			=> '<h2>' . __( 'Custom search setup completed!', 'wpv-views' ) . '</h2>'
+										. '<p>' . sprintf( __('You have finished the setup of the custom search provided by the View <strong>%s</strong>.', 'wpv-views'), $view_name ) . '</p>'
 										. '<p><a href="#" class="button button-small button-primary-toolset js-wpv-insert-form-workflow-help-box-close">' . __( 'Close', 'wpv-views' ) . '</a></p>',
 						'close'			=> 'true',
 						'hidden'		=> 'false',
@@ -1225,11 +1225,11 @@ function wpv_insert_form_workflow_help_boxes( $post ) {
 					wpv_toolset_help_box( $data_already_inserted );
 					// We also add the basic help box for SELF, hidden
 					$data_def = array(
-						'text'			=> '<h2>' . __( 'Complete the parametric search setup by inserting the results', 'wpv-views' ) . '</h2>'
-										. '<p>' . sprintf( __('This page should display the results of the parametric search provided by the View <strong>%s</strong>.', 'wpv-views'), $view_name ) . WPV_MESSAGE_SPACE_CHAR
+						'text'			=> '<h2>' . __( 'Complete the custom search setup by inserting the results', 'wpv-views' ) . '</h2>'
+										. '<p>' . sprintf( __('This page should display the results of the custom search provided by the View <strong>%s</strong>.', 'wpv-views'), $view_name ) . WPV_MESSAGE_SPACE_CHAR
 										. sprintf( __( 'You can copy and paste this shortcode wherever you want to display the results: %s', 'wpv-views' ), $view_shortcode ) . '</p>'
 										. '<p>' . sprintf( __( 'Also, you can click in the <strong>Views</strong> button and select <strong>%s</strong> in the <em>View</em> section.', 'wpv-views' ), $view_name ) . WPV_MESSAGE_SPACE_CHAR
-										. __( 'Then, select the option to display just the results for the parametric search.', 'wpv-views' ) . '</p>',
+										. __( 'Then, select the option to display just the results for the custom search.', 'wpv-views' ) . '</p>',
 						'close'			=> 'true',
 						'hidden'		=> 'true',
 						'classname'		=> 'js-wpv-insert-form-workflow-help-box'
@@ -1239,11 +1239,11 @@ function wpv_insert_form_workflow_help_boxes( $post ) {
 					// It has View data, no orig data and is not completed
 					// So we display the basic help box with View data
 					$data = array(
-						'text'			=> '<h2>' . __( 'Complete the parametric search setup by inserting the results', 'wpv-views' ) . '</h2>'
-										. '<p>' . sprintf( __('This page should display the results of the parametric search provided by the View <strong>%s</strong>.', 'wpv-views'), $view_name ) . WPV_MESSAGE_SPACE_CHAR
+						'text'			=> '<h2>' . __( 'Complete the custom search setup by inserting the results', 'wpv-views' ) . '</h2>'
+										. '<p>' . sprintf( __('This page should display the results of the custom search provided by the View <strong>%s</strong>.', 'wpv-views'), $view_name ) . WPV_MESSAGE_SPACE_CHAR
 										. sprintf( __( 'You can copy and paste this shortcode wherever you want to display the results: %s', 'wpv-views' ), $view_shortcode ) . '</p>'
 										. '<p>' . sprintf( __( 'Also, you can click in the <strong>Views</strong> button and select <strong>%s</strong> in the <em>View</em> section.', 'wpv-views' ), $view_name ) . WPV_MESSAGE_SPACE_CHAR
-										. __( 'Then, select the option to display just the results for the parametric search.', 'wpv-views' ) . '</p>',
+										. __( 'Then, select the option to display just the results for the custom search.', 'wpv-views' ) . '</p>',
 						'close'			=> 'true',
 						'hidden'		=> 'false',
 						'classname'		=> 'js-wpv-insert-form-workflow-help-box' . $view_classname
@@ -1388,7 +1388,7 @@ function wpv_views_instructions_section_data( $section = '' ) {
 				'table' => array(
 					array(
 						'element' => '<span class="wpv-code wpv-code-shortcode">[wpv-filter-start]</span><br />' . __( 'Content', 'wpv-views' ) . '<br /><span class="wpv-code wpv-code-shortcode">[wpv-filter-end]</span>',
-						'description' => __( 'Wrapper for the entire filter section, including the pagination controls and parametric search.', 'wpv-views' )
+						'description' => __( 'Wrapper for the entire filter section, including the pagination controls and custom search.', 'wpv-views' )
 							. WPV_MESSAGE_SPACE_CHAR
 							. __( 'The filter section includes these shortcodes by default and you should not remove them.', 'wpv-views' )
 					)
@@ -1399,12 +1399,12 @@ function wpv_views_instructions_section_data( $section = '' ) {
 		case 'parametric':
 			$return = array(
 				'classname' => 'js-wpv-editor-instructions-for-purpose js-wpv-display-for-purpose js-wpv-display-for-purpose-parametric js-wpv-display-for-purpose-full',
-				'title' => __( 'Parametric search shortcodes', 'wpv-views' ),
+				'title' => __( 'Custom search shortcodes', 'wpv-views' ),
 				'content' => '',
 				'table' => array(
 					array(
 						'element' => '<span class="wpv-code wpv-code-shortcode">[wpv-filter-controls]</span><br />' . __( 'Content', 'wpv-views' ) . '<br /><span class="wpv-code wpv-code-shortcode">[/wpv-filter-controls]</span>',
-						'description' => __( 'Wrapper for the parametric search controls.', 'wpv-views' )
+						'description' => __( 'Wrapper for the custom search controls.', 'wpv-views' )
 							. WPV_MESSAGE_SPACE_CHAR
 							. __( 'All fields must appear between these shortcodes.', 'wpv-views' )
 					),
@@ -1418,9 +1418,9 @@ function wpv_views_instructions_section_data( $section = '' ) {
 					),
 					array(
 						'element' => '<span class="wpv-code wpv-code-shortcode">[wpv-filter-search-box ...]</span>',
-						'description' => __( 'A content search input, which can search the title or title and content.', 'wpv-views' )
+						'description' => __( 'A text search input, which can search the title or title and content.', 'wpv-views' )
 							. WPV_MESSAGE_SPACE_CHAR
-							. __( 'To insert this shortcode and set its option, click on the <strong>Content search</strong> button.', 'wpv-views' )
+							. __( 'To insert this shortcode and set its option, click on the <strong>Text search</strong> button.', 'wpv-views' )
 					),
 					array(
 						'element' => '<span class="wpv-code wpv-code-shortcode">[wpv-filter-spinner ...]</span>',
@@ -1585,17 +1585,17 @@ function wpv_formatting_help_filter() {
 		'toggler_title' => __( 'Formatting and editing instructions', 'wpv-views' ),
 		'toggled_classname' => 'wpv-editor-instructions js-wpv-editor-instructions js-wpv-editor-instructions-filter-html',
 		'toggled_intro' => '<p>'
-						. __( 'The filter section may include pagination for the results and a parametric search (or both of them together).', 'wpv-views' )
+						. __( 'The filter section may include pagination for the results and a custom search (or both of them together).', 'wpv-views' )
 						. '</p><p>'
-						. sprintf(__('To create a parametric search, position the cursor between the %s and %s shortcodes and click on the <strong>New filter</strong> button to insert filter elements.', 'wpv-views'),'<strong>[wpv-filter-controls]</strong>','<strong>[/wpv-filter-controls]</strong>')
+						. sprintf(__('To create a custom search, position the cursor between the %s and %s shortcodes and click on the <strong>New filter</strong> button to insert filter elements.', 'wpv-views'),'<strong>[wpv-filter-controls]</strong>','<strong>[/wpv-filter-controls]</strong>')
 						. WPV_MESSAGE_SPACE_CHAR
-						. __('Your parametric search can contain filters by custom fields, taxonomies or even post relationships.', 'wpv-views')
+						. __('Your custom search can contain filters by custom fields, taxonomies or even post relationships.', 'wpv-views')
 						. '</p><p>'
-						. __('Your parametric search can also include a <strong>content search input</strong>, <strong>spinner</strong> to indicate updates in progress, a button to <strong>clear the form input</strong> and a <strong>submit button</strong>.', 'wpv-views')
+						. __('Your custom search can also include a <strong>text search input</strong>, <strong>spinner</strong> to indicate updates in progress, a button to <strong>clear the form input</strong> and a <strong>submit button</strong>.', 'wpv-views')
 						. '</p><p>'
 						. __('Use HTML and CSS to style the filter.', 'wpv-views')
 						. '</p><p>'
-						. __( 'If you are not using pagination or a parametric search, this section outputs nothing.', 'wpv-views' )
+						. __( 'If you are not using pagination or a custom search, this section outputs nothing.', 'wpv-views' )
 						. '</p>',
 		'toggled_sections' => $sections
 	);
@@ -1852,34 +1852,7 @@ function render_view_pointers( $args, $dismissed_pointers ) {
 	
 	?>
 	<div id="js-wpv-view-hidden-pointers-container" class="popup-window-container">
-		<?php
-		/**
-		* Pagination pointer
-		*/
-		$dismissed_classname = '';
-		if ( isset( $dismissed_pointers['enabled-view-pagination'] ) ) {
-			$dismissed_classname = ' js-wpv-pointer-dismissed';
-		}
-		?>
-		<div class="js-wpv-enabled-view-pagination-pointer<?php echo $dismissed_classname; ?>">
-			<h3><?php _e( 'Pagination enabled', 'wpv-views' ); ?></h3>
-			<p>
-				<?php
-				_e( 'This View uses pagination, but pagination controls are still not inserted into the filter HTML section.', 'wpv-views' );
-				?>
-			</p>
-			<p>
-				<?php
-				_e( 'To add them, just place your cursor between the [wpv-filter-start] and the [wpv-filter-end] shortcodes and click on the <strong>Pagination controls</strong> button.', 'wpv-views' );
-				?>
-			</p>
-			<p>
-				<label>
-					<input type="checkbox" class="js-wpv-dismiss-pointer" data-pointer="enabled-view-pagination" id="wpv-dismiss-enabled-view-pagination-pointer" />
-					<?php _e( 'Don\'t show this again', 'wpv-views' ); ?>
-				</label>
-			</p>
-		</div>
+		
 	</div>
 	<?php
 }
@@ -1914,12 +1887,12 @@ function render_wpa_pointers( $args, $dismissed_pointers ) {
 				<h3><?php _e( 'Screen Options', 'wpv-views' ); ?></h3>
 				<p>
 					<?php
-					echo __( 'Did you know that you can add a parametric search to this Archive?', 'wpv-views' );
+					echo __( 'Did you know that you can add a custom search to this Archive?', 'wpv-views' );
 					?>
 				</p>
 				<p>
 					<?php
-					echo __( 'Open the Screen Options and set the WordPress Archive purpose to display it as a parametric search.', 'wpv-views' );
+					echo __( 'Open the Screen Options and set the WordPress Archive purpose to display it as a custom search.', 'wpv-views' );
 					?>
 				</p>
 				<p>
@@ -2106,6 +2079,17 @@ function render_view_dialogs( $args, $dismissed_dialogs ) {
 						<div class="wpv-dialog-pagination-wizard-data">
 							<input type="checkbox" name="pagination_control" class="js-wpv-pagination-dialog-control" id="pagination-include-controls" value="page_controls" data-target="next-previous-controls" />
 							<label for="pagination-include-controls"><?php _e('Next and previous page controls','wpv-views'); ?></label>
+							<span class="wpv-dialog-pagination-wizard-item-extra js-wpv-dialog-pagination-wizard-item-extra js-wpv-pagination-shortcode-attribute-container">
+								<label for="wpv-pagination-insert-prev-force">
+								<?php printf( 
+									__( 'and %s include even on the first and last pages', 'wpv-views' ), 
+									'<input type="checkbox" 
+									name="wpv_pagination_insert_prev_force" id="wpv-pagination-insert-prev-force"
+									class="js-wpv-pagination-shortcode-attribute" 
+									data-attribute="force" value="true" />'
+									); ?>
+								</label>
+							</span>
 						</div>
 						<div class="wpv-dialog-pagination-wizard-preview js-wpv-dialog-pagination-wizard-preview disabled">
 							<p class="wpv-pagination-preview-element js-wpv-pagination-preview-element next-previous-controls" data-name="next-previous-controls">
@@ -2191,29 +2175,6 @@ function render_view_dialogs( $args, $dismissed_dialogs ) {
 					
 				</div>
 				
-			</div>
-		</div>
-		
-		<?php
-		/**
-		* Pagination controls for infinite scrolling dialog
-		*/
-		?>
-		
-		<div class="js-wpv-pagination-infinite-form-dialog">
-			<div class="wpv-dialog wpv-dialog-pagination-wizard js-wpv-dialog-pagination-infinite-wizard">
-				
-				<h3><?php _e('Pagination controls', 'wpv-views'); ?></h3>
-				<p class="toolset-alert toolset-alert-info">
-					<i class="icon icon-info fa fa-info toolset-rounded-icon"></i>
-					<?php _e( 'This View uses infinite scrolling, so no pagination controls are needed.', 'wpv-views' ); ?>
-				</p>
-				<!--
-				<div class="wpv-dialog-pagination-wizard-controls">
-					<input type="checkbox" name="pagination_control" class="js-wpv-pagination-infinite-dialog-control" id="pagination-include-infinite-controls" value="more_control" data-target="more-control" />
-					<label for="pagination-include-infinite-controls"><?php _e('Infinite scrolling control','wpv-views'); ?></label>
-				</div>
-				-->
 			</div>
 		</div>
 		
@@ -2327,15 +2288,17 @@ function render_wpa_dialogs( $args, $dismissed_dialogs ) {
 								class="js-wpv-archive-pagination-control" 
 								value="wpv-pager-archive-prev-page" />
 							<label for="archive-pagination-insert-prev"><?php _e( 'Link to the previous page','wpv-views' ); ?></label>
-							<div class="wpv-dialog-pagination-wizard-item-extra js-wpv-dialog-pagination-wizard-item-extra js-wpv-archive-pagination-shortcode-attribute-container">
-								<p>
-									<input type="checkbox" 
-										name="archive_pagination_insert_prev_force" id="archive-pagination-insert-prev-force"
-										class="js-wpv-archive-pagination-shortcode-attribute" 
-										data-attribute="force" value="true" />
-									<label for="archive-pagination-insert-prev-force"><?php _e( 'Include when on the first page','wpv-views' ); ?></label>
-								</p>
-							</div>
+							<span class="wpv-dialog-pagination-wizard-item-extra js-wpv-dialog-pagination-wizard-item-extra js-wpv-archive-pagination-shortcode-attribute-container">
+								<label for="archive-pagination-insert-prev-force">
+								<?php printf( 
+									__( 'and %s include even on the first page', 'wpv-views' ), 
+									'<input type="checkbox" 
+									name="archive_pagination_insert_prev_force" id="archive-pagination-insert-prev-force"
+									class="js-wpv-archive-pagination-shortcode-attribute" 
+									data-attribute="force" value="true" />'
+									); ?>
+								</label>
+							</span>
 						</div>
 						
 						<div class="wpv-dialog-pagination-wizard-preview js-wpv-dialog-pagination-wizard-preview disabled">
@@ -2354,15 +2317,17 @@ function render_wpa_dialogs( $args, $dismissed_dialogs ) {
 								class="js-wpv-archive-pagination-control" 
 								value="wpv-pager-archive-next-page" />
 							<label for="archive-pagination-insert-next"><?php _e( 'Link to the next page','wpv-views' ); ?></label>
-							<div class="wpv-dialog-pagination-wizard-item-extra js-wpv-dialog-pagination-wizard-item-extra js-wpv-archive-pagination-shortcode-attribute-container">
-								<p>
-									<input type="checkbox" 
-										name="archive_pagination_insert_next_force" id="archive-pagination-insert-next-force"
-										class="js-wpv-archive-pagination-shortcode-attribute" 
-										data-attribute="force" value="true" />
-									<label for="archive-pagination-insert-next-force"><?php _e( 'Include when on the last page','wpv-views' ); ?></label>
-								</p>
-							</div>
+							<span class="wpv-dialog-pagination-wizard-item-extra js-wpv-dialog-pagination-wizard-item-extra js-wpv-archive-pagination-shortcode-attribute-container">
+								<label for="archive-pagination-insert-next-force">
+								<?php printf( 
+									__( 'and %s include even on the last page', 'wpv-views' ), 
+									'<input type="checkbox" 
+									name="archive_pagination_insert_next_force" id="archive-pagination-insert-next-force"
+									class="js-wpv-archive-pagination-shortcode-attribute" 
+									data-attribute="force" value="true" />'
+								); ?>
+								</label>
+							</span>
 						</div>
 						
 						<div class="wpv-dialog-pagination-wizard-preview js-wpv-dialog-pagination-wizard-preview disabled">
@@ -2457,6 +2422,70 @@ function render_shared_dialogs( $args, $dismissed_dialogs ) {
 	<div id="js-wpv-shared-hidden-dialogs-container" class="popup-window-container">
 		<?php
 		/**
+		* Insert frontend sorting controls dialog
+		*/
+		?>
+		<div id="js-sorting-pagination-dialog" class="toolset-shortcode-gui-dialog-container wpv-shortcode-gui-dialog-container wpv-dialog-frontend-sorting-controls">
+			<div class="wpv-dialog wpv-shortcode-gui-content-wrapper">
+				<h3><?php _e( 'Insert frontend sorting controls', 'wpv-views' ); ?></h3>
+				<div>
+					<ul class="wpv-sorting-controls-type-list">
+						<li>
+							<input type="checkbox" class="wpv-sorting-controls-type js-wpv-sorting-controls-type" value="orderby" id="wpv-sorting-controls-type-orderby" />
+							<label for="wpv-sorting-controls-type-orderby"><?php _e( 'Control for the sorting field', 'wpv-views' ); ?></label>
+							<div class="wpv-advanced-setting">
+								<p>
+									<label for="wpv-sorting-controls-type-orderby-kind"><?php _e( 'Display controls as', 'wpv-views' ); ?></label>
+									<select id="wpv-sorting-controls-type-orderby-kind" class="js-wpv-sorting-controls-type-orderby-kind">
+										<option value="select"><?php _e( 'a select dropdown', 'wpv-views' ); ?></option>
+										<option value="radio"><?php _e( 'a set of radio inputs', 'wpv-views' ); ?></option>
+									<select>
+								</p>
+								<h4><?php _e( 'Options', 'wpv-views' ); ?></h4>
+								
+							</div>
+						</li>
+						<li>
+							<input type="checkbox" class="wpv-sorting-controls-type js-wpv-sorting-controls-type" value="order" id="wpv-sorting-controls-type-order" />
+							<label for="wpv-sorting-controls-type-order"><?php _e( 'Control for the sorting direction', 'wpv-views' ); ?></label>
+							<div class="wpv-advanced-setting">
+								<p>
+									<label for="wpv-sorting-controls-type-order-kind"><?php _e( 'Display controls as', 'wpv-views' ); ?></label>
+									<select id="wpv-sorting-controls-type-order-kind" class="js-wpv-sorting-controls-type-order-kind">
+										<option value="select"><?php _e( 'a select dropdown', 'wpv-views' ); ?></option>
+										<option value="radio"><?php _e( 'a set of radio inputs', 'wpv-views' ); ?></option>
+									<select>
+								</p>
+								<ul>
+									<li>
+										<label for="wpv-sorting-controls-type-order-default"><?php _e( 'Label for the empty option', 'wpv-views' ); ?></label>
+										<input type="text" id="wpv-sorting-controls-type-order-default" class="js-wpv-sorting-controls-type-order-default" value="" />
+									</li>
+									<li>
+										<label for="wpv-sorting-controls-type-order-asc"><?php _e( 'Label for the ascending option', 'wpv-views' ); ?></label>
+										<input type="text" id="wpv-sorting-controls-type-order-asc" class="js-wpv-sorting-controls-type-order-asc" value="" />
+									</li>
+									<li>
+										<label for="wpv-sorting-controls-type-order-desc"><?php _e( 'Label for the descending option', 'wpv-views' ); ?></label>
+										<input type="text" id="wpv-sorting-controls-type-order-desc" class="js-wpv-sorting-controls-type-order-desc" value="" />
+									</li>
+								</ul>
+							</div>
+						</li>
+						<li>
+							<input type="checkbox" class="wpv-sorting-controls-type js-wpv-sorting-controls-type" value="link" id="wpv-sorting-controls-type-link" />
+							<label for="wpv-sorting-controls-type-link"><?php _e( 'Controls as links for sorting by specific fields and directions', 'wpv-views' ); ?></label>
+							<div class="wpv-advanced-setting">
+							
+							</div>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+		
+		<?php
+		/**
 		* Insert frontend events dialog
 		*/
 		?>
@@ -2475,7 +2504,7 @@ function render_shared_dialogs( $args, $dismissed_dialogs ) {
 					);
 					if ( $query_type == 'posts' ) {
 						$frontend_events_tabs['wpv-dialog-frontend-events-parametric-container'] = array(
-							'title' => __( 'Parametric search', 'wpv-views' )
+							'title' => __( 'Custom search', 'wpv-views' )
 						);
 					}
 					$frontend_events_tabs = apply_filters( 'wpv_filter_wpv_dialog_frontend_events_tabs', $frontend_events_tabs, $query_type );
@@ -2505,36 +2534,36 @@ function render_shared_dialogs( $args, $dismissed_dialogs ) {
 						</ul>
 					</div>
 					<div id="wpv-dialog-frontend-events-parametric-container" class="wpv-settings-query-type-posts<?php if ( $query_type != 'posts' ) { echo ' hidden'; } ?>">
-						<h2><?php _e( 'Parametric search events', 'wpv-views' ); ?></h2>
+						<h2><?php _e( 'Custom search events', 'wpv-views' ); ?></h2>
 						<p>
-							<?php _e( 'The parametric search triggers some events when set to update options or results automatically.', 'wpv-views' ); ?>
+							<?php _e( 'The custom search triggers some events when set to update options or results automatically.', 'wpv-views' ); ?>
 						</p>
 						<ul>
 							<li>
 								<label for="wpv-frontent-event-parametric-search-triggered">
 									<input type="checkbox" id="wpv-frontent-event-parametric-search-triggered" value="1" class="js-wpv-frontend-event-gui" data-event="js_event_wpv_parametric_search_triggered" />
-									<?php _e( 'The parametric search has been triggered', 'wpv-views' ); ?>
+									<?php _e( 'The custom search has been triggered', 'wpv-views' ); ?>
 								</label>
 								<span class="wpv-helper-text"><?php _e( 'This happens before Views collects any form data', 'wpv-views' ); ?></span>
 							</li>
 							<li>
 								<label for="wpv-frontend-event-parametric-search-started">
 									<input type="checkbox" id="wpv-frontend-event-parametric-search-started" value="1" class="js-wpv-frontend-event-gui" data-event="js_event_wpv_parametric_search_started" />
-									<?php _e( 'The parametric search data has been collected', 'wpv-views' ); ?>
+									<?php _e( 'The custom search data has been collected', 'wpv-views' ); ?>
 								</label>
 								<span class="wpv-helper-text"><?php _e( 'This happens after the data has been collected, but before performing any action', 'wpv-views' ); ?></span>
 							</li>
 							<li>
 								<label for="wpv-frontend-event-parametric-search-form-updated">
 									<input type="checkbox" id="wpv-frontend-event-parametric-search-form-updated" value="1" class="js-wpv-frontend-event-gui" data-event="js_event_wpv_parametric_search_form_updated" />
-									<?php _e( 'The parametric search form has been updated', 'wpv-views' ); ?>
+									<?php _e( 'The custom search form has been updated', 'wpv-views' ); ?>
 								</label>
 								<span class="wpv-helper-text"><?php _e( 'This happens after Views updates the form to show only relevant options', 'wpv-views' ); ?></span>
 							</li>
 							<li>
 								<label for="wpv-frontend-event-parametric-search-results-updated">
 									<input type="checkbox" id="wpv-frontend-event-parametric-search-results-updated" value="1" class="js-wpv-frontend-event-gui" data-event="js_event_wpv_parametric_search_results_updated" />
-									<?php _e( 'The parametric search results have been updated', 'wpv-views' ); ?>
+									<?php _e( 'The custom search results have been updated', 'wpv-views' ); ?>
 								</label>
 								<span class="wpv-helper-text"><?php _e( 'This happens after Views updates the search results', 'wpv-views' ); ?></span>
 							</li>

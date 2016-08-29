@@ -39,124 +39,6 @@ window.wpvPaginationQueue = {};
     };
 })();
 
-// ------------------------------------
-// Rollover
-// ------------------------------------
-
-jQuery.fn.wpvRollover = function( data ) {
-	var args = jQuery.extend( {}, {id: 1, effect: "fade", speed: 5, page: 1, count: 1}, data ),
-	id = args.id,
-	effect = args.effect,
-	speed = args.speed*1000,
-	page = args.page,
-	count = args.count,
-	wpvInfiniteLoop;
-	if ( count > 1 ) {
-		if ( 
-			window.wpvPaginationAjaxLoaded.hasOwnProperty( id ) 
-			&& window.wpvPaginationAjaxLoaded[id] === false 
-		) {
-			if ( jQuery( this ).length > 0 ) {
-				setTimeout( function() {
-						jQuery( this ).wpvRollover( {
-							id:id,
-							effect:effect,
-							speed:speed/1000,
-							page:page,
-							count:count,
-						} );
-					}, 
-					100 );
-			}
-			return false;
-		}
-		window.wpvPaginationAjaxLoaded[id] = false;
-		wpvInfiniteLoop = setTimeout( function() {
-			if ( effect === 'slideright' || effect === 'slidedown' ) {
-				if ( page <= 1 ) {
-					page = count;
-				} else {
-					page--;
-				}
-			} else {
-				if ( page === count ) {
-					page = 1;
-				} else {
-					page++;
-				}
-			}
-			if (
-				! wpv_stop_rollover.hasOwnProperty( id ) 
-				&& jQuery( this ).length > 0
-			) {
-				WPViews.view_pagination.trigger_pagination( id, page );
-				jQuery( this ).wpvRollover( {
-					id:id,
-					effect:effect,
-					speed:speed/1000,
-					page:page,
-					count:count,
-				} );
-			}
-		}, speed);
-	}
-};
-
-
-////////////////////////////////////////////////////
-// Table sorting head click
-////////////////////////////////////////////////////
-
-// TODO create a table sorting object to wrap all related code
-
-jQuery( document ).on( 'click', '.js-wpv-column-header-click', function( e ) {
-	e.preventDefault();
-	var thiz		= jQuery( this ),
-	view_number		= thiz.data( 'viewnumber' ),
-	name			= thiz.data( 'name' ),
-	direction		= thiz.data( 'direction' ),
-	orderby_as		= thiz.data( 'orderbyas' ),
-	innerthis;
-	jQuery( 'form[name="wpv-filter-' + view_number + '"]' ).each( function() {
-		innerthis = jQuery( this );
-		WPViews.view_frontend_utils.set_extra_url_query_parameters_by_form( innerthis );
-		if ( innerthis.find( '[name=wpv_sort_orderby]' ).length > 0 ) {
-			innerthis.find( '[name=wpv_sort_orderby]' ).val( name );
-		} else {
-			jQuery( '<input>' )
-				.attr({
-					type:	'hidden',
-					name:	'wpv_sort_orderby',
-					value:	name
-				})
-				.appendTo( innerthis );
-		}
-		if ( innerthis.find( '[name=wpv_sort_order]' ).length > 0 ) {
-			innerthis.find( '[name=wpv_sort_order]' ).val( direction );
-		} else {
-			jQuery( '<input>' )
-				.attr({
-					type:	'hidden',
-					name:	'wpv_sort_order',
-					value:	direction
-				})
-				.appendTo( innerthis );
-		}
-		if ( innerthis.find( '[name=wpv_sort_orderby_as]' ).length > 0 ) {
-			innerthis.find( '[name=wpv_sort_orderby_as]' ).val( orderby_as );
-		} else {
-			jQuery( '<input>' )
-				.attr({
-					type:	'hidden',
-					name:	'wpv_sort_orderby_as',
-					value:	orderby_as
-				})
-				.appendTo( innerthis );
-		}
-	});
-	jQuery( 'form[name="wpv-filter-' + view_number + '"]' ).submit();
-});
-
 WPViews.ViewFrontendUtils = function( $ ) {
 	
 	// ------------------------------------
@@ -229,7 +111,10 @@ WPViews.ViewFrontendUtils = function( $ ) {
 	*
 	* Gets the current URL query parameters, but only those that do not belong to the current form already.
 	*
-	* @note Arrays are returned on a single key with valus on a single string, separated by the ##URLARRAYVALHACK## placeholder. We might review that later
+	* @note Arrays are returned on a single key with values on a single string, separated by the ##URLARRAYVALHACK## placeholder. We might review that later
+	* @note Since 2.2, force include URL parameters that belong to form controls when the form does not use dependency nor AJAX results.
+	* 		As the form should be posted with page reload in this case, and we are not performing a dependency call, URL parameters win over optios in the form
+	* 		and have been not recorded yet in the AJAX method manager.
 	*
 	* @return array
 	*
@@ -239,13 +124,20 @@ WPViews.ViewFrontendUtils = function( $ ) {
 	*/
 
 	self.get_extra_url_query_parameters_by_form = function( form ) {
-		var query_string = self.extract_url_query_parameters( window.location.search.substr( 1 ) );
-		data = {};
+		var query_string = self.extract_url_query_parameters( window.location.search.substr( 1 ) ),
+		data = {},
+		force_from_form = ! ( form.hasClass( 'js-wpv-dps-enabled' ) 
+			|| form.hasClass( 'js-wpv-ajax-results-enabled' ) 
+			|| form.hasClass( 'js-wpv-ajax-results-submit-enabled' ) 
+		);
 		for ( var prop in query_string ) {
 			if ( 
 				query_string.hasOwnProperty( prop ) 
 				&& ! data.hasOwnProperty( prop )
-				&& form.find( '[name=' + prop + '], [name=' + prop + '\\[\\]]' ).length === 0
+				&& (
+					force_from_form 
+					|| form.find( '[name=' + prop + '], [name=' + prop + '\\[\\]]' ).length === 0 
+				)
 			) {
 				data[ prop ] = query_string[ prop ];
 			}
@@ -372,6 +264,178 @@ WPViews.ViewFrontendUtils = function( $ ) {
 		});
 	};
 	
+	/**
+	* get_form_element_type
+	*
+	* Get a form element type, be it text, radio, checkbox, textarea or select
+	*
+	* @param selector	A jQuery selector object
+	*
+	* @return string	'text'|'radio'|'checkbox'|'textarea'|'select'|empty if selector is empty
+	*
+	* @since 2.2
+	*/
+	
+	self.get_form_element_type = function( selector ) {
+		if ( selector.length > 0 ) {
+			return selector[0].tagName == "INPUT" ? selector[0].type.toLowerCase() : selector[0].tagName.toLowerCase();
+		} else {
+			return '';
+		}
+	}
+	
+	self.get_sort_data = function( view_number, form ) {
+		var sort			= {},
+		parametric_data		= form.data( 'parametric' );
+		
+		sort['wpv_sort_orderby']	= parametric_data['sort']['orderby'];
+		sort['wpv_sort_order']		= parametric_data['sort']['order'];
+		sort['wpv_sort_orderby_as']	= parametric_data['sort']['orderby_as'];
+		sort['wpv_sort_orderby_second']	= parametric_data['sort']['orderby_second'];
+		sort['wpv_sort_order_second']	= parametric_data['sort']['order_second'];
+		
+		if ( form.find( '.js-wpv-sort-control-orderby' ).length > 0 ) {
+			var orderby_type = self.get_form_element_type( form.find( '.js-wpv-sort-control-orderby' ) );
+			switch ( orderby_type ) {
+				case 'select':
+					sort['wpv_sort_orderby'] = form.find( '.js-wpv-sort-control-orderby' ).val();
+					break;
+				case 'radio':
+					sort['wpv_sort_orderby'] = form.find( '.js-wpv-sort-control-orderby:checked' ).val();
+					break;
+			}
+		}
+		
+		if ( form.find( '.js-wpv-sort-control-order' ).length > 0 ) {
+			var order_type = self.get_form_element_type( form.find( '.js-wpv-sort-control-order' ) );
+			switch ( order_type ) {
+				case 'select':
+					sort['wpv_sort_order'] = form.find( '.js-wpv-sort-control-order' ).val();
+					break;
+				case 'radio':
+					sort['wpv_sort_order'] = form.find( '.js-wpv-sort-control-order:checked' ).val();
+					break;
+			}
+		}
+		
+		return sort;
+	}
+	
+	self.set_sort_data = function( form, sort ) {
+		if ( _.has( sort, 'orderby' ) ) {
+			if ( form.find( '[name="wpv_sort_orderby"]' ).length > 0 ) {
+				var orderby_type = self.get_form_element_type( form.find( '[name="wpv_sort_orderby"]' ) );
+				switch ( orderby_type ) {
+					case 'select':
+						if ( form.find( '[name="wpv_sort_orderby"] option[value="' + sort['orderby'] + '"]' ).length == 0 ) {
+							form.find( '[name="wpv_sort_orderby"]' ).append( $('<option>', {
+								value:	sort['orderby'],
+								text:	sort['orderby']
+							}));
+						}
+						form.find( '[name="wpv_sort_orderby"]' ).val( sort['orderby'] );
+						break;
+					case 'text':
+						form.find( '[name="wpv_sort_orderby"]' ).val( sort['orderby'] );
+						break;
+					case 'radio':
+						if ( form.find( '[name="wpv_sort_orderby"][value="' + sort['orderby'] + '"]' ).length == 0 ) {
+							form.append( $('<input>', {
+								type:	'radio',
+								name:	'wpv_sort_orderby',
+								value:	sort['orderby']
+							}));
+						}
+						form.find( '[name="wpv_sort_orderby"][value="' +  sort['orderby'] + '"' ).prop( 'checked', true );
+						break;
+				}
+			} else {
+				$( '<input>' )
+					.attr({
+						type:	'hidden',
+						name:	'wpv_sort_orderby',
+						value:	sort['orderby']
+					})
+					.appendTo( form );
+			}
+		}
+		if ( _.has( sort, 'order' ) ) {
+			if ( form.find( '[name="wpv_sort_order"]' ).length > 0 ) {
+				var order_type = self.get_form_element_type( form.find( '[name="wpv_sort_order"]' ) );
+				switch ( order_type ) {
+					case 'select':
+						if ( form.find( '[name="wpv_sort_order"] option[value="' + sort['order'] + '"]' ).length == 0 ) {
+							form.find( '[name="wpv_sort_order"]' ).append( $('<option>', {
+								value:	sort['order'],
+								text:	sort['order']
+							}));
+						}
+						form.find( '[name="wpv_sort_order"]' ).val( sort['order'] );
+						break;
+					case 'text':
+						form.find( '[name="wpv_sort_order"]' ).val( sort['order'] );
+						break;
+					case 'radio':
+					if ( form.find( '[name="wpv_sort_order"][value="' + sort['order'] + '"]' ).length == 0 ) {
+							form.append( $('<input>', {
+								type:	'radio',
+								name:	'wpv_sort_order',
+								value:	sort['order']
+							}));
+						}
+						form.find( '[name="wpv_sort_order"][value="' +  sort['order'] + '"' ).prop( 'checked', true );
+						break;
+				}
+			} else {
+				$( '<input>' )
+					.attr({
+						type:	'hidden',
+						name:	'wpv_sort_order',
+						value:	sort['order']
+					})
+					.appendTo( form );
+			}
+		}
+		if ( _.has( sort, 'orderby_as' ) ) {
+			if ( form.find( '[name="wpv_sort_orderby_as"]' ).length > 0 ) {
+				var orderby_as_type = self.get_form_element_type( form.find( '[name="wpv_sort_orderby_as"]' ) );
+				switch ( orderby_as_type ) {
+					case 'select':
+						if ( form.find( '[name="wpv_sort_orderby_as"] option[value="' + sort['orderby_as'] + '"]' ).length == 0 ) {
+							form.find( '[name="wpv_sort_orderby_as"]' ).append( $('<option>', {
+								value:	sort['orderby_as'],
+								text:	sort['orderby_as']
+							}));
+						}
+						form.find( '[name="wpv_sort_orderby_as"]' ).val( sort['orderby_as'] );
+						break;
+					case 'text':
+						form.find( '[name="wpv_sort_orderby_as"]' ).val( sort['orderby_as'] );
+						break;
+					case 'radio':
+					if ( form.find( '[name="wpv_sort_orderby_as"][value="' + sort['orderby_as'] + '"]' ).length == 0 ) {
+							form.append( $('<input>', {
+								type:	'radio',
+								name:	'wpv_sort_orderby_as',
+								value:	sort['orderby_as']
+							}));
+						}
+						form.find( '[name="wpv_sort_orderby_as"][value="' +  sort['orderby_as'] + '"' ).prop( 'checked', true );
+						break;
+				}
+			} else {
+				$( '<input>' )
+					.attr({
+						type:	'hidden',
+						name:	'wpv_sort_orderby_as',
+						value:	sort['orderby_as']
+					})
+					.appendTo( form );
+			}
+		}
+		return self;
+	}
+	
 	// ------------------------------------
 	// Get updated results
 	// ------------------------------------
@@ -403,9 +467,7 @@ WPViews.ViewFrontendUtils = function( $ ) {
 		lang					= ( typeof icl_lang == 'undefined' ) ? false : icl_lang,
 		parametric_data			= form.data( 'parametric' );
 		
-		sort['wpv_sort_orderby']	= parametric_data['sort']['orderby'];
-		sort['wpv_sort_order']		= parametric_data['sort']['order'];
-		sort['wpv_sort_orderby_as']	= parametric_data['sort']['orderbyas'];
+		sort = self.get_sort_data( view_number, form );
 		
 		if ( parametric_data['environment'].current_post_id > 0 ) {
 			environment['wpv_aux_current_post_id'] = parametric_data['environment'].current_post_id;
@@ -420,12 +482,15 @@ WPViews.ViewFrontendUtils = function( $ ) {
 			environment['wpv_aux_parent_user_id'] = parametric_data['environment'].parent_user_id;
 		}
 		
+		environment['archive'] = parametric_data['environment'].archive;
+		
 		if ( form.find( '.js-wpv-post-relationship-update' ).length ) {
 			search['dps_pr'] = form.find( '.js-wpv-post-relationship-update' ).serializeArray();
 		}
 		if ( 
 			form.hasClass( 'js-wpv-dps-enabled' ) 
 			|| form.hasClass( 'js-wpv-ajax-results-enabled' ) 
+			|| form.hasClass( 'js-wpv-ajax-results-submit-enabled' ) 
 		) {
 			search['dps_general'] = form.find( '.js-wpv-filter-trigger, .js-wpv-filter-trigger-delayed' ).serializeArray();
 		}
@@ -511,6 +576,92 @@ WPViews.ViewFrontendUtils = function( $ ) {
 
 };
 
+WPViews.ViewSorting = function( $ ) {
+	
+	var self = this;
+	
+	// ------------------------------------
+	// Sorting links
+	// ------------------------------------
+	
+	$( document ).on( 'click', '.js-wpv-sort-trigger', function( e ) {
+		e.preventDefault();
+		var thiz		= $( this ),
+		view_number		= thiz.data( 'viewnumber' ),
+		form			= $( '.js-wpv-filter-form-' + view_number ),
+		sort			= {
+							'orderby':		thiz.data( 'orderby' ),
+							'order':		thiz.data( 'order' ),
+							'orderby_as':	thiz.data( 'orderbyas' )
+		},
+		form_each;
+		form.each( function() {
+			form_each = $( this );
+			WPViews.view_frontend_utils
+				.set_sort_data( form_each, sort )
+				.set_extra_url_query_parameters_by_form( form_each );
+		});
+		if ( 
+			thiz.hasClass( 'js-wpv-column-header-click' ) 
+			|| (
+				! form.hasClass( 'js-wpv-ajax-results-enabled' ) 
+				&& ! form.hasClass( 'js-wpv-ajax-results-submit-enabled' )
+			)
+		) {
+			// Backwards compatibility: table sorting does reload the page for sorting
+			// Also, submit the form for a page reload when the form is not set to load results using AJAX
+			form.submit();
+		} else {
+			// Elsewhere, trigger a parametric search change, and make sure AJAX is used where due
+			var data_for_events = {
+				view_unique_id:			view_number,
+				form:					form,
+				force_results_update:	form.hasClass( 'js-wpv-ajax-results-submit-enabled' )
+			};
+			
+			data_for_events = WPViews.view_parametric_search.extend_wpv_parametric_search_triggered_data( data_for_events );
+			
+			$( document ).trigger( 'js_event_wpv_parametric_search_triggered', [ data_for_events ] );
+		}
+	});
+	
+	// ------------------------------------
+	// Sorting controls
+	// ------------------------------------
+	
+	$( document ).on( 'change', '.js-wpv-sort-control-orderby, .js-wpv-sort-control-order', function() {
+		var thiz		= $( this ),
+		thiz_control	= thiz.data( 'control' ),
+		sort			= {},
+		view_number		= thiz.data( 'viewnumber' ),
+		form			= $( '.js-wpv-filter-form-' + view_number ),
+		data_for_events = {
+			view_unique_id:	view_number,
+			form:			form
+		};
+		
+		sort[ thiz_control ] = thiz.val();
+		WPViews.view_frontend_utils.set_sort_data( form, sort );
+		
+		wpv_stop_rollover[ view_number ] = true;
+		
+		data_for_events = WPViews.view_parametric_search.extend_wpv_parametric_search_triggered_data( data_for_events );
+		
+		$( document ).trigger( 'js_event_wpv_parametric_search_triggered', [ data_for_events ] );
+	});
+	
+	// ------------------------------------
+	// Init
+	// ------------------------------------
+	
+	self.init = function() {
+		
+	};
+	
+	self.init();
+	
+};
+
 WPViews.ViewPagination = function( $ ) {
 	
 	// ------------------------------------
@@ -557,7 +708,7 @@ WPViews.ViewPagination = function( $ ) {
 	};
 	
 	self.pagination_doing_ajax = [];
-		
+	
 	// ------------------------------------
 	// Methods
 	// ------------------------------------
@@ -583,6 +734,8 @@ WPViews.ViewPagination = function( $ ) {
 		data['wpv_sort_orderby']	= this_form.data( 'orderby' );
 		data['wpv_sort_order']		= this_form.data( 'order' );
 		data['wpv_sort_orderby_as']	= this_form.data( 'orderbyas' );
+		data['wpv_sort_orderby_second']	= this_form.data( 'orderbysecond' );
+		data['wpv_sort_order_second']	= this_form.data( 'ordersecond' );
 		data['wpv_view_widget_id']	= this_form.data( 'viewwidgetid' );
 		data['view_hash']			= this_form.data( 'viewhash' );
 		data['dps_pr']				= {};
@@ -955,7 +1108,6 @@ WPViews.ViewPagination = function( $ ) {
 		} else {
 			self.pagination_slide( slide_data );
 		}
-		WPViews.view_frontend_utils.render_frontend_datepicker();
 	};
 	
 	/**
@@ -977,10 +1129,12 @@ WPViews.ViewPagination = function( $ ) {
 				slide_data.effect = 'slideh';
 				break;
 			case 'slideright':
+			case 'sliderightforward':
 				slide_data.next = false;
 				slide_data.effect = 'slideh';
 				break;
 			case 'slidedown':
+			case 'slidedownforward':
 				slide_data.next = false;
 				slide_data.effect = 'slidev';
 				break;
@@ -1147,6 +1301,7 @@ WPViews.ViewPagination = function( $ ) {
 	
 	$( document ).on( 'js_event_wpv_pagination_completed', function( event, data ) {
 		WPViews.view_frontend_utils.render_frontend_media_shortcodes( data.layout );
+		WPViews.view_frontend_utils.render_frontend_datepicker();
 		// Init pagination for any inner View that might be included inside the new page
 		self.init_paged_views( data.layout );
 		self.init_preload_images( data.layout );
@@ -1651,21 +1806,14 @@ WPViews.ViewPagination = function( $ ) {
 	*
 	* Makes the history in the browser work with AJAX pagination, except infinite scrolling and sliders
 	*
-	* @note Some View IDs are stored in WPViews.rollower_ids as numbers, so we need to check parseInt( data.view_number ) too
-	*
 	* @param object data
 	*
 	* @since 1.11
 	*/
 	
 	self.manage_browser_history = function( data ) {
-		var num_view_number = $.isNumeric( data.view_number ) ? parseInt( data.view_number ) : data.view_number;
 		if ( 
-			! _.has( WPViews, 'rollower_ids' )
-			|| (
-				! _.contains( WPViews.rollower_ids, data.view_number ) 
-				&& ! _.contains( WPViews.rollower_ids, num_view_number ) 
-			)
+			self.paged_views[ data.view_number ].type != 'rollover'
 		) {
 			if ( self.paged_views[ data.view_number ].manage_history == 'enabled' ) {
 				if ( self.add_paginated_history == true ) {
@@ -1777,9 +1925,11 @@ WPViews.ViewPagination = function( $ ) {
 		self.pagination_effects_spinner['fade']			= 
 		self.pagination_effects_spinner['slideleft']	= 
 		self.pagination_effects_spinner['slideright']	= 
+		self.pagination_effects_spinner['sliderightforward']	= 
 		self.pagination_effects_spinner['slideh']		= 
 		self.pagination_effects_spinner['slideup']		=
 		self.pagination_effects_spinner['slidedown']	= 
+		self.pagination_effects_spinner['slidedownforward']	= 
 		self.pagination_effects_spinner['slidev']		= function( view_number, wpvPaginatorLayout ) {
 			var img = new Image();
 			img.src = self.paged_views[ view_number ].spinner_image;
@@ -1853,8 +2003,28 @@ WPViews.ViewPagination = function( $ ) {
 				init_scrolling_event = true;
 			}
 			if ( self.paged_views[ view_number ].type == 'rollover' ) {
-				init_rollover_timing = true;
-				self.rollover_running.push( view_number );
+				init_rollover_timing	= true;
+				rollover_has_index		= _.findIndex( self.rollover_running, function( item ) { 
+					return item.view_number == view_number; 
+				});
+				if ( rollover_has_index < 0 ) {
+					// This rollover was not there, so trigger it
+					var thiz_rollover_data = { 
+						view_number:	view_number, 
+						page:			1,
+						force_reset:	false
+					};
+					self.rollover_running.push( thiz_rollover_data );
+					if ( self.init_rollover_timing_fired ) {
+						self.trigger_rollover( thiz_rollover_data );
+					}
+				} else {
+					self.rollover_running[ rollover_has_index ] = {
+						view_number:	view_number,
+						page:			1,
+						force_reset:	true
+					};
+				}
 			}
 		});
 		if ( 
@@ -1931,7 +2101,7 @@ WPViews.ViewPagination = function( $ ) {
 	/**
 	* init_scrolling_event_callback
 	*
-	* Init the scrolling event callback, only when there is a View with infinite scrlling in a page
+	* Init the scrolling event callback, only when there is a View with infinite scrolling in a page
 	*
 	* @since 1.11
 	*/
@@ -1958,9 +2128,105 @@ WPViews.ViewPagination = function( $ ) {
 		self.init_scrolling_event_fired = true;
 	};
 	
-	self.init_rollover_timing_callback = function() {
-		//alert(self.rollover_running.toSource());
+	/**
+	* trigger_rollover
+	*
+	* Trigger the rollover on a given View, using timeout
+	*
+	* @since 2.2
+	*/
+	
+	self.trigger_rollover = function( view_data ) {
+		var rollover_data	= $.extend( {}, { view_number: '', page: 1, force_reset: false }, view_data ),
+		view_number			= rollover_data.view_number;
+		
+		if ( 
+			self.paged_views[ view_number ].max_pages > 1
+			&& $("#wpv-view-layout-" + view_number ).length > 0 
+		) {
+			setTimeout( function() {
+				if (
+					! wpv_stop_rollover.hasOwnProperty( view_number ) 
+					&& $("#wpv-view-layout-" + view_number ).length > 0
+				) {
+					// Get native current page and index on the rollovers array
+					var view_page	= rollover_data.page,
+					rollover_index	= _.findIndex( self.rollover_running, function( item ) { 
+						return item.view_number == view_number; 
+					});
+					// If reset si force, set the current page to 1 and stop the force
+					if ( self.rollover_running[ rollover_index ].force_reset ) {
+						self.rollover_running[ rollover_index ].force_reset = false;
+						view_page = 1;
+					}
+					// Calculate the page to rollover to
+					if ( 
+						self.paged_views[ view_number ].effect === 'slideright' 
+						|| self.paged_views[ view_number ].effect === 'slidedown' 
+					) {
+						// Note that this was deprecated in 2.2, keep for backwards compatibility
+						if ( view_page <= 1 ) {
+							view_page = self.paged_views[ view_number ].max_pages;
+						} else {
+							view_page = view_page - 1;
+						}
+					} else {
+						if ( view_page === self.paged_views[ view_number ].max_pages ) {
+							view_page = 1;
+						} else {
+							view_page = view_page + 1;
+						}
+					}
+					// Set the new current page
+					self.rollover_running[ rollover_index ].page = view_page;
+					WPViews.view_pagination.trigger_pagination( view_number, view_page );
+				} else {
+					var rollover_index	= _.findIndex( self.rollover_running, function( item ) { 
+						return item.view_number == view_number; 
+					});
+					self.rollover_running.splice( rollover_index, 1 );
+				}
+			}, self.paged_views[ view_number ].speed * 1000 );
+		} else {
+			var rollover_index	= _.findIndex( self.rollover_running, function( item ) { 
+				return item.view_number == view_number; 
+			});
+			self.rollover_running.splice( rollover_index, 1 );
+		}
 	};
+	
+	/**
+	* init_rollover_timing_callback
+	*
+	* Init the rollover event callback, only when there is a View with rollover in a page
+	*
+	* @since 2.2
+	*/
+	
+	self.init_rollover_timing_callback = function() {
+		_.each( self.rollover_running, function( view_data, index, list ) {
+			self.trigger_rollover( view_data );
+		});
+		self.init_rollover_timing_fired = true;
+	};
+	
+	$( document ).on( 'js_event_wpv_pagination_completed', function( event, data ) {
+		if ( self.paged_views[ data.view_unique_id ].type == 'rollover' ) {
+			var rollover_index = _.findIndex( self.rollover_running, function( item ) { 
+				return item.view_number == data.view_unique_id; 
+			});
+			self.trigger_rollover( self.rollover_running[ rollover_index ] );
+		}
+	});
+	
+	$( document ).on( 'js_event_wpv_parametric_search_results_updated', function( event, data ) {
+		if ( self.paged_views[ data.view_unique_id ].type == 'rollover' ) {
+			var rollover_index = _.findIndex( self.rollover_running, function( item ) { 
+				return item.view_number == data.view_unique_id; 
+			});
+			self.trigger_rollover( self.rollover_running[ rollover_index ] );
+		}
+	});
 	
 	/**
 	* pagination_init_preload_images
@@ -2784,6 +3050,7 @@ WPViews.ViewParametricSearch = function( $ ) {
 
 jQuery( document ).ready( function( $ ) {
 	WPViews.view_frontend_utils = new WPViews.ViewFrontendUtils( $ );
+	WPViews.view_sorting = new WPViews.ViewSorting( $ );
 	WPViews.view_pagination = new WPViews.ViewPagination( $ );
     WPViews.view_parametric_search = new WPViews.ViewParametricSearch( $ );
 });

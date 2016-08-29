@@ -50,18 +50,13 @@ class WPV_View_Post_Query {
 		add_filter( 'wpv_filter_wpv_get_dependant_extended_query_args',		array( $this, 'wpv_get_dependant_view_query_args' ), 10, 2 );
 		
 		/**
-		* Compatibility
-		*/
-		
-		add_filter( 'wpv_filter_query',					array( $this, 'wpv_filter_query_compatibility' ), 99, 3 );
-		add_filter( 'wpv_filter_query_post_process',	array( $this, 'wpv_filter_query_post_proccess_compatibility' ), 99, 3 );
-		
-		/**
 		* AJAX pagination
 		*/
 		
 		add_action( 'wp_ajax_wpv_get_view_query_results',					array( $this, 'wpv_get_view_query_results' ) );
 		add_action( 'wp_ajax_nopriv_wpv_get_view_query_results',			array( $this, 'wpv_get_view_query_results' ) );
+		
+		add_filter( 'wpv_filter_wpv_get_current_archive_loop',				array( $this, 'wpv_set_posted_archive_loop' ) );
 		
 	}
 	
@@ -175,7 +170,6 @@ class WPV_View_Post_Query {
 			'orderby'           => 'post-date',
 			'order'             => 'DESC',
 			'paged'             => '1',
-			'posts_per_page'    =>  -1
 		);
 		extract( $view_settings_defaults );
 		
@@ -183,7 +177,6 @@ class WPV_View_Post_Query {
 		extract( $view_settings, EXTR_OVERWRITE );
 		
 		$query = array(
-			'posts_per_page'    	=> $posts_per_page,
 			'paged'             	=> $paged,
 			'post_type'         	=> $post_type,
 			'order'             	=> $order,
@@ -259,38 +252,6 @@ class WPV_View_Post_Query {
 	
 	/**
 	* -------------------------
-	* Compatibility
-	* -------------------------
-	*/
-
-	function wpv_filter_query_compatibility( $query, $view_settings, $view_id ) {
-
-		// Relevanssi compatibility
-		if ( 
-			isset( $view_settings['search_mode'] ) 
-			&& function_exists( 'relevanssi_prevent_default_request' ) 
-		) {
-			remove_filter('posts_request', 'relevanssi_prevent_default_request', 10, 3 );
-		}
-
-		return $query;
-	}
-	
-	function wpv_filter_query_post_proccess_compatibility( $post_query, $view_settings, $view_id ) {
-
-	// Relevanssi compatibility - restore
-		if ( 
-			isset( $view_settings['search_mode'] ) 
-			&& function_exists( 'relevanssi_prevent_default_request' ) 
-		) {
-			add_filter('posts_request', 'relevanssi_prevent_default_request', 10, 3 );
-		}
-
-		return $post_query;
-	}
-	
-	/**
-	* -------------------------
 	* AJAX pagination
 	* -------------------------
 	*/
@@ -311,7 +272,7 @@ class WPV_View_Post_Query {
 		$_GET['wpv_paged']		= $page;
 		
 		foreach ( $sort as $sort_key => $sort_value ) {
-			if ( in_array( $sort_key, array( 'wpv_sort_orderby', 'wpv_sort_order', 'wpv_sort_orderby_as' ) ) ) {
+			if ( in_array( $sort_key, array( 'wpv_sort_orderby', 'wpv_sort_order', 'wpv_sort_orderby_as', 'wpv_sort_orderby_second', 'wpv_sort_order_second' ) ) ) {
 				$_GET[ $sort_key ] = esc_attr( $sort_value );
 			}
 		}
@@ -486,6 +447,7 @@ class WPV_View_Post_Query {
 			} else if ( $expect == 'full' ) {
 				$data['form'] = '';
 				if ( isset( $args['target_id'] ) ) {
+					unset( $args['target_id'] );
 				}
 				$data['full'] = render_view( $args );
 			} else if ( $expect == 'both' ) {
@@ -501,27 +463,82 @@ class WPV_View_Post_Query {
 		} else {
 			// set the view count so we return the right view number after rendering.
 			//$WP_Views->set_view_count( (int) esc_attr( $post_data['view_number'] ), $view_id );
-			$data = array(
+			$expect		= isset( $_POST['expect'] ) ? $_POST['expect'] : 'full';
+			
+			$data		= array(
 				'id'	=> $view_id,
 				'form'	=> '',
+				'full'	=> ''
 			);
 			
-			$widget = new WPV_Widget();
-			$args = array(
+			$args		= array(
+				'id' => $view_id
+			);
+			if ( isset( $_POST['target_id'] ) ) {
+				$args['target_id'] = $_POST['target_id'];
+			}
+			$args		= array_merge( $args, $attributes );
+			
+			$widget_args = array(
 				'before_widget' => '',
 				'before_title' => '',
 				'after_title' => '',
 				'after_widget' => ''
 			);
-			ob_start();
-			$widget->widget(
-				$args, 
-				array(
-					'title' => '',
-					'view' => $view_id
-				)
-			);
-			$data['full'] = ob_get_clean();
+			
+			if ( $expect == 'form' ) {
+				if ( isset( $args['target_id'] ) ) {
+					$widget_form = new WPV_Widget_filter();
+					ob_start();
+					$widget_form->widget(
+						$widget_args, 
+						array(
+							'title'		=> '',
+							'view'		=> $view_id,
+							'target_id'	=> $args['target_id']
+						)
+					);
+					$data['form'] = ob_get_clean();
+				}
+			} else if ( $expect == 'full' ) {
+				$widget = new WPV_Widget();
+				ob_start();
+				$widget->widget(
+					$widget_args, 
+					array(
+						'title' => '',
+						'view' => $view_id
+					)
+				);
+				$data['full'] = ob_get_clean();
+			} else if ( $expect == 'both' ) {
+				if ( isset( $args['target_id'] ) ) {
+					$widget_form = new WPV_Widget_filter();
+					ob_start();
+					$widget_form->widget(
+						$widget_args, 
+						array(
+							'title'		=> '',
+							'view'		=> $view_id,
+							'target_id'	=> $args['target_id']
+						)
+					);
+					$data['form'] = ob_get_clean();
+				}
+				$widget = new WPV_Widget();
+				ob_start();
+				$widget->widget(
+					$widget_args, 
+					array(
+						'title' => '',
+						'view' => $view_id
+					)
+				);
+				$data['full'] = ob_get_clean();
+			} else {
+				$data['form'] = '';
+				$data['full'] = '';
+			}
 		}
 		
 		/**
@@ -555,10 +572,14 @@ class WPV_View_Post_Query {
 			$query_args_remove[]			= 'lang';
 			$query_args_remove[]			= 'wpv_sort_orderby';
 			$query_args_remove[]			= 'wpv_sort_order';
+			$query_args_remove[]			= 'wpv_sort_orderby_as';
+			$query_args_remove[]			= 'wpv_sort_orderby_second';
+			$query_args_remove[]			= 'wpv_sort_order_second';
 			$query_args_remove[]			= 'wpv_aux_current_post_id';
 			$query_args_remove[]			= 'wpv_aux_parent_post_id';
 			$query_args_remove[]			= 'wpv_aux_parent_term_id';
 			$query_args_remove[]			= 'wpv_aux_parent_user_id';
+			$query_args_remove[]			= 'wpv_view_count';
 			$data['parametric_permalink']	= remove_query_arg(
 				$query_args_remove,
 				$pagination_permalink
@@ -580,7 +601,6 @@ class WPV_View_Post_Query {
 				'orderby'           => 'post-date',
 				'order'             => 'DESC',
 				'paged'             => '1',
-				'posts_per_page'    =>  -1
 			);
 			extract( $view_settings_defaults );
 			
@@ -591,7 +611,6 @@ class WPV_View_Post_Query {
 			extract( $view_settings, EXTR_OVERWRITE );
 			
 			$args = array(
-				'posts_per_page'  	 	=> $posts_per_page,
 				'paged'           	 	=> $paged,
 				'post_type'     	    => $post_type,
 				'order'         	    => $order,
@@ -607,7 +626,8 @@ class WPV_View_Post_Query {
 			}
 			
 			// !IMPORTANT override the sorting options (not important here), sorting by a custom field breaks everything, so revert to post_date
-			$view_settings['orderby'] = 'ID';
+			$view_settings['orderby']	= 'ID';
+			$view_settings['order']		= 'DESC';
 			
 			$args = apply_filters( 'wpv_filter_query', $args, $view_settings, $id );
 			
@@ -623,6 +643,40 @@ class WPV_View_Post_Query {
 		return $args;
 	}
 	
+	/**
+	* wpv_set_posted_archive_loop
+	*
+	* Set data for the current archive loop passed by the AJAX pagination.
+	*
+	* When doing AJAX pagination, some query filters demand the current archive data.
+	* We can not recreate the global archive query, but we can get the relevant information, crafted in WPV_WordPress_Archive_Frontend::archive_set on the first page load.
+	* Then, this data will be used in the parametric['environment']['archive'] data attribute on the View form.
+	*
+	* @param $current_archive_loop array
+	* 		type:	string	'native'|'post_type'|'taxonomy' The type of archive.
+	* 		name:	string	'{post_type}'|'{taxonomy}'|'home'|'search'|'author'|'year'|'month'|'day' The name of the queried object.
+	* 		data:	array	The extra data about the queried object, different keys depending on different types.
+	*
+	* since 2.2
+	*/
+	
+	function wpv_set_posted_archive_loop( $current_archive_loop = array() ) {
+		if (
+			defined( 'DOING_AJAX' )
+			&& DOING_AJAX
+			&& isset( $_REQUEST['action'] )
+			&& $_REQUEST['action'] == 'wpv_get_view_query_results'
+			&& isset( $_POST['environment']['archive'] )
+		) {
+			$current_archive_loop = array(
+				'type'	=> isset( $_POST['environment']['archive']['type'] ) ? sanitize_text_field( $_POST['environment']['archive']['type'] ) : '',
+				'name'	=> isset( $_POST['environment']['archive']['name'] ) ? sanitize_text_field( $_POST['environment']['archive']['name'] ) : '',
+				'data'	=> isset( $_POST['environment']['archive']['data'] ) ? $_POST['environment']['archive']['data'] : array(),
+			);
+		}
+		return $current_archive_loop;
+	}
+
 }
 
 $WPV_View_Post_Query = WPV_View_Post_Query::get_instance();
@@ -647,7 +701,6 @@ function wpv_filter_get_posts( $id ) {
 	$view_settings_defaults = array(
 		'post_type'         => 'any',
 		'paged'             => '1',
-		'posts_per_page'    =>  -1
 	);
 	extract( $view_settings_defaults );
 	
@@ -668,24 +721,9 @@ function wpv_filter_get_posts( $id ) {
     $query = array(
 		'post_type'				=> $post_type,
 		'paged'					=> $paged,
-		'posts_per_page'		=> $posts_per_page,
 		'suppress_filters'		=> false,
 		'ignore_sticky_posts'	=> true
     );
-
-    if (
-		isset( $view_settings['pagination'][0] ) 
-		&& $view_settings['pagination'][0] == 'disable'
-    // && isset($view_settings['pagination']['mode']) && $view_settings['pagination']['mode'] == 'paged'
-    ) {
-        // Show all the posts if pagination is disabled.
-        $query['posts_per_page'] = -1;
-    } else if (
-		isset( $view_settings['pagination']['mode'] ) 
-		&& $view_settings['pagination']['mode'] == 'rollover'
-	) {
-        $query['posts_per_page'] = $view_settings['rollover']['posts_per_page'];
-    }
 
 	// Add special check for media (attachments) as their default status in not usually published
 	if ( 

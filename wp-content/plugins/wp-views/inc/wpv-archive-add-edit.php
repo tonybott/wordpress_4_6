@@ -168,7 +168,7 @@ function views_archive_redesign_html() {
 		
 		<div class="wpv-filter-section">
 			
-			<span class="wpv-section-title"><?php _e('The Filter section lets you set up parametric search, which lets visitors control the WordPress Archive results','wpv-views') ?></span>
+			<span class="wpv-section-title"><?php _e('The Filter section lets you set up a custom search, which lets visitors control the WordPress Archive results','wpv-views') ?></span>
 			
 			<div class="js-wpv-metasection-message-container js-wpv-metasection-message-container-filter"></div>
 			

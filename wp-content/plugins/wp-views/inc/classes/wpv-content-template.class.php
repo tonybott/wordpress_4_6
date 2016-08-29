@@ -109,6 +109,10 @@ final class WPV_Content_Template extends WPV_Content_Template_Embedded {
                 return null;
             }
         }
+		
+		if ( empty( $sanitized_name ) ) {
+			$sanitized_name = WPV_Content_Template_Embedded::POST_TYPE . '-rand-' . uniqid();
+		}
 
         // Insert the post in database.
         $post_id = wp_insert_post(

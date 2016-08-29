@@ -29,7 +29,7 @@ define('WPV_FILTER_BY_AUTHOR_LINK', 'http://wp-types.com/documentation/user-guid
 
 define('WPV_FILTER_BY_POST_PARENT_LINK', 'http://wp-types.com/documentation/user-guides/filtering-views-query-by-post-parent/?utm_source=viewsplugin&utm_campaign=views&utm_medium=edit-view-post-parent-filter&utm_term=Learn about filtering by Post Parent');
 
-define('WPV_FILTER_BY_SPECIFIC_TEXT_LINK', 'http://wp-types.com/documentation/user-guides/filtering-views-for-a-specific-text-string-search/?utm_source=viewsplugin&utm_campaign=views&utm_medium=edit-view-search-text-filter&utm_term=Learn about filtering for a specific text string');
+define('WPV_FILTER_BY_SPECIFIC_TEXT_LINK', 'https://wp-types.com/documentation/user-guides/views-text-search/?utm_source=viewsplugin&utm_campaign=views&utm_medium=edit-view-search-text-filter&utm_term=Learn about filtering for a specific text string');
 
 define('WPV_FILTER_BY_POST_ID_LINK', 'http://wp-types.com/documentation/user-guides/filtering-views-query-by-post-id/?utm_source=viewsplugin&utm_campaign=views&utm_medium=edit-view-post-ids-filter&utm_term=Learn about filtering by Post ID');
 

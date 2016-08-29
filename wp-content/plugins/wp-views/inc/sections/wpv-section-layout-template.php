@@ -121,11 +121,12 @@ function add_view_layout_templates( $view_settings, $view_layout_settings, $view
 
 function wpv_list_view_ct_item( $template, $ct_id, $view_id, $opened = false ) {
 	do_action('views_ct_inline_editor');
+	$extra_ct_attributes = apply_filters( 'wpv_filter_wpv_layout_template_extra_attributes', array(), $template, $view_id );
     ?>
-    <li id="wpv-ct-listing-<?php echo esc_attr( $ct_id ); ?>" class="js-wpv-ct-listing js-wpv-ct-listing-show js-wpv-ct-listing-<?php echo esc_attr( $ct_id ); ?> layout-html-editor" data-id="<?php echo esc_attr( $ct_id ); ?>" data-viewid="<?php echo esc_attr( $view_id ); ?>">
+    <li id="wpv-ct-listing-<?php echo esc_attr( $ct_id ); ?>" class="js-wpv-ct-listing js-wpv-ct-listing-show js-wpv-ct-listing-<?php echo esc_attr( $ct_id ); ?> layout-html-editor" data-id="<?php echo esc_attr( $ct_id ); ?>" data-viewid="<?php echo esc_attr( $view_id ); ?>" data-attributes="<?php echo esc_js( json_encode( $extra_ct_attributes ) ); ?>">
         <span class="wpv-inline-content-template-title" style="display:block;">
 			<button class="button button-secondary button-small js-wpv-content-template-open wpv-content-template-open" data-target="<?php echo esc_attr( $ct_id ); ?>" data-viewid="<?php echo esc_attr( $view_id ); ?>">
-				<i class="js-wpv-open-close-arrow icon-caret-<?php if ( $opened ) { echo 'up'; } else { echo 'down'; } ?> fa fa-caret-<?php if ( $opened ) { echo 'up'; } else { echo 'down'; } ?>"> </i>
+				<i class="js-wpv-open-close-arrow fa fa-caret-<?php if ( $opened ) { echo 'up'; } else { echo 'down'; } ?>"> </i>
             </button>
 			<strong><?php echo esc_html( $template->post_title ); ?></strong>
 			<span class="wpv-inline-content-template-action-buttons">
@@ -188,6 +189,8 @@ function wpv_list_view_ct_item( $template, $ct_id, $view_id, $opened = false ) {
 					WPV_Toolset.CodeMirror_instance["wpv_ct_assets_inline_js_editor_<?php echo esc_js( $ct_id ); ?>"].on('change', function() {
 						WPViews.view_edit_screen_inline_content_templates.track_inline_content_template_changes( '<?php echo esc_js( $ct_id ); ?>' );
 					});
+					
+					$( document ).trigger( 'js_event_wpv_ct_inline_editor_inited', ['<?php echo esc_js( $ct_id ); ?>'] );
 				}
 			});
 
@@ -641,7 +644,7 @@ function wpv_add_extra_controls_css_js_after_editor_views( $ct_id, $extra_css, $
     ob_start();?>
     <div class="wpv-editor-metadata-toggle js-wpv-editor-metadata-toggle js-wpv-ct-assets-inline-editor-toggle" data-id="<?php echo esc_attr( $ct_id ); ?>" data-target="js-wpv-ct-assets-inline-css-editor-<?php echo esc_attr( $ct_id ); ?>" data-type="css">
 			<span class="wpv-toggle-toggler-icon js-wpv-toggle-toggler-icon">
-				<i class="icon-caret-down fa fa-caret-down icon-large fa-lg"></i>
+				<i class="fa fa-caret-down icon-large fa-lg"></i>
 			</span>
         <i class="icon-pushpin fa fa-thumb-tack js-wpv-textarea-full" style="<?php echo ( empty( $extra_css ) ) ? 'display:none;' : ''; ?>"></i>
         <strong><?php _e( 'CSS editor', 'wpv-views' ); ?></strong>
@@ -651,7 +654,7 @@ function wpv_add_extra_controls_css_js_after_editor_views( $ct_id, $extra_css, $
     </div>
     <div class="wpv-editor-metadata-toggle js-wpv-editor-metadata-toggle js-wpv-ct-assets-inline-editor-toggle" data-id="<?php echo esc_attr( $ct_id ); ?>" data-target="js-wpv-ct-assets-inline-js-editor-<?php echo esc_attr( $ct_id ); ?>" data-type="js">
 			<span class="wpv-toggle-toggler-icon js-wpv-toggle-toggler-icon">
-				<i class="icon-caret-down fa fa-caret-down icon-large fa-lg"></i>
+				<i class="fa fa-caret-down icon-large fa-lg"></i>
 			</span>
         <i class="icon-pushpin fa fa-thumb-tack js-wpv-textarea-full" style="<?php echo ( empty( $extra_js ) ) ? 'display:none;' : ''; ?>"></i>
         <strong><?php _e( 'JS editor', 'wpv-views' ); ?></strong>

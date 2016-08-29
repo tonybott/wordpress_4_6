@@ -53,6 +53,8 @@ function wpv_view_default_settings( $purpose = 'full' ) {
 			'taxonomy_pad_counts' => true, // check this setting application
 			'orderby' => 'post_date',
 			'order'	=> 'DESC',
+			'orderby_second' => '',
+			'order_second'	=> 'DESC',
 			'taxonomy_orderby' => 'name',
 			'taxonomy_order' => 'DESC',
 			'users_orderby' => 'user_login',
@@ -63,34 +65,38 @@ function wpv_view_default_settings( $purpose = 'full' ) {
 			'taxonomy_offset' => 0,
 			'users_limit' => -1,
 			'users_offset' => 0,
-			'posts_per_page' => 10,
-			// TODO this needs carefull review
+			//'posts_per_page' => 10,// DEPRECATED
 			'pagination' => array(
-				'disable',
-				'mode'							=> 'none',
-				'type'							=> 'disabled',
-				'preload_images'				=> true,
-				'cache_pages'					=> true,
-				'preload_pages'					=> true,
-				'pre_reach'						=> 1,
-				'page_selector_control_type'	=> 'drop_down',
-				'spinner'						=> 'default',
-				'spinner_image'					=> WPV_URL . '/res/img/ajax-loader.gif',
-				'spinner_image_uploaded'		=> '',
-				'callback_next'	=>				'' 
+								//'disable',// DEPRECATED
+								//'mode'							=> 'none',// DEPRECATED
+								'type'							=> 'disabled',
+								'posts_per_page'				=> 10,
+								'effect'						=> 'fade',
+								'duration'						=> 500,
+								'speed'							=> 5,
+								'preload_images'				=> true,
+								'cache_pages'					=> true,
+								'preload_pages'					=> true,
+								'pre_reach'						=> 1,
+								'spinner'						=> 'default',
+								'spinner_image'					=> WPV_URL . '/res/img/ajax-loader.gif',
+								'spinner_image_uploaded'		=> '',
+								'callback_next'	=>				'' 
 			),
-			'ajax_pagination' => array(
+			/*
+			'ajax_pagination' => array(// DEPRECATED
 				'disable',
 				'style'							=> 'fade',
 				'duration'						=> 500 
 			),
-			'rollover' => array(
+			'rollover' => array(// DEPRECATED
 				'preload_images'				=> true,
 				'posts_per_page'				=> 1,
 				'speed'							=> 5,
 				'effect'						=> 'fade',
 				'duration'						=> 500 
 			),
+			*/
 			'filter_meta_html_state' => array(
 				'html'							=> 'on',
 				'css'							=> 'off',
@@ -121,13 +127,15 @@ function wpv_view_default_settings( $purpose = 'full' ) {
 				'filter-extra' => 'off'	);
 			break;
 		case 'pagination':
-			$defaults['pagination'][0] = 'enable'; // disable --> enable
-			$defaults['pagination']['mode'] = 'paged';
+			//$defaults['pagination'][0] = 'enable'; // disable --> enable // DEPRECATED
+			//$defaults['pagination']['mode'] = 'paged';// DEPRECATED
+			$defaults['pagination']['type'] = 'paged';
 			$defaults['sections-show-hide'] = array( 'limit-offset' => 'off' );
 			break;
 		case 'slider':
-			$defaults['pagination'][0] = 'enable'; // disable --> enable
-			$defaults['pagination']['mode'] = 'rollover';
+			//$defaults['pagination'][0] = 'enable'; // disable --> enable // DEPRECATED
+			//$defaults['pagination']['mode'] = 'rollover';// DEPRECATED
+			$defaults['pagination']['type'] = 'rollover';
 			$defaults['sections-show-hide'] = array( 'limit-offset' => 'off' );
 			break;
 		case 'parametric':
@@ -212,6 +220,8 @@ function wpv_wordpress_archives_defaults( $settings = 'view_settings', $purpose 
             ),
 			'orderby'					=> 'post_date',
 			'order'						=> 'DESC',
+			'orderby_second'			=> '',
+			'order_second'				=> 'DESC',
 			'pagination'				=> array(
 												'type'						=> 'paged',
 												'posts_per_page'			=> 'default',
@@ -537,6 +547,10 @@ function wpv_layout_users_V( $menu ) {
 			'display_name'		=> array(
 				'label'	=> __('Display Name', 'wpv-views'),
 				'code'	=> 'wpv-user field="display_name"'
+			),
+			'user_nicename'		=> array(
+				'label'	=> __('Nicename', 'wpv-views'),
+				'code'	=> 'wpv-user field="user_nicename"'
 			),
 			'description'		=> array(
 				'label'	=> __('Description', 'wpv-views'),

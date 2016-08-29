@@ -94,10 +94,22 @@ function wpv_ct_editor_content_section_localize_script( $l10n_data ) {
         Render section content
 \* ************************************************************************* */
 
-$editor_control = apply_filters( 'wpv_editor_active_editor', false );
+add_action( 'wpv_ct_editor_sections', function() {
+    $editor_select = apply_filters( 'toolset_user_editors_backend_html_editor_select', '' );
+    $content = apply_filters( 'toolset_user_editors_backend_html_active_editor', false );
+    if( $content ) {
+        wpv_ct_editor_render_section(
+            __( 'Template', 'wpv-views' ),
+            'js-wpv-content-section',
+            $editor_select . $content,
+            true,
+            '',
+            '',
+            array( 'section' => 'content_section', 'pointer_slug' => 'ptr_section' )
+        );
+    }
+}, 20 );
 
-if( is_object( $editor_control ) && method_exists( $editor_control, 'build' ) )
-    $editor_control->build();
 
 /**
  * Render media button for a CodeMirror editor.

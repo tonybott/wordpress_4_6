@@ -373,10 +373,17 @@
 	
 	.wpv-dialog-pagination-wizard-item-extra {
 		display: none;
+	}
+	
+		.wpv-dialog-pagination-wizard-item-extra input[type="checkbox"] {
+			margin-right: 0;
+		}
+	
+	div.wpv-dialog-pagination-wizard-item-extra {
+		margin: 5px 10px 0 0;
+		padding: 1px 10px;
 		background: #f6f6f6;
 		border-left: 3px solid #cdcdcd;
-		margin: 5px 10px 0 25px;
-		padding: 1px 10px;
 	}
 	
 		.wpv-dialog-pagination-wizard-item-extra input[type="text"] {
@@ -580,6 +587,44 @@
 
 .toolset-shortcode-gui-dialog-container .ui-tabs-vertical label {
     display: block;
+}
+
+.toolset-shortcode-gui-dialog-container .wpv-insert-view-extra-attributes-container li,
+.toolset-shortcode-gui-dialog-container .wpv-insert-view-override-container li {
+    padding-bottom: 6px;
+	overflow: hidden;
+}
+
+.toolset-shortcode-gui-dialog-container .wpv-insert-view-extra-attributes-container .label-alignleft,
+.toolset-shortcode-gui-dialog-container .wpv-insert-view-override-container .label-alignleft {
+	display: inline-block;
+	padding-right: 10px;
+	width: auto;
+}
+
+.wpv-insert-view-extra-attributes-container li input,
+.wpv-insert-view-extra-attributes-container li select,
+.wpv-insert-view-override-container li input,
+.wpv-insert-view-override-container li select {
+	float: right;
+}
+
+.wpv-insert-view-extra-attributes-container li .wpv-helper-text,
+.wpv-insert-view-override-container li .wpv-helper-text {
+	clear: both;
+}
+
+.toolset-shortcode-gui-dialog-container .wpv-insert-view-override-container .wpv-insert-views-shortcode-advanced-toggler {
+    padding: 0;
+	margin: 20px 0 5px;
+}
+
+.toolset-shortcode-gui-dialog-container .wpv-insert-views-shortcode-advanced-toggler span {
+	background: #ededed none repeat scroll 0 0;
+    cursor: pointer;
+    display: block;
+    margin-bottom: 6px;
+    padding: 5px 10px;
 }
 
 .toolset-shortcode-gui-dialog-container .ui-tabs-vertical .ui-tabs-nav .ui-tabs-active a {
@@ -790,6 +835,10 @@
 
 .ac_results.wpv-suggest-results {
 	z-index: 1000000;
+}
+
+.wpv-regular-select {
+	width: 25em;
 }
 
 .wpv-dialog textarea {
