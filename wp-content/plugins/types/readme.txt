@@ -7,11 +7,7 @@ Domain Path: /embedded/locale
 License: GPLv2
 Requires at least: 3.7
 Tested up to: 4.6
-<<<<<<< HEAD
-Stable tag: 2.2.1
-=======
 Stable tag: 2.2
->>>>>>> origin/master
 
 The complete and reliable plugin for managing custom post types, custom taxonomies and custom fields.
 
@@ -155,13 +151,6 @@ Additionally, Types is the only plugin that lets you define parent/child relatio
 
 == Changelog ==
 
-<<<<<<< HEAD
-= 2.2.1 =
-
-* Fixed path for Toolset Installer
-
-=======
->>>>>>> origin/master
 = 2.2 =
 
 * Added feature to output title, description, caption and alt text using placeholders in image field.
