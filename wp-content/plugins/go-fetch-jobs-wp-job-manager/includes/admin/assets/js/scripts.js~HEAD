@@ -16,14 +16,14 @@ jQuery(document).ready(function($) {
 	});
 
 	$('#templates_list').select2({
-		placeholder: goft_jobs_admin_l18n.label_templates,
+		placeholder: goft_wpjm_admin_l18n.label_templates,
 	});
 
 	// Select2
 	$('#providers_list').select2({
 		minimumResultsForSearch : 20, // at least 20 results must be displayed
 		templateResult          : single_provider_item,
-		placeholder             : goft_jobs_admin_l18n.label_providers,
+		placeholder             : goft_wpjm_admin_l18n.label_providers,
 	}).maximizeSelect2Height();
 
 	// Geocomplete.
@@ -104,7 +104,7 @@ jQuery(document).ready(function($) {
 	        $(document).guided_tour();
 	    });
 
-		$(document).on( 'click', '.button.gofetch-jobs-tour1_0_step4_2', function() {
+		$(document).on( 'click', '.button.gofetch-wpjm-tour1_0_step4_2', function() {
 			$('#rss_feed_import').val( $('#rss_feed_import').data('example') );
 			$('.import-feed').click();
 		});
@@ -117,12 +117,12 @@ jQuery(document).ready(function($) {
 		var toggle = $( '#goft-settings-type:checked' ).val();
 
 		var data = {
-			action      : 'goft_jobs_toggle_settings',
+			action      : 'goft_wpjm_toggle_settings',
 			toggle      : toggle,
-			_ajax_nonce : goft_jobs_admin_l18n.ajax_nonce,
+			_ajax_nonce : goft_wpjm_admin_l18n.ajax_nonce,
 		};
 
-		$.post( goft_jobs_admin_l18n.ajaxurl, data );
+		$.post( goft_wpjm_admin_l18n.ajaxurl, data );
 
 		toggle_settings( toggle );
 
@@ -139,6 +139,7 @@ jQuery(document).ready(function($) {
 
 	// __Core Events.
 
+
 	// On refresh templates.
 	$(document).on( 'click', '.refresh-templates', function(e) {
 
@@ -146,19 +147,19 @@ jQuery(document).ready(function($) {
 			return this.value;
 		}).remove();
 
-		if ( ! $('.goft_jobs.processing.templates').length ) {
+		if ( ! $('.goft_wpjm.processing.templates').length ) {
 
-			template_actions.hide().after('<div class="goft_jobs processing templates">&nbsp;</div>');
+			template_actions.hide().after('<div class="goft_wpjm processing templates">&nbsp;</div>');
 
 			$('.import-feed').prop( 'disabled', true );
 		}
 
 		var data = {
-			action: 'goft_jobs_update_templates_list',
-			_ajax_nonce: goft_jobs_admin_l18n.ajax_nonce,
+			action      : 'goft_wpjm_update_templates_list',
+			_ajax_nonce : goft_wpjm_admin_l18n.ajax_nonce,
 		};
 
-		$.post( goft_jobs_admin_l18n.ajaxurl, data, function( response ) {
+		$.post( goft_wpjm_admin_l18n.ajaxurl, data, function( response ) {
 
 			if ( undefined !== response && undefined !== response.templates ) {
 
@@ -183,7 +184,7 @@ jQuery(document).ready(function($) {
 				$('#templates_list').trigger('change');
 			}
 
-			$('.goft_jobs.processing.templates').remove();
+			$('.goft_wpjm.processing.templates').remove();
 			$('.import-feed').prop( 'disabled', false );
 
 			template_actions.show();
@@ -202,30 +203,30 @@ jQuery(document).ready(function($) {
 		var url = $('#rss_feed_import').val();
 
 		if ( ! url ) {
-			alert( goft_jobs_admin_l18n.msg_specify_valid_url );
+			alert( goft_wpjm_admin_l18n.msg_specify_valid_url );
 			e.preventDefault();
 			return;
 		}
 
 		enable_import( false );
 
-		$('.goft_jobs.no-jobs-found').remove();
+		$('.goft_wpjm.no-jobs-found').remove();
 
-		if ( ! $('.goft_jobs.processing.feed').length ) {
+		if ( ! $('.goft_wpjm.processing.feed').length ) {
 			$('input[name=import_feed]').hide();
-			$('input[name=import_feed]').after('<span class="goft_jobs processing feed">&nbsp;</span>').after('<a class="button-secondary cancel-feed-load">' + goft_jobs_admin_l18n.cancel_feed_load + '</a>');
+			$('input[name=import_feed]').after('<span class="goft_wpjm processing feed">&nbsp;</span>').after('<a class="button-secondary cancel-feed-load">' + goft_wpjm_admin_l18n.cancel_feed_load + '</a>');
 			$('input', template_actions).prop( 'disabled', true );
 		}
 
 		var data = {
-			action      : 'goft_jobs_import_feed',
-			url         : url,
-			load_images : $('input[name=load_images]').is(':checked'),
-			force_feed  : $('input[name=force_feed]').is(':checked'),
-			_ajax_nonce : goft_jobs_admin_l18n.ajax_nonce,
+			action       : 'goft_wpjm_import_feed',
+			url          : url,
+			load_images  : $('input[name=load_images]').is(':checked'),
+			force_feed   : $('input[name=force_feed]').is(':checked'),
+			_ajax_nonce  : goft_wpjm_admin_l18n.ajax_nonce,
 		};
 
-		xhr = $.post( goft_jobs_admin_l18n.ajaxurl, data, function( response ) {
+		xhr = $.post( goft_wpjm_admin_l18n.ajaxurl, data, function( response ) {
 
 			if ( undefined !== response ) {
 
@@ -235,15 +236,15 @@ jQuery(document).ready(function($) {
 
 					$('.force-feed').show();
 
-					$('input[name=load_images]').closest('p').after('<span class="goft_jobs no-jobs-found feed"> ' + goft_jobs_admin_l18n.msg_invalid_feed + ': ' + response.error );
+					$('input[name=load_images]').closest('p').after('<span class="goft_wpjm no-jobs-found feed"> ' + goft_wpjm_admin_l18n.msg_invalid_feed + ': ' + response.error );
 
 				} else if ( response.total_items > 0 ) {
 
-					$('.goft_jobs_jobs_found').remove();
+					$('.goft_wpjm_jobs_found').remove();
 
-					$('.goft_jobs_table').html( response.sample_item );
+					$('.goft_wpjm_table').html( response.sample_item );
 
-					$('.goft_jobs_table').after( '<h4 class="goft_jobs_jobs_found code">' + goft_jobs_admin_l18n.msg_jobs_found + ': ' + response.total_items + '</h4>');
+					$('.goft_wpjm_table').after( '<h4 class="goft_wpjm_jobs_found code">' + goft_wpjm_admin_l18n.msg_jobs_found + ': ' + response.total_items + '</h4>');
 
 					var load_only_defaults = $('#templates_list').val() && ! is_template_new_provider();
 
@@ -265,12 +266,12 @@ jQuery(document).ready(function($) {
 					});
 
 				} else {
-					$('input[name=load_images]').closest('p').after('<span class="goft_jobs no-jobs-found feed"> ' + goft_jobs_admin_l18n.msg_no_jobs_found + '</span>');
+					$('input[name=load_images]').closest('p').after('<span class="goft_wpjm no-jobs-found feed"> ' + goft_wpjm_admin_l18n.msg_no_jobs_found + '</span>');
 				}
 
 			}
 
-			$('.goft_jobs.processing').remove();
+			$('.goft_wpjm.processing').remove();
 			$('.cancel-feed-load').remove();
 
 			$('input[name=import_feed]').show();
@@ -291,7 +292,7 @@ jQuery(document).ready(function($) {
 
 		$(this).remove();
 
-		$('.goft_jobs.processing').remove();
+		$('.goft_wpjm.processing').remove();
 		$('input[name=import_feed]').show();
 		$('input', template_actions).prop( 'disabled', false );
 
@@ -305,23 +306,23 @@ jQuery(document).ready(function($) {
 		var template_name = $('#template_name').val();
 
 		if ( ! template_name ) {
-			alert( goft_jobs_admin_l18n.msg_template_missing );
+			alert( goft_wpjm_admin_l18n.msg_template_missing );
 			return;
 		}
 
-		if ( ! $('.goft_jobs.processing.save').length ) {
+		if ( ! $('.goft_wpjm.processing.save').length ) {
 			$('.save-template').hide();
-			$('.save-template').after('<span class="goft_jobs processing save">&nbsp;</span>');
+			$('.save-template').after('<span class="goft_wpjm processing save">&nbsp;</span>');
 		}
 
 		var data = {
-			action           : 'goft_jobs_save_template',
-			template         : template_name,
-			fetch_images     : Number( $('input[name=load_images]').is(':checked') ),
-			force_feed       : Number( $('input[name=force_feed]').is(':checked') ),
-			smart_tax_input  : $('select[name=smart_tax_input]').val(),
-			rss_feed_import  : $('#rss_feed_import').val(),
-			_wpnonce         : goft_jobs_admin_l18n.ajax_save_nonce,
+			action          : 'goft_wpjm_save_template',
+			template        : template_name,
+			fetch_images    : Number( $('input[name=load_images]').is(':checked') ),
+			force_feed      : Number( $('input[name=force_feed]').is(':checked') ),
+			smart_tax_input : $('select[name=smart_tax_input]').val(),
+			rss_feed_import : $('#rss_feed_import').val(),
+			_wpnonce        : goft_wpjm_admin_l18n.ajax_save_nonce,
 		};
 
 		// Dynamically get all meta and taxonomy input data.
@@ -338,12 +339,12 @@ jQuery(document).ready(function($) {
 
 		});
 
-		$.post( goft_jobs_admin_l18n.ajaxurl, data, function( response ) {
+		$.post( goft_wpjm_admin_l18n.ajaxurl, data, function( response ) {
 
 			if ( undefined !== response && '1' === response) {
 
 				$('.save-template').show();
-				$('.save-template').after('<span class="template-saved-msg"> ' + goft_jobs_admin_l18n.msg_template_saved + '</span>');
+				$('.save-template').after('<span class="template-saved-msg"> ' + goft_wpjm_admin_l18n.msg_template_saved + '</span>');
 
 				var template_exists = false;
 
@@ -368,7 +369,7 @@ jQuery(document).ready(function($) {
 
 			$('.template-saved-msg').delay(2000).fadeOut();
 
-			$('.goft_jobs.processing.save').remove();
+			$('.goft_wpjm.processing.save').remove();
 
 		});
 
@@ -386,17 +387,17 @@ jQuery(document).ready(function($) {
 
 		enable_import( false );
 
-		if ( ! $('.goft_jobs.processing.templates').length ) {
-			template_actions.hide().after('<div class="goft_jobs processing templates">&nbsp;</div>');
+		if ( ! $('.goft_wpjm.processing.templates').length ) {
+			template_actions.hide().after('<div class="goft_wpjm processing templates">&nbsp;</div>');
 		}
 
 		var data = {
-			action: 'goft_jobs_load_template_content',
+			action: 'goft_wpjm_load_template_content',
 			template: $(this).val(),
-			_ajax_nonce: goft_jobs_admin_l18n.ajax_nonce,
+			_ajax_nonce: goft_wpjm_admin_l18n.ajax_nonce,
 		};
 
-		$.post( goft_jobs_admin_l18n.ajaxurl, data, function( response ) {
+		$.post( goft_wpjm_admin_l18n.ajaxurl, data, function( response ) {
 
 			if ( ! response ) {
 
@@ -441,6 +442,7 @@ jQuery(document).ready(function($) {
 				               var td = $( object ).closest('td');
 				               $( 'img', td ).attr( 'src', value );
 				           }
+
 						}
 
 					});
@@ -453,7 +455,7 @@ jQuery(document).ready(function($) {
 				$('.force-feed').toggle( $('input[name=force_feed]').is(':checked')  );
 			}
 
-			$('.goft_jobs.processing.templates').remove();
+			$('.goft_wpjm.processing.templates').remove();
 
 			template_actions.show();
 
@@ -476,29 +478,28 @@ jQuery(document).ready(function($) {
 
 		var $providers_list = $(this);
 
-		$('.goft_jobs.processing.providers').remove();
+		$('.goft_wpjm.processing.providers').remove();
 
 		if ( ! $providers_list.val() ) {
 			$('.providers-placeholder').closest('tr').fadeOut();
 			return;
 		}
 
-		if ( ! $('.goft_jobs.processing.templates').length ) {
-			$('#providers_list').next('.select2').after('<div class="goft_jobs processing providers">&nbsp;</div>');
+		if ( ! $('.goft_wpjm.processing.templates').length ) {
+			$('#providers_list').next('.select2').after('<div class="goft_wpjm processing providers">&nbsp;</div>');
 		}
 
 		var data = {
-			action      : 'goft_jobs_load_provider_info',
+			action      : 'goft_wpjm_load_provider_info',
 			provider    : $providers_list.val(),
-			_ajax_nonce : goft_jobs_admin_l18n.ajax_nonce,
+			_ajax_nonce : goft_wpjm_admin_l18n.ajax_nonce,
 		};
 
-
-		$.post( goft_jobs_admin_l18n.ajaxurl, data, function( response ) {
+		$.post( goft_wpjm_admin_l18n.ajaxurl, data, function( response ) {
 
 			if ( response ) {
 				$('.providers-placeholder-content').html( response['setup'] ).closest('tr').fadeIn();
-				$('.providers-placeholder-content').append( '<a class="dashicons-before dashicons-dismiss close-provider" title="' + goft_jobs_admin_l18n.title_close + '"></a>' );
+				$('.providers-placeholder-content').append( '<a class="dashicons-before dashicons-dismiss close-provider" title="' + goft_wpjm_admin_l18n.title_close + '"></a>' );
 
 				$('.close-provider').click( function() {
 					$providers_list.val('').change();
@@ -509,13 +510,12 @@ jQuery(document).ready(function($) {
 				pre_fill_provider_rss_builder( response['provider'] );
 			}
 
-			$('.goft_jobs.processing.providers').remove();
+			$('.goft_wpjm.processing.providers').remove();
 
 		}, 'json' );
 
 		g_feed_base_url = '';
 		params          = [];
-
 	});
 
 	// On provider click.
@@ -525,7 +525,7 @@ jQuery(document).ready(function($) {
 
 		$('input[name=rss_feed_import]').val( $(this).attr('href') ).addClass('input-feed-pasted');
 
-		$(this).after('<span class="rss-copied-msg"> ' + goft_jobs_admin_l18n.msg_rss_copied + '</span>').fadeIn();
+		$(this).after('<span class="rss-copied-msg"> ' + goft_wpjm_admin_l18n.msg_rss_copied + '</span>').fadeIn();
 		$('.rss-copied-msg').delay(1000).fadeOut( function(){
 			$('input[name=rss_feed_import]').removeClass('input-feed-pasted');
 		});
@@ -639,9 +639,9 @@ jQuery(document).ready(function($) {
 			$(this).addClass('temp-tr-hide');
 
 			if ( $(this).is(':visible') ) {
-				$( section_a ).text( goft_jobs_admin_l18n.simple );
+				$( section_a ).text( goft_wpjm_admin_l18n.simple );
 			} else {
-				$( section_a ).text( goft_jobs_admin_l18n.advanced );
+				$( section_a ).text( goft_wpjm_admin_l18n.advanced );
 			}
 
 		});
@@ -847,8 +847,8 @@ jQuery(document).ready(function($) {
 
 		var all_query_args = [];
 
-		if ( undefined !== goft_jobs_admin_l18n.default_query_args ) {
-			all_query_args.push( goft_jobs_admin_l18n.default_query_args );
+		if ( undefined !== goft_wpjm_admin_l18n.default_query_args ) {
+			all_query_args.push( goft_wpjm_admin_l18n.default_query_args );
 		}
 
 		if ( undefined !== provider.feed ) {
@@ -943,12 +943,12 @@ jQuery(document).ready(function($) {
 
 			$( 'select, input[type!="button"], textarea', tr ).each( function() {
 
-				value = '';
+				value = classes = '';
 
 				if ( $(this).is('select') ) {
 					value = $(this).find(':selected').text();
 				} else if ( $(this).is(':checkbox') ) {
-					value = $(this).is(':checked') ? goft_jobs_admin_l18n.label_yes : goft_jobs_admin_l18n.label_no;
+					value = $(this).is(':checked') ? goft_wpjm_admin_l18n.label_yes : goft_wpjm_admin_l18n.label_no;
 				} else if ( $(this).val() ) {
 					value = $(this).val();
 
@@ -983,7 +983,7 @@ jQuery(document).ready(function($) {
 
 					var sel_values_placeholder =
 						'<tr class="section-advanced temp-tr-hide">' +
-							'<td><a href="#" class="section-expand" expand="' + section + '">' + goft_jobs_admin_l18n.msg_advanced + '</a></td>' +
+							'<td><a href="#" class="section-expand" expand="' + section + '">' + goft_wpjm_admin_l18n.msg_advanced + '</a></td>' +
 							'<td class="tip">&nbsp;</td>' +
 							'<td class="section-values ' + selector + '" colspan=5></td>' +
 						'</tr>';
@@ -1012,7 +1012,7 @@ jQuery(document).ready(function($) {
 	 */
 	function toggle_settings_groups( show ) {
 
-		var group = $('.temp-tr-hide');
+		var group      = $('.temp-tr-hide');
 		var fixedgroup = $('.temp-tr-hide.tr-hide');
 
 		if ( show ) {
@@ -1039,7 +1039,7 @@ jQuery(document).ready(function($) {
 			items++;
 
 			if ( state.children ) {
-				var $state = $('<span class="goft-jobs-group">' + state.text + '<span class="dashicons-before ' + icon + ' expand-minimize"></span></span>');
+				var $state = $('<span class="goft-wpjm-group">' + state.text + '<span class="dashicons-before ' + icon + ' expand-minimize"></span></span>');
 				return $state;
 			}
 
@@ -1095,20 +1095,20 @@ jQuery(document).ready(function($) {
 	}
 
 
-	// Single page schedules.
+	// __Single page schedules.
 
-	$('#_goft_jobs_period_custom').closest('tr').hide();
+	$('#_goft_wpjm_period_custom').closest('tr').hide();
 
-	$(document).on( 'change', '#_goft_jobs_period', function() {
+	$(document).on( 'change', '#_goft_wpjm_period', function() {
 
 		if ( 'custom' == $(this).val() ) {
-			$('#_goft_jobs_period_custom' ).closest('tr').fadeIn();
+			$('#_goft_wpjm_period_custom' ).closest('tr').fadeIn();
 		} else {
-			$('#_goft_jobs_period_custom' ).closest('tr').hide();
+			$('#_goft_wpjm_period_custom' ).closest('tr').hide();
 		}
 
 	});
 
-	$('#_goft_jobs_period').trigger('change');
+	$('#_goft_wpjm_period').trigger('change');
 
 })

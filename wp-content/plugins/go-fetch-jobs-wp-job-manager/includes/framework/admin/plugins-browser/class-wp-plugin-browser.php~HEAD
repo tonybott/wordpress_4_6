@@ -131,7 +131,6 @@ class BC_Framework_Plugin_Browser_Core extends BC_Framework_Plugin_Browser_Menu_
 	 * Setup hooks.
 	 */
 	protected function setup_hooks() {
-		add_filter( 'pre_set_site_transient_update_plugins', array( $this, 'update_plugins' ) );
 		add_action( "bc_plugin_browser_list_before_filter_{$this->page_slug}", array( $this, 'display_banner' ) );
 	}
 
@@ -666,14 +665,6 @@ class BC_Framework_Plugin_Browser_Core extends BC_Framework_Plugin_Browser_Menu_
 		$list = new BC_Framework_Plugin_Browser_List( $this->page_slug, null, $args );
 
 		return $list->items;
-	}
-
-	/**
-	 * Updates the plugin list.
-	 */
-	public function update_plugins( $value, $transient, $refresh = true ) {
-		$this->get_plugins( $refresh );
-		return $value;
 	}
 
 }

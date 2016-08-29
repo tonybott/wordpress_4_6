@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Admin class.
  */
-class GoFetch_JR_Admin_List {
+class GoFetch_WPJM_Admin_List {
 
 	/**
 	 * Constructor.
@@ -25,8 +25,8 @@ class GoFetch_JR_Admin_List {
 	 * Hooks for customizing backend listings.
 	 */
 	public function customize_post_type_listing() {
-		add_filter( 'manage_' . GoFetch_JR()->post_type . '_posts_columns', array( $this, 'manage_columns' ) , 11 );
-		add_action( 'manage_' . GoFetch_JR()->post_type . '_posts_custom_column', array( $this, 'add_column_data' ), 10, 2 );
+		add_filter( 'manage_' . GoFetch_WPJM()->post_type . '_posts_columns', array( $this, 'manage_columns' ) , 11 );
+		add_action( 'manage_' . GoFetch_WPJM()->post_type . '_posts_custom_column', array( $this, 'add_column_data' ), 10, 2 );
 	}
 
 	/**
@@ -38,11 +38,11 @@ class GoFetch_JR_Admin_List {
 
 		unset( $columns['date'] );
 
-		$columns['schedule']  = __( 'Schedule', 'gofetch-jobs' );
-		$columns['time_span'] = __( 'Content Period', 'gofetch-jobs' );
-		$columns['template']  = __( 'Template', 'gofetch-jobs' );
+		$columns['schedule']  = __( 'Schedule', 'gofetch-wpjm' );
+		$columns['time_span'] = __( 'Content Period', 'gofetch-wpjm' );
+		$columns['template']  = __( 'Template', 'gofetch-wpjm' );
 		$columns['date']      = $date;
-		$columns['last_run']  = __( 'Last Run', 'gofetch-jobs' );
+		$columns['last_run']  = __( 'Last Run', 'gofetch-wpjm' );
 
 		return $columns;
 	}
@@ -55,19 +55,19 @@ class GoFetch_JR_Admin_List {
 		switch ( $column_index ) {
 
 			case 'schedule':
-				$schedule = get_post_meta( $post_id, '_goft_jobs_cron', true );
+				$schedule = get_post_meta( $post_id, '_goft_wpjm_cron', true );
 
 				switch( $schedule ) {
 					case 'daily':
-						$schedule = __( 'Daily', 'gofetch-jobs' );
+						$schedule = __( 'Daily', 'gofetch-wpjm' );
 						break;
 
 					case 'weekly':
-						$schedule = __( 'Weekly', 'gofetch-jobs' );
+						$schedule = __( 'Weekly', 'gofetch-wpjm' );
 						break;
 
 					case 'monthly':
-						$schedule = __( 'Monthly', 'gofetch-jobs' );
+						$schedule = __( 'Monthly', 'gofetch-wpjm' );
 						break;
 				}
 
@@ -75,31 +75,31 @@ class GoFetch_JR_Admin_List {
 				break;
 
 	        case 'time_span' :
-	            $time_span = get_post_meta( $post_id, '_goft_jobs_period', true );
+	            $time_span = get_post_meta( $post_id, '_goft_wpjm_period', true );
 				if ( 'custom' == $time_span ) {
-					$time_span = (int) get_post_meta( $post_id, '_goft_jobs_period_custom', true );
+					$time_span = (int) get_post_meta( $post_id, '_goft_wpjm_period_custom', true );
 				}
 
 				switch( $time_span ) {
 					case 'today':
-						$time_span = __( 'Today', 'gofetch-jobs' );
+						$time_span = __( 'Today', 'gofetch-wpjm' );
 						break;
 
 					default:
-						$time_span = sprintf( __( 'Last %s %s', 'gofetch-jobs' ), $time_span, _n( 'day', 'days', $time_span, 'gofetch-jobs' ) );
+						$time_span = sprintf( __( 'Last %s %s', 'gofetch-wpjm' ), $time_span, _n( 'day', 'days', $time_span, 'gofetch-wpjm' ) );
 						break;
 				}
 				echo $time_span;
 	            break;
 
 			case 'template':
-				echo get_post_meta( $post_id, '_goft_jobs_template', true );
+				echo get_post_meta( $post_id, '_goft_wpjm_template', true );
 				break;
 
 	        case 'last_run':
 	        	$last_message = get_post_meta( $post_id, '_scheduler_log_status', true );
 				echo get_post_meta( $post_id, '_scheduler_log_timestamp', true ) . '<br/>';
-				echo ( is_array( $last_message ) ? GoFetch_JR_Log_Message_Table::get_stats_message( $last_message ) : $last_message );
+				echo ( is_array( $last_message ) ? GoFetch_WPJM_Log_Message_Table::get_stats_message( $last_message ) : $last_message );
 	            break;
 
 		}
@@ -108,4 +108,4 @@ class GoFetch_JR_Admin_List {
 
 }
 
-new GoFetch_JR_Admin_List();
+new GoFetch_WPJM_Admin_List();

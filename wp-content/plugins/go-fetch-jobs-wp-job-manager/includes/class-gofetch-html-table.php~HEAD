@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Base class for HTML tables.
  */
-abstract class GoFetch_JR_HTML_Table {
+abstract class GoFetch_WPJM_HTML_Table {
 
 	protected function table( $items, $attributes = array(), $args = array() ){
 
@@ -52,7 +52,7 @@ abstract class GoFetch_JR_HTML_Table {
 		return $table_body;
 	}
 
-	abstract protected function row( $item );
+	abstract protected function row( $item = array(), $atts = array() );
 
 	protected function cells( $cells, $atts = array(), $type = 'td' ){
 

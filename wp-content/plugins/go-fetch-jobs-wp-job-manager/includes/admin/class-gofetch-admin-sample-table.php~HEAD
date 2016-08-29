@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Sample HTML table class.
  */
-class GoFetch_JR_Sample_Table extends GoFetch_JR_HTML_Table {
+class GoFetch_WPJM_Sample_Table extends GoFetch_WPJM_HTML_Table {
 
 	/**
 	 * Constructor.
@@ -28,12 +28,12 @@ class GoFetch_JR_Sample_Table extends GoFetch_JR_HTML_Table {
 	public static function display( $query_args = array(), $fields = array() ) {
 
 		$defaults = array(
-			'content_type' => GoFetch_JR()->parent_post_type,
+			'content_type' => GoFetch_WPJM()->parent_post_type,
 		);
 		$query_args = wp_parse_args( $query_args, $defaults );
 
 		// output the table
-		$table = new GoFetch_JR_Sample_Table( $fields, $query_args['content_type'] );
+		$table = new GoFetch_WPJM_Sample_Table( $fields, $query_args['content_type'] );
 
 		ob_start();
 
@@ -46,7 +46,7 @@ class GoFetch_JR_Sample_Table extends GoFetch_JR_HTML_Table {
 	 * Outputs the final table.
 	 */
 	public function show() {
-		echo $this->table( $this->fields, array( 'class' => 'goft_jobs_table widefat fields' ) );
+		echo $this->table( $this->fields, array( 'class' => 'goft_wpjm_table widefat fields' ) );
 	}
 
 	/**
@@ -69,8 +69,8 @@ class GoFetch_JR_Sample_Table extends GoFetch_JR_HTML_Table {
 		}
 
 		$cells = $this->cells( array(
-			__( 'Fields', 'gofetch-jobs' ),
-			__( 'Sample Content', 'gofetch-jobs' ),
+			__( 'Fields', 'gofetch-wpjm' ),
+			__( 'Sample Content', 'gofetch-wpjm' ),
 		), $atts, 'td' );
 
 		return html( 'tr', array(), $cells );
@@ -91,7 +91,7 @@ class GoFetch_JR_Sample_Table extends GoFetch_JR_HTML_Table {
 		if ( empty( $item['data'] ) ) {
 			$item['data'] = '-';
 		} elseif ( is_serialized( $item['data'] ) ) {
-			$item['data'] = __( '[serialized data]', 'gofetch-jobs' );
+			$item['data'] = __( '[serialized data]', 'gofetch-wpjm' );
 		}
 
 		$field_atts = array(
@@ -136,7 +136,7 @@ class GoFetch_JR_Sample_Table extends GoFetch_JR_HTML_Table {
 			$default = array(
 				'name'              => $field,
 				'type'              => $type,
-				'content_data_type' => GoFetch_JR_Helper::get_field_type( $field, $content_type ),
+				'content_data_type' => GoFetch_WPJM_Helper::get_field_type( $field, $content_type ),
 				'data'              => '-',
 				'label'             => '',
 				'checked'           => false,

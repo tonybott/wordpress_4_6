@@ -94,20 +94,3 @@ class BC_Framework_Logger implements BC_Framework_Log {
 	}
 
 }
-
-/**
- * Simple logger that outputs data to the debug log file.
- */
-function bc_framework_simple_log( $log, $override_condition = null )  {
-
-    if ( ! defined('WP_DEBUG_LOG') || ! WP_DEBUG_LOG || ! $override_condition ) {
-    	return;
-    }
-
-    if ( is_array( $log ) || is_object( $log ) ) {
-        error_log( print_r( $log, true ) );
-    } else {
-        error_log( $log );
-    }
-
-}
